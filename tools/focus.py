@@ -47,7 +47,7 @@ def load_local():
             d = json.load(f)
     except (OSError, ValueError):
         d = {}
-    d.setdefault("enabled", True)
+    d.setdefault("enabled", False)  # opt-in per machine (/setup asks)
     d.setdefault("categories", None)   # None = config default_categories
     d.setdefault("extra", [])          # extra process names to block
     d.setdefault("allow", [])          # process names never to block (e.g. a browser needed for class)
