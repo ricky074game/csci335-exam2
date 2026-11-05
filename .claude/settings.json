@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python tools/study.py:*)",
+      "Bash(python3 tools/study.py:*)",
+      "Bash(python -I tools/study.py:*)",
+      "Bash(python3 -I tools/study.py:*)",
+      "Read(./**)",
+      "Edit(./bank/**)",
+      "Edit(./progress/**)"
+    ]
+  }
+}

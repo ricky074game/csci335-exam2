@@ -1,0 +1,468 @@
+{
+  "topic": "sortbasics",
+  "title": "Insertion/Merge Sort, Lower Bounds, Linear-Time and External Sorting",
+  "questions": [
+    {
+      "id": "sortbasics-005",
+      "type": "trace",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "inversions",
+        "insertion-sort",
+        "textbook-7.3"
+      ],
+      "points": 6,
+      "prompt": "List **all inversions** of `12, 5, 9, 3, 8, 1` (an inversion is a pair of positions i < j with a[i] > a[j]). Then (a) give the number of positions each element moves when insertion sort processes the array, (b) state the maximum possible number of inversions for 6 distinct elements and the average over all permutations of 6 distinct elements.",
+      "answer": "**Inversions (12):** (12,5), (12,9), (12,3), (12,8), (12,1), (5,3), (5,1), (9,3), (9,8), (9,1), (3,1), (8,1).\n\nCheck by element (number of larger elements to its left): 5 has 1 (12); 9 has 1 (12); 3 has 3 (12,5,9); 8 has 2 (12,9); 1 has 5 (12,5,9,3,8). Total 1 + 1 + 3 + 2 + 5 = **12**.\n\n**(a)** Insertion sort moves each element left past exactly the larger elements on its left, i.e. by the numbers above: 12 moves 0, 5 moves 1, 9 moves 1, 3 moves 3, 8 moves 2, 1 moves 5 - total 12 = number of inversions. (Engine: `sort insertion 12,5,9,3,8,1` ends with \"12 inversions\".)\n\n**(b)** Maximum: the reverse-sorted permutation has every pair inverted, N(N-1)/2 = 6*5/2 = **15**. Average over all 6! permutations: N(N-1)/4 = **7.5** (Theorem 7.1).",
+      "rubric": [
+        "lists the 12 inversion pairs",
+        "counts by element (or equivalent) to confirm 12",
+        "relates moves in insertion sort to inversions",
+        "maximum N(N-1)/2 = 15",
+        "average N(N-1)/4 = 7.5"
+      ]
+    },
+    {
+      "id": "sortbasics-006",
+      "type": "proof",
+      "difficulty": 2,
+      "source": "textbook-7.3",
+      "tags": [
+        "inversions",
+        "theorem-7.1",
+        "proof"
+      ],
+      "points": 8,
+      "prompt": "**(Textbook Theorem 7.1 / slide \"Lower bound for simple sorting algorithms\")** Prove that the average number of inversions in an array of N distinct elements is N(N-1)/4. State clearly what \"average\" means.",
+      "answer": "**Assumption (what average means).** There are no duplicates, so w.l.o.g. the input is a permutation of 1..N, and all N! permutations are equally likely.\n\n**Proof.** Take any list L and let L^r be its reverse. Look at any pair of values (x, y) with x < y. Exactly one of the two lists has y before x, i.e. has this pair as an inversion: if x comes before y in L it is not inverted in L, but in L^r y comes before x so it is inverted in L^r, and vice versa. There are C(N,2) = N(N-1)/2 such pairs of values. Therefore **inv(L) + inv(L^r) = N(N-1)/2**.\n\nPair every permutation with its reverse (L != L^r for N >= 2, so this splits the N! permutations into N!/2 pairs). Each pair has an average of N(N-1)/4 inversions, so the average over all permutations is **N(N-1)/4 = Theta(N^2)**. Example: for N = 6 the average is 7.5, and 34, 8, 64, 51, 32, 21 (9 inversions) paired with its reverse 21, 32, 51, 64, 8, 34 (6 inversions) gives 9 + 6 = 15 = 6*5/2. []",
+      "rubric": [
+        "states the assumption: distinct elements, all N! permutations equally likely",
+        "considers a list L and its reverse L^r and any pair of values",
+        "argues each pair is an inversion in exactly one of L and L^r",
+        "total inversions of L and L^r = N(N-1)/2",
+        "divides by 2 to get the average N(N-1)/4"
+      ]
+    },
+    {
+      "id": "sortbasics-007",
+      "type": "proof",
+      "difficulty": 2,
+      "source": "textbook-7.3",
+      "tags": [
+        "inversions",
+        "theorem-7.2",
+        "lower-bound",
+        "proof"
+      ],
+      "points": 8,
+      "prompt": "**(Textbook Theorem 7.2)** Prove that any sorting algorithm that only exchanges *adjacent* elements needs Omega(N^2) time on average. Then explain what this says about how a sort can be faster than quadratic.",
+      "answer": "**Claim.** Any algorithm that sorts by exchanging adjacent elements takes Omega(N^2) time on average.\n\n**Proof.**\n1. By Theorem 7.1 the average input (distinct elements, all permutations equally likely) has N(N-1)/4 = Omega(N^2) inversions.\n2. A sorted array has 0 inversions, so every inversion must be removed.\n3. Exchanging two **adjacent** elements changes the relative order of that one pair only (for any third element z, both swapped elements stay on the same side of z), so the number of inversions changes by exactly 1: it drops by one if the pair was out of order (and rises by one if it was in order). So each swap removes **at most one** inversion.\n4. Therefore at least N(N-1)/4 swaps are needed on average: Omega(N^2) time. []\n\nThis holds for the whole *class* of algorithms (insertion sort, bubble sort, and any undiscovered adjacent-swap algorithm).\n\n**Consequence.** To be o(N^2) a sort must compare and exchange elements that are **far apart**, so that one exchange can remove many inversions (this is what Shellsort's long gaps, heapsort's parent/child jumps, quicksort's partition swaps and mergesort's merge do).",
+      "rubric": [
+        "uses Theorem 7.1: the average number of inversions is Theta(N^2)",
+        "sorted array has zero inversions so all must be removed",
+        "an adjacent swap removes exactly (at most) one inversion",
+        "concludes Omega(N^2) swaps on average",
+        "explains that a faster sort must exchange far-apart elements"
+      ]
+    },
+    {
+      "id": "sortbasics-008",
+      "type": "proof",
+      "difficulty": 3,
+      "source": "textbook-7.8",
+      "tags": [
+        "decision-tree",
+        "lower-bound",
+        "textbook-7.8",
+        "proof"
+      ],
+      "points": 12,
+      "prompt": "**(Textbook 7.8, Sorting slides)** Prove that any sorting algorithm that uses only comparisons requires Omega(N log N) comparisons in the worst case. Your proof must include (1) the decision-tree model, (2) Lemma 1: a binary tree of depth d has at most 2^d leaves, (3) Lemma 2: a binary tree with L leaves has depth at least ceil(log2 L), (4) the final step showing log2(N!) is Omega(N log N). What does this say about mergesort, heapsort and quicksort?",
+      "answer": "**Model.** Any comparison-based sorting algorithm (on N distinct items) can be drawn as a binary **decision tree**: each internal node is a comparison \"a < b?\", the two edges are the outcomes (yes/no), and each leaf is a final answer - the sorted order. The number of comparisons used on a particular input = the length of the path to its leaf, so the **worst case = the depth of the tree**.\n\n**The tree has at least N! leaves.** Each of the N! orderings of the input must reach a different leaf (the algorithm must output a different permutation for each), so L >= N!.\n\n**Lemma 1.** A binary tree of depth d has at most 2^d leaves. Induction on d: d = 0 is a single node, 1 leaf = 2^0. For d > 0 the root is not a leaf and has two subtrees of depth <= d-1, each with at most 2^(d-1) leaves by the hypothesis, so at most 2*2^(d-1) = 2^d leaves.\n\n**Lemma 2.** A binary tree with L leaves has depth at least ceil(log2 L). From Lemma 1: L <= 2^d, so d >= log2 L, and d is an integer, so d >= ceil(log2 L).\n\n**Theorem 1.** Worst-case comparisons >= depth >= ceil(log2(N!)).\n\n**Theorem 2 (Omega(N log N)).**\nlog(N!) = log N + log(N-1) + ... + log 2 + log 1\n >= log N + log(N-1) + ... + log(N/2)  (throw away the smaller half of the terms)\n >= (N/2) log(N/2) (N/2 terms, each at least log(N/2))\n = (N/2) log N - N/2 = Omega(N log N). []\n\n**Consequence.** Mergesort and heapsort (O(N log N) worst case) are **optimal** to within a constant factor. The argument extends to the average case (average leaf depth is also >= log L), so quicksort is optimal on average. The bound is an *information-theoretic* bound: it does not say how to achieve it, and it only applies to comparison-based sorts (counting/bucket/radix sort escape it).",
+      "rubric": [
+        "models the algorithm as a binary decision tree whose worst-case comparisons = depth",
+        "argues the tree has at least N! leaves",
+        "proves (or correctly states) Lemma 1: at most 2^d leaves",
+        "derives Lemma 2: depth >= ceil(log2 L)",
+        "shows log2(N!) >= (N/2) log2(N/2) = Omega(N log N)",
+        "concludes mergesort/heapsort optimal (and quicksort on average)"
+      ]
+    },
+    {
+      "id": "sortbasics-009",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "textbook-7.8",
+      "tags": [
+        "decision-tree",
+        "log-factorial",
+        "lower-bound"
+      ],
+      "points": 6,
+      "prompt": "Using the decision-tree lower bound, compute the minimum number of comparisons that any comparison-based algorithm needs in the worst case to sort (a) 3, (b) 4, (c) 5 and (d) 8 distinct elements. For N = 3 draw/describe a decision tree that achieves the bound. Is the bound always achievable by mergesort?",
+      "answer": "The bound is ceil(log2(N!)):\n\n* N = 3: 3! = 6 leaves, log2 6 = 2.58, so **3** comparisons.\n* N = 4: 4! = 24, log2 24 = 4.58, so **5**.\n* N = 5: 5! = 120, log2 120 = 6.91, so **7**.\n* N = 8: 8! = 40320, log2 40320 = 15.30, so **16**.\n\n**N = 3 tree (textbook Fig 7.20 style).** Compare a:b. If a < b compare a:c; if a < c then the order is a < b ? c still unknown, so one more comparison b:c; if c < a we know c < a < b. Symmetric for b < a. Every path has length <= 3 and the tree has 6 leaves, so 3 comparisons suffice and are necessary.\n\n**Is it tight for mergesort?** For N = 4 mergesort's worst case is 5 comparisons (equals the bound), but for N = 5 its worst case is 8 comparisons while the bound is 7 (and for N = 6: 11 vs 10). The bound proves that no algorithm can do better than ceil(log2 N!); it does not say it can always be reached. Asymptotically both are Theta(N log N).",
+      "rubric": [
+        "gives ceil(log2 N!) = 3, 5, 7, 16",
+        "uses N! leaves and depth >= ceil(log2 leaves)",
+        "describes a valid 3-comparison tree for N = 3 with 6 leaves",
+        "notes the bound is a lower bound and need not be exactly achieved by mergesort"
+      ]
+    },
+    {
+      "id": "sortbasics-010",
+      "type": "proof",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "mergesort",
+        "recurrence",
+        "telescoping",
+        "textbook-7.6"
+      ],
+      "points": 8,
+      "prompt": "**(Sorting slides \"Mergesort Analysis\", Textbook 7.6.1)** Solve T(1) = 1, T(N) = 2T(N/2) + N for N a power of 2 by **telescoping**: divide through by N, write the equation for N, N/2, N/4, ..., 2, add them all, and cancel. Why is dividing by N necessary? Then solve it a second time by repeated substitution.",
+      "answer": "**Divide by N:**  T(N)/N = T(N/2)/(N/2) + 1.\n\nThis is valid for every power of 2, so write it down for N, N/2, N/4, ..., 2:\n\n* T(N)/N = T(N/2)/(N/2) + 1\n* T(N/2)/(N/2) = T(N/4)/(N/4) + 1\n* T(N/4)/(N/4) = T(N/8)/(N/8) + 1\n* ...\n* T(2)/2 = T(1)/1 + 1\n\nAdd all equations. Every term T(N/2^i)/(N/2^i) with i = 1..log N - 1 appears once on the left and once on the right and **cancels** (telescoping). What is left: T(N)/N = T(1)/1 + (one \"1\" for each equation). There are log N equations (N = 2^k gives k = log2 N), so\n\nT(N)/N = T(1) + log N = 1 + log N  =>  **T(N) = N log N + N = O(N log N)**.\n\n**Why divide by N?** Without it the right side keeps the factor structure 2T(N/2) and the terms do not match the next equation's left side, so nothing cancels. Dividing by N makes the coefficient of the recursive term equal to the coefficient on the left of the next line.\n\n**Substitution method.** T(N) = 2T(N/2) + N = 4T(N/4) + 2N = 8T(N/8) + 3N = ... = 2^k T(N/2^k) + kN. With k = log N: T(N) = N T(1) + N log N = N log N + N.",
+      "rubric": [
+        "divides by N to get T(N)/N = T(N/2)/(N/2) + 1",
+        "writes the equation for N/2, N/4, ..., 2 and adds them",
+        "identifies the cancellation of the intermediate terms",
+        "counts log N ones and gets T(N)/N = 1 + log N",
+        "concludes T(N) = N log N + N = O(N log N)",
+        "second method (repeated substitution) reaching 2^k T(N/2^k) + kN"
+      ]
+    },
+    {
+      "id": "sortbasics-011",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "textbook-7.6",
+      "tags": [
+        "mergesort",
+        "merge",
+        "comparisons",
+        "space"
+      ],
+      "points": 6,
+      "prompt": "The textbook `merge` combines two sorted runs A = `2, 5, 8, 11` and B = `1, 3, 4, 12, 15` into a temp array. (a) List each comparison made and the element copied. (b) How many comparisons were made, and what is the maximum for runs of total size N? (c) What is the time and extra space of merge, and why does mergesort therefore need O(N) extra space?",
+      "answer": "**(a)** Compare the fronts of A and B; copy the smaller (ties go left, `<=`):\n\n1. 2 vs 1 -> take 1 (right)\n2. 2 vs 3 -> take 2 (left)\n3. 5 vs 3 -> take 3 (right)\n4. 5 vs 4 -> take 4 (right)\n5. 5 vs 12 -> take 5 (left)\n6. 8 vs 12 -> take 8 (left)\n7. 11 vs 12 -> take 11 (left)\n\nA is now exhausted; the rest of B (12, 15) is copied without comparisons. Result: `1, 2, 3, 4, 5, 8, 11, 12, 15`.\n\n**(b)** 7 comparisons. In general each comparison places one element, except the last comparison, which finishes a run and leaves at least two elements to copy, so at most **N - 1** comparisons for N = |A| + |B| elements (here N = 9, bound 8).\n\n**(c)** Time **Theta(N)** (each element is copied to tmp once and back once, plus at most N-1 comparisons). Extra space **Theta(N)**: the output cannot be written over the two input runs in place without overwriting unread elements, so a temporary array is needed. The textbook allocates one tmpArray of size N in the driver and reuses it, so total extra space for mergesort is O(N) (not O(N log N)); it is not an in-place sort.",
+      "rubric": [
+        "lists the comparisons in order with the correct element copied each time",
+        "counts 7 comparisons then copies the remaining run",
+        "states the N-1 comparison bound",
+        "merge is Theta(N) time and Theta(N) extra space",
+        "ties the O(N) temp array to mergesort's O(N) extra space (not in place)"
+      ]
+    },
+    {
+      "id": "sortbasics-012",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "mergesort",
+        "merge-order",
+        "odd-size"
+      ],
+      "points": 8,
+      "prompt": "Sort `38, 27, 43, 3, 9, 82, 10, 5, 1` (9 elements, indices 0..8) with the textbook mergesort (`center = (left + right) / 2`, integer division). (a) Give the index range of the two halves at the top level. (b) Show the result of every merge in the order they happen. (c) How many merges are performed in total?",
+      "answer": "**(a)** center = (0+8)/2 = 4, so the halves are indices **0..4** (5 elements) and **5..8** (4 elements): the left half gets the extra element.\n\n**(b)**\n\n```\nmerge [38] + [27] -> [27, 38]  (indices 0..1)\n    [27 38] 43 3 9 82 10 5 1\nmerge [27, 38] + [43] -> [27, 38, 43]  (indices 0..2)\n    [27 38 43] 3 9 82 10 5 1\nmerge [3] + [9] -> [3, 9]  (indices 3..4)\n    27 38 43 [3 9] 82 10 5 1\nmerge [27, 38, 43] + [3, 9] -> [3, 9, 27, 38, 43]  (indices 0..4)\n    [3 9 27 38 43] 82 10 5 1\nmerge [82] + [10] -> [10, 82]  (indices 5..6)\n    3 9 27 38 43 [10 82] 5 1\nmerge [5] + [1] -> [1, 5]  (indices 7..8)\n    3 9 27 38 43 10 82 [1 5]\nmerge [10, 82] + [1, 5] -> [1, 5, 10, 82]  (indices 5..8)\n    3 9 27 38 43 [1 5 10 82]\nmerge [3, 9, 27, 38, 43] + [1, 5, 10, 82] -> [1, 3, 5, 9, 10, 27, 38, 43, 82]  (indices 0..8)\n    [1 3 5 9 10 27 38 43 82]\n\nfinal: 1,3,5,9,10,27,38,43,82\n```\n\n**(c)** **8 merges** (= N - 1 for N = 9; every merge reduces the number of sorted runs by one, starting from 9 runs of size 1).",
+      "rubric": [
+        "top-level halves 0..4 and 5..8 (left gets the extra element)",
+        "merges happen depth-first, left half first, in the engine's order",
+        "[27,38]+[43] and [3,9] merged before the 5+4 final merge of the left half",
+        "final result 1,3,5,9,10,27,38,43,82",
+        "counts 8 merges"
+      ]
+    },
+    {
+      "id": "sortbasics-013",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "textbook-7.31",
+      "tags": [
+        "stability",
+        "textbook-7.31",
+        "insertion-sort",
+        "mergesort",
+        "quicksort",
+        "heapsort"
+      ],
+      "points": 8,
+      "prompt": "**(Textbook 7.31)** A sort is *stable* if elements with equal keys stay in their original relative order. Which of insertion sort, selection sort (swap the minimum into place), mergesort, quicksort (Hoare partition of 7.7.2) and heapsort are stable? Justify the stable ones from the code, and give a small counterexample for each unstable one (tag equal keys as 2a, 2b, ...). Why does stability matter, and which STL function guarantees it?",
+      "answer": "| Sort | Stable? | Why |\n|---|---|---|\n| Insertion sort | **Yes** | inner loop uses strict `tmp < a[j-1]`; an element never jumps over an equal one |\n| Mergesort | **Yes** | `merge` takes from the left run when `a[leftPos] <= a[rightPos]`, so equal keys from the left run come out first |\n| Selection sort | **No** | long-distance swap: `3a, 3b, 1` -> swap 3a with 1 -> `1, 3b, 3a` |\n| Quicksort (Hoare) | **No** | partition swaps far-apart elements: `2a, 3a, 3b, 1` with pivot 2 -> pivot swapped to the end `1, 3a, 3b, 2a`; final swap a[i=1] with the pivot gives `1, 2a, 3b, 3a` (3a and 3b reversed) |\n| Heapsort | **No** | `2a, 2b`: buildHeap changes nothing (ties do not move), then deleteMax swaps a[0] and a[1] giving `2b, 2a` |\n\n(Counterexample for quicksort checked with `python tools/study.py sort partition 2,3,3,1` and tracking the two 3s; for heapsort with the Fig 7.10 code.)\n\n**Why it matters:** sorting records on several keys in turn (e.g. sort by name, then stable-sort by grade keeps names alphabetical inside each grade), and radix sort's passes rely on stability.\n\n**STL:** `std::stable_sort` (usually a mergesort variant, uses extra memory) guarantees it; `std::sort` (introsort) does not.",
+      "rubric": [
+        "insertion sort and mergesort identified as stable with a code-based reason",
+        "selection sort, quicksort and heapsort identified as unstable",
+        "gives a valid small counterexample for each unstable sort",
+        "mentions why stability matters (multi-key sorting / radix sort)",
+        "names std::stable_sort vs std::sort"
+      ]
+    },
+    {
+      "id": "sortbasics-014",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "sort-choice",
+        "insertion-sort",
+        "mergesort",
+        "heapsort",
+        "quicksort",
+        "counting-sort"
+      ],
+      "points": 6,
+      "prompt": "Which sorting algorithm would you use in each situation, and why (give the complexity that justifies the choice)?\n\na. A 1,000,000-element array that is already sorted except for about 20 elements that are slightly out of place.\nb. Sorting a singly linked list of N nodes.\nc. A real-time system needs a worst-case O(N log N) guarantee and cannot afford any extra array.\nd. General-purpose sort of an array where average speed matters most and extra memory is limited.\ne. Sorting 10 million exam scores that are integers between 0 and 100.\nf. Records that must be sorted by grade while keeping the existing alphabetical order among equal grades.",
+      "answer": "a. **Insertion sort**: O(N + I) where I = number of inversions. With only ~20 slightly misplaced elements I is about 20 * (small distance), so it runs in about O(N).\nb. **Mergesort**: needs no random access, and merging linked lists needs no extra array (relink nodes), O(N log N) worst case.\nc. **Heapsort**: O(N log N) worst case and in place (O(1) extra space). (Introsort also gives the guarantee, using heapsort as the fallback.)\nd. **Quicksort** (in practice **introsort**, which is what `std::sort` uses): O(N log N) average, in place apart from O(log N) stack, fastest in practice because of the tight inner loop; median-of-3 + insertion-sort cutoff for small subarrays.\ne. **Counting (bucket) sort**: O(N + k) with k = 101 buckets, which is O(N) because the key range is tiny; it beats the Omega(N log N) comparison bound because it does not compare.\nf. **A stable sort**: `std::stable_sort` / mergesort (or insertion sort for small inputs). Quicksort and heapsort are not stable.",
+      "rubric": [
+        "a: insertion sort with O(N + inversions) reasoning",
+        "b: mergesort with no random access / O(1)-extra-space merge for lists",
+        "c: heapsort (or introsort) for worst-case guarantee in place",
+        "d: quicksort/introsort with average-case reasoning",
+        "e: counting/bucket sort O(N + k) and why it avoids the comparison lower bound",
+        "f: stable sort (mergesort / stable_sort)"
+      ]
+    },
+    {
+      "id": "sortbasics-015",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "stl",
+        "sort",
+        "stable_sort",
+        "iterators"
+      ],
+      "points": 5,
+      "prompt": "Sorting slides / Textbook 7.1. Assume `vector<int> v` holds 10 elements. (a) What does each call do? `sort(v.begin(), v.end());`  `sort(v.begin(), v.end(), greater<int>{});`  `sort(v.begin(), v.begin() + (v.end() - v.begin()) / 2);` (b) What is the time complexity of `std::sort` on N elements, and what is it typically implemented with? (c) Why does `sort(lst.begin(), lst.end())` not compile for a `std::list<int> lst`, and what do you call instead? What is its complexity? (d) When do you prefer `stable_sort`?",
+      "answer": "**(a)** First: sorts the whole vector in non-decreasing order. Second: sorts the whole vector in non-increasing (descending) order (comparator `greater<int>`). Third: sorts only the **first half** (indices 0..4) in non-decreasing order; the second half is untouched.\n\n**(b)** O(N log N) (the standard requires this even in the worst case); implemented as **introsort** (quicksort -> heapsort when the recursion gets too deep -> insertion sort on small ranges). Not stable.\n\n**(c)** `std::sort` needs **random-access iterators** (it jumps to the middle, uses `begin + k`); `std::list` iterators are only bidirectional. Use the member function `lst.sort()`, which is a mergesort on the linked list: O(N log N), stable, and no extra array because it just relinks nodes.\n\n**(d)** When equal keys must keep their input order (multi-key sorts, sorting records by one field). `stable_sort` is O(N log N) given enough extra memory (O(N log^2 N) without it), and it is stable.",
+      "rubric": [
+        "explains the three sort calls (ascending, descending with greater, first half only)",
+        "O(N log N) and introsort",
+        "random-access iterator requirement; use list::sort",
+        "list::sort is a mergesort, O(N log N)",
+        "stable_sort for preserving the order of equal keys"
+      ]
+    },
+    {
+      "id": "sortbasics-016",
+      "type": "trace",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "selection-sort",
+        "background",
+        "complexity"
+      ],
+      "points": 6,
+      "prompt": "Selection sort (background material): in pass p = 0 .. N-2 find the smallest element among positions p..N-1 and swap it into position p. (a) Show the array after each pass for `29, 10, 14, 37, 13`. (b) How many comparisons and how many swaps does it make for N elements, and does it get faster on presorted input? (c) Is it stable? Does the Omega(N^2) adjacent-swap theorem explain its running time?",
+      "answer": "**(a)**\n\n```\npass 1: min of positions 0..4 is at index 1; swap -> 10, 29, 14, 37, 13\npass 2: min of positions 1..4 is at index 4; swap -> 10, 13, 14, 37, 29\npass 3: min of positions 2..4 is at index 2; swap -> 10, 13, 14, 37, 29\npass 4: min of positions 3..4 is at index 4; swap -> 10, 13, 14, 29, 37\n```\n\n**(b)** Pass p scans N - p elements to find the minimum: (N-1) + (N-2) + ... + 1 = N(N-1)/2 comparisons **always**, so it is **Theta(N^2) in best, average and worst case** (presorted input does not help). It makes at most N - 1 swaps (O(N) data movement), which is its only attraction.\n\n**(c)** Not stable (the long swap can jump an element over an equal one: 3a, 3b, 1 -> 1, 3b, 3a). Selection sort does not exchange adjacent elements only, so Theorem 7.2 does not strictly apply; its Theta(N^2) comes from always making N(N-1)/2 comparisons. (The book lists it with bubble sort among the \"simple\" quadratic sorts.)",
+      "rubric": [
+        "array after each of the 4 passes is correct",
+        "N(N-1)/2 comparisons in every case, Theta(N^2) even when presorted",
+        "at most N-1 swaps",
+        "not stable, with a reason"
+      ]
+    },
+    {
+      "id": "sortbasics-017",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "counting-sort",
+        "bucket-sort",
+        "textbook-7.11",
+        "light"
+      ],
+      "points": 7,
+      "prompt": "**(Slides \"Counting Sort\", Textbook 7.11 bucket sort; light topic)** SAT scores range from 400 to 1600 in steps of 10. You must sort N = 500,000 scores.\n\na. Describe counting sort for this input (what array, what key mapping, what passes) and give its time and space complexity.\nb. Why does this not contradict the Omega(N log N) lower bound for sorting?\nc. For which kind of input would counting sort be a poor choice? Give an example where range k is much larger than N and state which sort you would use instead.",
+      "answer": "**(a)** Map each score to a key `(score - 400) / 10` in 0..120, so k = 121 distinct keys. Make an array `count[0..k-1]` of zeros. Pass 1: for each of the N scores increment `count[key]` (O(N)). Pass 2: scan `count` from 0 to k-1 and write each key `count[key]` times (the values, converted back by key*10 + 400) into the output - O(N + k) in total. **Time O(N + k) = O(N + 121) = O(N); space O(k) for the counts (plus O(N) if you must keep records stable in a separate output array).**\n\n**(b)** The lower bound is for algorithms that learn about the order **only by comparing** pairs of elements. Counting sort never compares two elements: indexing `count[key]` is effectively a k-way comparison in constant time, which is outside the decision-tree model (Textbook 7.11 says this explicitly). It relies on extra knowledge: the keys are small integers in a known range.\n\n**(c)** Poor when k is not O(N): e.g. N = 1000 values that can be any 32-bit integer (k = 2^32): O(N + k) is dominated by k, far worse than O(N log N). Use a comparison sort (`std::sort`, O(N log N)), or the hash variation below if there are few distinct values. It also does not work directly for non-integer keys (strings, doubles) unless they can be mapped to small consecutive integers. Note the topics page says counting sort is probably not tested; know O(N + k) and when it applies.",
+      "rubric": [
+        "maps scores to keys 0..120 (k = 121) and describes count array and output pass",
+        "time O(N + k) = O(N) here, space O(k)",
+        "explains it does not use comparisons so the lower bound does not apply",
+        "gives a counterexample where k >> N and a better sort"
+      ]
+    },
+    {
+      "id": "sortbasics-018",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "slides",
+      "tags": [
+        "counting-sort",
+        "hash-variation",
+        "unordered_map",
+        "cumulative"
+      ],
+      "points": 10,
+      "prompt": "**(Slides \"Counting Sort Hash Variation\", cumulative with hashing)** You are given a `vector<int>` of N elements drawn from only d distinct values, but the values themselves are arbitrary 32-bit integers (so ordinary counting sort is impossible).\n\na. Design an algorithm using `unordered_map<int,int>` and `std::sort` and analyse it (average case), giving a tight bound in terms of N and d.\nb. What does the bound become when d is a small constant? When d = N?\nc. What changes in the bound if you insist on the *worst case* of the hash table?",
+      "answer": "**(a) Design.**\n1. Count: for each of the N elements do `counts[x]++` on an `unordered_map<int,int>`. Average O(1) per access, so **O(N)** total (average case).\n2. Copy the d (value, count) pairs into a `vector<pair<int,int>>`: iterating the map is O(d) (plus bucket overhead O(d)).\n3. Sort the d pairs by value with `std::sort`: **O(d log d)**.\n4. Write the output: for each pair in sorted order, append `value` `count` times: O(N) in total (the counts sum to N).\n\nTotal (average) = O(N) + O(d) + O(d log d) + O(N) = **O(N + d log d)** (slides: \"O(n + k log k) where k is the number of unique values\").\n\n**(b)** d constant: O(N) - linear, beating the Omega(N log N) comparison bound because only d values were ever compared, so the lower bound for the comparison step, Omega(d log d), is tiny. d = N (all distinct): O(N + N log N) = O(N log N): no better than an ordinary sort, plus hashing overhead.\n\n**(c)** An `unordered_map` access is O(1) only on average; in the worst case (all keys collide) it is O(N) per access, giving O(N^2) for the counting step, so the worst case is O(N^2 + d log d) = O(N^2). The *average* bound above assumes a good hash function. (Using a `map` instead gives O(N log d) for the counting step, worst-case guaranteed, total O(N log d).)",
+      "rubric": [
+        "counting step with unordered_map: O(N) average",
+        "sorts only the d distinct (value,count) pairs: O(d log d)",
+        "expansion of the output O(N)",
+        "total O(N + d log d)",
+        "interprets the cases d constant (linear) and d = N (N log N)",
+        "worst-case hash behaviour O(N) per op leads to O(N^2)"
+      ]
+    },
+    {
+      "id": "sortbasics-019",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "textbook-7.12",
+      "tags": [
+        "external-sorting",
+        "concepts",
+        "multiway-merge",
+        "runs"
+      ],
+      "points": 7,
+      "prompt": "**(Textbook 7.12, concepts only)** A file of N records is far too big for memory, which can hold and sort M records at a time.\n\na. Why are quicksort, heapsort and Shellsort a poor fit for data on tapes/disks, and which basic operation do external sorts reuse instead?\nb. Describe the simple two-way external algorithm (runs, passes) and give the number of passes needed. Compute the passes for N/M = 1000 initial runs with 2-way, 4-way and 10-way merging.\nc. How does a priority queue help in k-way merging, and what does replacement selection improve?",
+      "answer": "**(a)** Internal sorts rely on **random access** (a[i] and a[i*2+1], median-of-3, Shellsort gaps). On a tape only sequential access is efficient, and a disk has a large cost for every seek, so these algorithms spend all their time moving the head. **Merging** only reads each input sequentially and writes sequentially, so external sorts are built on the mergesort `merge`.\n\n**(b)** *Run construction:* read M records at a time, sort them in memory (any internal sort), write each sorted **run** alternately onto two output tapes -> N/M runs. *Merge passes:* merge pairs of runs (one from each input tape) onto the output tapes, alternating tapes; every pass halves the number of runs and doubles their length. Number of merge passes = **ceil(log2(N/M))**, plus the one run-construction pass. For 1000 runs: 2-way: ceil(log2 1000) = **10**; 4-way: ceil(log4 1000) = **5** (4^5 = 1024 >= 1000); 10-way: ceil(log10 1000) = **3**. In general k-way merging needs ceil(log_k(N/M)) passes (but 2k tapes, or k+1 with polyphase merge).\n\n**(c)** To find the smallest of the k run fronts for a k-way merge, keep them in a **priority queue** (deleteMin, then insert the next record of that run): O(log k) per record. **Replacement selection** builds runs with a priority queue of M records, replacing each output record by the next input record if it can still extend the current run; the expected run length for random input is **2M** (and a few very long runs for nearly sorted input), so fewer runs, hence fewer merge passes.",
+      "rubric": [
+        "explains random access vs sequential access, external sorts reuse merge",
+        "describes runs of size M and merge passes that halve the number of runs",
+        "pass counts: 10 (2-way), 5 (4-way), 3 (10-way)",
+        "priority queue picks the smallest of k fronts (k-way merge)",
+        "replacement selection gives runs of average length 2M so fewer passes"
+      ]
+    },
+    {
+      "id": "sortbasics-020",
+      "type": "proof",
+      "difficulty": 3,
+      "source": "textbook-7.9",
+      "tags": [
+        "selection",
+        "lower-bound",
+        "textbook-7.9",
+        "tournament"
+      ],
+      "points": 10,
+      "prompt": "**(Textbook 7.9, high level)** (a) Prove that any comparison-based algorithm that finds the minimum of N distinct elements needs at least N - 1 comparisons. (b) State the lower bounds for finding the two smallest elements and the median, and say which are tight. (c) Describe an algorithm that finds the two smallest elements with N + ceil(log N) - 2 comparisons. (d) How does this relate to heap-based selection and quickselect?",
+      "answer": "**(a)** Every element except the minimum must be *shown to be larger than something* by at least one comparison in which it loses. If two elements had never lost a comparison, either could still be the minimum, and the algorithm could not decide. Each comparison has one loser, so at least N - 1 comparisons (one loser per non-minimum element) are needed. Scanning the array and keeping the smallest uses exactly N - 1, so the bound is **tight**. (The decision tree argument: every leaf has depth >= N-1, so the tree has >= 2^(N-1) leaves.)\n\n**(b)** Two smallest: at least **N + ceil(log N) - 2** comparisons (tight). Median (k = N/2): at least about **3N/2 - O(log N)** (not tight; the best known algorithms do not match it). In general finding the k-th smallest needs at least N - k + ceil(log C(N, k-1)) comparisons (Theorem 7.9, derived from a leaf-count argument).\n\n**(c)** Tournament: pair up the elements and play a knockout (N - 1 comparisons) to find the minimum; the second smallest must have lost *directly to the winner*, and the winner played only ceil(log N) matches, so find the minimum of those ceil(log N) losers with ceil(log N) - 1 more comparisons. Total N - 1 + ceil(log N) - 1 = N + ceil(log N) - 2.\n\n**(d)** Selection needs only Omega(N) comparisons, strictly less than the Omega(N log N) needed to sort, so sorting to select is wasteful. Heap-based selection (buildHeap + k deleteMins) costs O(N + k log N); quickselect is O(N) on average (O(N^2) worst case). Both are asymptotically consistent with the Omega(N) bound: quickselect average is optimal up to a constant.",
+      "rubric": [
+        "proves N-1 comparisons for the minimum (every non-minimum element must lose once)",
+        "states N + ceil(log N) - 2 for the two smallest and about 3N/2 for the median",
+        "says which bounds are tight (min and 2 smallest) and which are not (median)",
+        "tournament algorithm for the second smallest",
+        "relates to heap selection O(N + k log N) and quickselect O(N)"
+      ]
+    },
+    {
+      "id": "sortbasics-021",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "complexity-table",
+        "operations",
+        "stability",
+        "in-place"
+      ],
+      "points": 8,
+      "prompt": "Fill in a complete table (from memory) for **insertion sort, selection sort, mergesort, heapsort, quicksort (median-of-3, no safeguard), introsort**: best case, average case, worst case, extra space, stable?, in place? Then give the time of each fundamental operation: `merge` (two sorted runs, total N), `partition` (N elements), `buildHeap`, `deleteMax`/`percolateDown`, one insertion-sort pass at position p, quickselect (average and worst).",
+      "answer": "| Sort | Best | Average | Worst | Extra space | Stable | In place |\n|---|---|---|---|---|---|---|\n| Insertion | O(N) (presorted) | O(N^2) | O(N^2) | O(1) | yes | yes |\n| Selection | O(N^2) | O(N^2) | O(N^2) | O(1) | no | yes |\n| Mergesort | O(N log N) | O(N log N) | O(N log N) | O(N) | yes | no |\n| Heapsort | O(N log N) | O(N log N) | O(N log N) | O(1) | no | yes |\n| Quicksort | O(N log N) | O(N log N) | O(N^2) | O(log N) stack avg (O(N) worst) | no | yes (in-place partition) |\n| Introsort | O(N log N) | O(N log N) | O(N log N) | O(log N) | no | yes |\n\n(Heapsort's best case is also N log N for distinct keys; quicksort's best case needs even splits.)\n\n| Operation | Time | Why |\n|---|---|---|\n| `merge` of runs of total size N | **O(N)** | each element copied once, <= N-1 comparisons |\n| `partition` of N elements | **O(N)** | i and j sweep the array once, each element touched once |\n| `buildHeap` | **O(N)** | sum of heights, not N log N |\n| `deleteMax` / `percolateDown` | **O(log N)** | one root-to-leaf path of a complete tree |\n| one insertion pass at position p | O(p) worst, O(1) best | slides past the larger elements; total pass cost = number of inversions involving a[p] |\n| quickselect | **O(N) average**, O(N^2) worst | only one recursive call: N + N/2 + N/4 + ... |\n| heap-based selection | **O(N + k log N)** | buildHeap + k deleteMins |",
+      "rubric": [
+        "gives insertion/selection/merge/heap/quick time bounds correctly",
+        "extra space: O(1) insertion/selection/heap, O(N) merge, O(log N) quick",
+        "stability: insertion and merge stable, the others not",
+        "merge, partition, buildHeap O(N); deleteMax O(log N)",
+        "quickselect O(N) average / O(N^2) worst and heap selection O(N + k log N)"
+      ]
+    },
+    {
+      "id": "sortbasics-022",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "textbook-7.32",
+      "tags": [
+        "design",
+        "insertion-sort",
+        "merge",
+        "textbook-7.32",
+        "cumulative"
+      ],
+      "points": 12,
+      "prompt": "**(Textbook 7.32, design and analysis)** You are given a sorted list of N elements followed by f(N) elements in random order. How would you sort the whole list, and what is the time, if (a) f(N) = O(1), (b) f(N) = O(log N), (c) f(N) = O(sqrt N)? (d) How large can f(N) be for the whole list still to be sortable in O(N) time? State a single general algorithm and give its cost in terms of N and f = f(N).",
+      "answer": "**General algorithm.**\n1. Sort only the f extra elements with an O(f log f) sort (`std::sort` or mergesort).\n2. **Merge** the sorted prefix (N elements) with the sorted extras (f elements) using the mergesort `merge`: O(N + f), using O(N + f) extra space.\n\nTotal **O(f log f + N + f) = O(N + f log f)**.\n\n* **(a) f = O(1):** O(1) to sort the extras, merge is O(N): **O(N)**. (Alternatively insert each extra element with insertion sort: each insertion costs O(N) shifts, O(1) elements: O(N).)\n* **(b) f = O(log N):** sorting the extras costs O(log N * log log N) which is o(N); merge O(N): **O(N)**.\n* **(c) f = O(sqrt N):** sorting extras O(sqrt N * log N) = o(N); merge O(N): **O(N)**.\n* **(d)** We need f log f = O(N). f = N / log N gives (N / log N) * log(N / log N) <= (N / log N) * log N = N, so **f(N) = O(N / log N)** keeps the whole thing O(N). Any larger growth, e.g. f = N / sqrt(log N), gives f log f of about N sqrt(log N), which is not O(N).\n\nNaive alternative: insertion-sort the whole list: O(N + I) where the I inversions are about f * N / 2 on average (each random extra element has about N/2 larger elements before it): O(N f), which is only linear for f = O(1). The sort-then-merge algorithm is better for every f that grows.",
+      "rubric": [
+        "sorts only the f extra elements in O(f log f)",
+        "merges the two sorted lists in O(N + f)",
+        "gives total O(N + f log f)",
+        "(a), (b), (c) are all O(N) with the right justification",
+        "(d) f = O(N / log N)",
+        "compares with insertion sort of the whole list O(N f)"
+      ]
+    },
+    {
+      "id": "sortbasics-023",
+      "type": "proof",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "insertion-sort",
+        "inversions",
+        "nearly-sorted",
+        "proof"
+      ],
+      "points": 10,
+      "prompt": "Suppose every element of an array of N distinct integers is at most k positions away from its position in the sorted array. (a) Prove that the array has at most 2kN inversions (or O(kN)). (b) What does this imply for the running time of insertion sort? For which k is it linear? (c) Give an example input with k = 1 where every element is displaced and insertion sort still takes only O(N).",
+      "answer": "**(a)** Suppose a[i] > a[j] with i < j is an inversion. In the sorted array a[i] must come after a[j], so pos(a[i]) > pos(a[j]) (pos = final sorted position). Since a[i] is at most k away from its final position, pos(a[i]) <= i + k, and similarly pos(a[j]) >= j - k. So j - k <= pos(a[j]) < pos(a[i]) <= i + k, hence **j - i < 2k**. So each element a[j] can be inverted only with the at most 2k - 1 elements immediately to its left. Therefore the number of inversions is at most (2k - 1) N = **O(kN)**.\n\n**(b)** Insertion sort runs in O(N + I) (every adjacent swap removes one inversion and everything else is O(N)), so it takes **O(N + kN) = O(kN)**. It is linear when k is a constant (and in general O(N) iff k = O(1); for k = O(log N) it is O(N log N)).\n\n**(c)** `2, 1, 4, 3, 6, 5, ...` (swap neighbouring pairs): every element is exactly 1 position from its sorted place, inversions = N/2, insertion sort moves each odd-position element past one neighbour: O(N).",
+      "rubric": [
+        "uses a[i] > a[j] with i < j implies j - i < 2k via the final positions",
+        "bounds inversions by (2k-1)N = O(kN)",
+        "insertion sort is O(N + I) = O(kN)",
+        "linear for constant k",
+        "valid example for k = 1 with O(N) running time"
+      ]
+    },
+    {
+      "id": "sortbasics-024",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "mergesort",
+        "linked-list",
+        "space",
+        "move-semantics"
+      ],
+      "points": 5,
+      "prompt": "Slides: \"Mergesort - good for linked lists, no need for random access; no need for extra space to merge sublists\". (a) Explain how merge works on two sorted singly linked lists and its time/space. (b) How do you split a linked list into halves for the recursion and what does that cost? (c) Why does the array version need an extra O(N) array? (d) Why is quicksort or heapsort a bad fit for a linked list?",
+      "answer": "**(a)** Keep a tail pointer to the merged list; repeatedly compare the heads of the two lists, detach the smaller head node and append it to the tail (`<=`/left first for stability). Only pointers change - no copying of elements and no temp array: **O(N) time, O(1) extra space**.\n\n**(b)** Find the middle by a slow/fast pointer walk (or count the length once): O(N) per level, which is the same order as the merge, so the recurrence stays T(N) = 2T(N/2) + O(N) = **O(N log N)**; the recursion stack is O(log N).\n\n**(c)** In an array the two halves live next to each other in the same block; the merged result cannot be written over them without overwriting elements not yet read, so the textbook merges into `tmpArray` (size N, allocated once in the driver) and copies back: O(N) extra space.\n\n**(d)** Quicksort's partition and median-of-3 and heapsort's `a[2i+1]` index arithmetic need **random access** (O(1) access by index); a linked list gives O(N) access, which ruins the running time. Mergesort touches the data sequentially.",
+      "rubric": [
+        "list merge by relinking nodes: O(N) time and O(1) extra space",
+        "splitting with slow/fast pointers costs O(N) and keeps O(N log N)",
+        "array merge needs an N-element temp array because merged output would overwrite unread input",
+        "quicksort/heapsort need random access"
+      ]
+    },
+    {
+      "id": "sortbasics-025",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "cumulative",
+        "sort",
+        "strings",
+        "analysis-style"
+      ],
+      "points": 8,
+      "prompt": "A `vector<string> names` has N strings, each of length at most L. (a) What is the time complexity of `std::sort(names.begin(), names.end())`? Count the cost of one comparison. (b) After sorting, you must output how many *distinct* names there are. Give two designs - one using the sorted vector, one using `unordered_set<string>` - with complexity of each (average case for the hash). (c) Which is better asymptotically?",
+      "answer": "**(a)** `std::sort` makes O(N log N) comparisons (introsort). Comparing two strings costs O(L) in the worst case (it scans up to the first differing character). So the total is **O(L N log N)**.\n\n**(b) Design 1 (sorted vector):** sort in O(L N log N); then one pass comparing each name with its predecessor, counting changes: N - 1 comparisons of O(L) = O(L N). Total **O(L N log N)**.\n**Design 2 (hash):** insert each name into `unordered_set<string>`; hashing a string reads all its characters, O(L), and the equality check on a collision chain is O(L), so each insert is O(L) average (O(N L) worst case if everything collides), N inserts: **O(L N) average**; the answer is `set.size()`, O(1).\n\n**(c)** The hash design: O(LN) average versus O(LN log N) - better by a log N factor on average, but its worst case O(N^2 L) is worse than the sorting design's guaranteed O(L N log N). (A `std::set<string>` gives O(L N log N) worst-case guaranteed.)",
+      "rubric": [
+        "sort comparisons O(N log N), each comparison O(L), total O(L N log N)",
+        "sorted-vector design counts adjacent differences in O(L N) more",
+        "hash design O(L) average per insert so O(L N) average",
+        "states worst case of the hash design and compares the designs"
+      ]
+    }
+  ]
+}

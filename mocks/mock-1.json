@@ -1,0 +1,238 @@
+{
+  "id": "mock-1",
+  "title": "Mock Exam 1",
+  "minutes": 70,
+  "total_points": 100,
+  "instructions": "Closed book, closed notes, no electronic devices. You have 70 minutes. Read every question fully before answering. Write all work you want graded on the FRONT of the page; the backs of pages are scrap and will not be graded. Provide only the number of examples/items a question asks for. For Big-O answers, give the tightest bound you know and justify it (a correct but loose bound earns no credit); say average case vs. worst case wherever it matters (especially for hashing). Use the TEXTBOOK (Weiss) version of every algorithm; a different but valid variant is graded as incorrect. Heaps use the textbook array layout (index 0 unused, root at index 1, children of i at 2i and 2i+1) unless a question says otherwise. Partitioning uses the textbook Section 7.7.2 Hoare method: swap the pivot with the last element, i starts at left and j at right-1, both i and j stop on elements equal to the pivot, and when they cross a[i] is swapped with the pivot. Array indices are 0-based unless stated. Code is C++11 or later using the standard library containers and algorithms; you are never asked to write a sorting algorithm yourself. Point values are shown next to each question.",
+  "questions": [
+    {
+      "id": "mock1-q1",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "hashing",
+        "linear probing",
+        "quadratic probing",
+        "clustering",
+        "rehash"
+      ],
+      "points": 12,
+      "prompt": "**Question 1 (hash table trace, 12 points)**\n\nInsert the keys **47, 17, 39, 25, 36, 58, 14** (in this order) into an initially empty hash table of size **11** (cells 0 through 10) with hash(x) = x mod 11. A probing insertion gives up after TableSize probes. Do **not** rehash in parts (a)-(c).\n\na) **(4 points)** Linear probing, f(i) = i. For each key list the cells probed, then draw the final table.\n\nb) **(4 points)** Quadratic probing, f(i) = i^2. For each key list the cells probed, then draw the final table. If some key cannot be placed, say so and leave it out of the table.\n\nc) **(2 points)** In part (b), explain why the last key fails even though there are empty cells left, and say why the textbook's guarantee for quadratic probing does not apply here.\n\nd) **(2 points)** Now suppose this table used the textbook rehashing rule for probing tables. During which insertion would the first rehash happen, and what would the new TableSize be?",
+      "answer": "**a) Linear probing** (engine-verified)\n\n```text\nlinear probing, TableSize 11, hash(x) = x mod 11\ninsert 47: hash = 47 mod 11 = 3 -> placed at 3\ninsert 17: hash = 17 mod 11 = 6 -> placed at 6\ninsert 39: hash = 39 mod 11 = 6; collisions at 6; tried h0=6, h1=7 -> placed at 7\ninsert 25: hash = 25 mod 11 = 3; collisions at 3; tried h0=3, h1=4 -> placed at 4\ninsert 36: hash = 36 mod 11 = 3; collisions at 3, 4; tried h0=3, h1=4, h2=5 -> placed at 5\ninsert 58: hash = 58 mod 11 = 3; collisions at 3, 4, 5, 6, 7; tried h0=3, h1=4, h2=5, h3=6, h4=7, h5=8 -> placed at 8\ninsert 14: hash = 14 mod 11 = 3; collisions at 3, 4, 5, 6, 7, 8; tried h0=3, h1=4, h2=5, h3=6, h4=7, h5=8, h6=9 -> placed at 9\n  0:\n  1:\n  2:\n  3: 47\n  4: 25\n  5: 36\n  6: 17\n  7: 39\n  8: 58\n  9: 14\n 10:\nload factor 7/11 = 0.64\nanswer line: 3:47 4:25 5:36 6:17 7:39 8:58 9:14\n```\nFinal: 3:47, 4:25, 5:36, 6:17, 7:39, 8:58, 9:14 (one long cluster in cells 3-9: primary clustering).\n\n**b) Quadratic probing** (probe i checks (hash + i^2) mod 11)\n\n```text\nquadratic probing, TableSize 11, hash(x) = x mod 11\ninsert 47: hash = 47 mod 11 = 3 -> placed at 3\ninsert 17: hash = 17 mod 11 = 6 -> placed at 6\ninsert 39: hash = 39 mod 11 = 6; collisions at 6; tried h0=6, h1=7 -> placed at 7\ninsert 25: hash = 25 mod 11 = 3; collisions at 3; tried h0=3, h1=4 -> placed at 4\ninsert 36: hash = 36 mod 11 = 3; collisions at 3, 4, 7; tried h0=3, h1=4, h2=7, h3=1 -> placed at 1\ninsert 58: hash = 58 mod 11 = 3; collisions at 3, 4, 7, 1; tried h0=3, h1=4, h2=7, h3=1, h4=8 -> placed at 8\ninsert 14: home 3; probed 3, 4, 7, 1, 8, 6, 6, 8, 1, 7, 4 - all occupied -> CANNOT PLACE 14\n  0:\n  1: 36\n  2:\n  3: 47\n  4: 25\n  5:\n  6: 17\n  7: 39\n  8: 58\n  9:\n 10:\nload factor 6/11 = 0.55\nanswer line: 1:36 3:47 4:25 6:17 7:39 8:58\n```\nFinal: 1:36, 3:47, 4:25, 6:17, 7:39, 8:58. Key **14 cannot be placed**.\n\n**c)** The offsets i^2 mod 11 take only the six values 0, 1, 4, 9, 5, 3, so 14 (home cell 3) only ever probes cells 3, 4, 7, 1, 8, 6 and then repeats. All six of those cells are occupied, so the insertion gives up after TableSize probes, even though cells 0, 2, 5, 9, 10 are empty. Textbook Theorem 5.1 guarantees an insertion succeeds only if TableSize is prime **and the table is at most half full**; here 6 of 11 cells were already full when 14 arrived, more than half.\n\n**d)** The textbook rehashes a probing table as soon as currentSize > TableSize/2 = 5, i.e. during the **6th insertion (58)** (after it is placed, currentSize = 6). The new size is the next prime at least 2 x 11 = 22, i.e. **23**, and every key is re-inserted with hash(x) = x mod 23.",
+      "rubric": [
+        "(2) linear: probe sequences shown and 39->7, 25->4, 36->5 correct",
+        "(2) linear: 58->8 and 14->9 correct (probes continue past the cluster)",
+        "(2) quadratic: 39->7, 25->4 correct and 36 placed at cell 1 using probes 3, 4, 7, 1",
+        "(1) quadratic: 58 placed at cell 8 (probes 3, 4, 7, 1, 8)",
+        "(1) quadratic: 14 reported as impossible to place (no cell inserted)",
+        "(1) probe sequence of 14 only reaches cells 3, 4, 7, 1, 8, 6, all occupied (offsets i^2 mod 11 repeat)",
+        "(1) Theorem 5.1 needs prime size AND at most half full; the table already had 6 of 11 cells filled",
+        "(1) rehash happens on the 6th insertion (58) because currentSize 6 > TableSize/2",
+        "(1) new TableSize = nextPrime(2 x 11) = 23"
+      ]
+    },
+    {
+      "id": "mock1-q2",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "heaps",
+        "deleteMin",
+        "percolate down",
+        "index 0"
+      ],
+      "points": 10,
+      "prompt": "**Question 2 (heap trace, 10 points)**\n\nThe following is a **min-heap** stored in the textbook layout (index 0 is unused and is used to hold the value being moved; the root is at index 1). Positions 1 through 12:\n\n`1  4  2  6  5  3  9  8  7  10  12  11`\n\nPerform **deleteMin twice** using the textbook algorithm (the last element is the one being moved; the smaller child moves up; ties go to the left child). Show the whole array, **including index 0**, after (i) the root is removed and the last element is stored in index 0, (ii) every time a child slides up into the hole, and (iii) the value is finally placed.\n\na) **(4 points)** The first deleteMin.\n\nb) **(4 points)** The second deleteMin (start from the heap that results from part (a)).\n\nc) **(2 points)** Give the tight worst-case running time of one deleteMin on a heap with n elements and justify it in one sentence. Then give the tight running time to find the **maximum** element of a min-heap with n elements and say why it is not O(1).",
+      "answer": "Engine-verified trace (`_` marks the hole; `[0]` is index 0):\n\n```text\nmin-heap deleteMin x2 (removed [1, 2])\n  [0]=11 | _ 4 2 6 5 3 9 8 7 10 12               # deleteMin: remove 1 from the root (hole at 1); last element 11 goes to index 0; size 11\n  [0]=11 | 2 4 _ 6 5 3 9 8 7 10 12               # smaller child 2 (index 3) beats 11 -> slide it up to index 1; hole moves to 3\n  [0]=11 | 2 4 3 6 5 _ 9 8 7 10 12               # smaller child 3 (index 6) beats 11 -> slide it up to index 3; hole moves to 6\n  [0]=- | 2 4 3 6 5 11 9 8 7 10 12               # place 11 in index 6\n  [0]=12 | _ 4 3 6 5 11 9 8 7 10                 # deleteMin: remove 2 from the root (hole at 1); last element 12 goes to index 0; size 10\n  [0]=12 | 3 4 _ 6 5 11 9 8 7 10                 # smaller child 3 (index 3) beats 12 -> slide it up to index 1; hole moves to 3\n  [0]=12 | 3 4 9 6 5 11 _ 8 7 10                 # smaller child 9 (index 7) beats 12 -> slide it up to index 3; hole moves to 7\n  [0]=- | 3 4 9 6 5 11 12 8 7 10                 # place 12 in index 7\nfinal heap (from index 1): 3,4,9,6,5,11,12,8,7,10\n```\n**First deleteMin:** removes 1; 11 goes to index 0; 2 slides up (hole to 3), 3 slides up (hole to 6); 11 placed at index 6. Heap: 2 4 3 6 5 11 9 8 7 10 12.\n\n**Second deleteMin:** removes 2; 12 goes to index 0; 3 slides up (hole to 3), 9 slides up (hole to 7), and the hole at 7 has no children (2*7 = 14 > size 10); 12 placed at index 7. Heap: **3 4 9 6 5 11 12 8 7 10**.\n\n**c)** deleteMin is **O(log n)** worst case: the moved element percolates down at most the height of the complete tree, floor(log n), doing O(1) work per level. The maximum of a min-heap is **O(n)**: heap order only says a parent is smaller than its children, so the max can be any of the roughly n/2 leaves and there is no order among them; you must scan them all.",
+      "rubric": [
+        "(1) first deleteMin: 11 (the last element) stored in index 0 and the root becomes the hole, size now 11",
+        "(2) first deleteMin: smaller child 2 slides up to index 1 then 3 slides up to index 3 (hole moves 1 -> 3 -> 6)",
+        "(1) first deleteMin: 11 placed at index 6; heap 2 4 3 6 5 11 9 8 7 10 12",
+        "(1) second deleteMin: 12 stored in index 0, root removed, size now 10",
+        "(2) second deleteMin: 3 slides up, then 9 (the smaller child of the hole at index 3) slides up; hole stops at 7",
+        "(1) second deleteMin: 12 placed at index 7; final heap 3 4 9 6 5 11 12 8 7 10",
+        "(1) deleteMin is O(log n) worst case because of the height of the tree",
+        "(1) finding the max of a min-heap is O(n) because it may be any leaf and leaves are unordered"
+      ]
+    },
+    {
+      "id": "mock1-q3",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "heapsort",
+        "buildHeap",
+        "in-place"
+      ],
+      "points": 8,
+      "prompt": "**Question 3 (heapsort trace, 8 points)**\n\nTrace the textbook **heapsort** (Figure 7.10: the array being sorted is a **0-indexed max-heap**, the children of i are 2i+1 and 2i+2, buildHeap runs percDown from i = n/2 - 1 down to 0, then for j = n-1 down to 1: swap a[0] with a[j] and percDown(a, 0, j)) on:\n\n`12  5  19  8  3  15  10  1  17`\n\na) **(3 points)** Show the array after buildHeap has finished.\n\nb) **(3 points)** Show the entire array after each of the first three deleteMax passes (draw a bar between the heap part and the sorted part).\n\nc) **(2 points)** Give the tight time of the buildHeap phase, of the sorting phase, and of heapsort overall, and state how much extra space heapsort uses and whether it is stable.",
+      "answer": "Engine-verified (each line is the whole array; the first rows are buildHeap with i = 3, 2, 1, 0, then the first deleteMax passes):\n\n```text\nheapsort 12,5,19,8,3,15,10,1,17  (textbook Fig. 7.10: 0-indexed max-heap)\n  12 5 19 8 3 15 10 1 17                   # start (n = 9); buildHeap: percDown from i = 3 down to 0 (MAX-heap, 0-indexed)\n  12 5 19 17 3 15 10 1 8                   # buildHeap: after percDown(a, 3, 9) (value 8)\n  12 5 19 17 3 15 10 1 8                   # buildHeap: after percDown(a, 2, 9) (value 19)\n  12 17 19 8 3 15 10 1 5                   # buildHeap: after percDown(a, 1, 9) (value 5)\n  19 17 15 8 3 12 10 1 5                   # buildHeap: after percDown(a, 0, 9) (value 12)\n  19 17 15 8 3 12 10 1 5                   # == heap built ==\n  17 8 15 5 3 12 10 1 19                   # deleteMax 19: swap a[0] with a[8], then percDown(a, 0, 8) -> heap = a[0..7], sorted = a[8..8]\n  15 8 12 5 3 1 10 17 19                   # deleteMax 17: swap a[0] with a[7], then percDown(a, 0, 7) -> heap = a[0..6], sorted = a[7..8]\n  12 8 10 5 3 1 15 17 19                   # deleteMax 15: swap a[0] with a[6], then percDown(a, 0, 6) -> heap = a[0..5], sorted = a[6..8]\n```\n**a)** After buildHeap: **19 17 15 8 3 12 10 1 5**.\n\n**b)** After pass 1: 17 8 15 5 3 12 10 1 | 19. After pass 2: 15 8 12 5 3 1 10 | 17 19. After pass 3: 12 8 10 5 3 1 | 15 17 19.\n\n**c)** buildHeap is O(n) (most nodes sit near the leaves and percolate only a few levels). The sorting phase does n-1 swaps + percDowns of O(log n) each: O(n log n). Total **O(n log n)** in the worst and average case. It is **in place: O(1) extra space**, and it is **not stable** (swapping a[0] with a[j] moves equal keys past each other).",
+      "rubric": [
+        "(1) buildHeap starts at i = n/2 - 1 = 3 and goes down to 0 (shown or clearly implied)",
+        "(2) array after buildHeap is 19 17 15 8 3 12 10 1 5",
+        "(1) after pass 1: 17 8 15 5 3 12 10 1 | 19",
+        "(1) after pass 2: 15 8 12 5 3 1 10 | 17 19",
+        "(1) after pass 3: 12 8 10 5 3 1 | 15 17 19",
+        "(1) buildHeap O(n), sorting phase O(n log n), total O(n log n)",
+        "(1) O(1) extra space (in place) and not stable"
+      ]
+    },
+    {
+      "id": "mock1-q4",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "quicksort",
+        "hoare partition",
+        "median-of-3",
+        "cutoff"
+      ],
+      "points": 10,
+      "prompt": "**Question 4 (partition trace, 10 points)**\n\nPartition the following subarray (indices 0 through 10) as the first step of quicksort, using the textbook **median-of-3** pivot (median of a[left], a[center], a[right], with center = (left + right) / 2) and the textbook **Hoare** partition (7.7.2):\n\n`9  2  14  5  12  7  1  10  3  13  6`\n\na) **(2 points)** Identify the three candidates (index and value) and the pivot. Show the array after the pivot is swapped with the last element.\n\nb) **(4 points)** Show the array after every swap of a[i] and a[j], saying where i and j stopped each time.\n\nc) **(1 point)** Show the array after the pivot is placed in its final position and give the pivot's index.\n\nd) **(3 points)** The sort uses a cutoff: any subarray of size 3 or less is finished by insertion sort. For each of the two subarrays that remain, say whether it is finished by insertion sort or partitioned again, and if partitioned again, give the pivot value its median-of-3 would choose.",
+      "answer": "Engine-verified:\n\n```text\nhoare partition, pivot median3: 9,2,14,5,12,7,1,10,3,13,6\nmedian-of-3: a[0]=9, a[5]=7 (center), a[10]=6 -> pivot 7; swap it with the last element a[10]\n    [9 2 14 5 12 6 1 10 3 13 7]\ni stops at index 0, j stops at index 8: swap 9 and 3\n    [3 2 14 5 12 6 1 10 9 13 7]\ni stops at index 2, j stops at index 6: swap 14 and 1\n    [3 2 1 5 12 6 14 10 9 13 7]\ni stops at index 4, j stops at index 5: swap 12 and 6\n    [3 2 1 5 6 12 14 10 9 13 7]\ni stops at index 5 (12), j at index 4 (6): crossed, no swap\n    [3 2 1 5 6 12 14 10 9 13 7]\nswap a[5] with the pivot: pivot 7 is now at index 5 (left part 0..4, right part 6..10)\n    [3 2 1 5 6 7 14 10 9 13 12]\nfinal: 3,2,1,5,6,7,14,10,9,13,12   pivot ends at index 5\n```\n**a)** Candidates a[0] = 9, a[5] = 7, a[10] = 6; the median is **7**. After swapping it with the last element: `9 2 14 5 12 6 1 10 3 13 7`.\n\n**b)** i stops at index 0 (9), j stops at index 8 (3): swap -> `3 2 14 5 12 6 1 10 9 13 7`. i stops at 2 (14), j at 6 (1): swap -> `3 2 1 5 12 6 14 10 9 13 7`. i stops at 4 (12), j at 5 (6): swap -> `3 2 1 5 6 12 14 10 9 13 7`. Then i stops at 5 (12) and j at 4 (6): they crossed, no swap.\n\n**c)** Swap a[5] with the pivot: `3 2 1 5 6 7 14 10 9 13 12`, pivot index **5**.\n\n**d)** Left subarray `3 2 1 5 6` (indices 0-4) and right subarray `14 10 9 13 12` (indices 6-10) both have size 5 > 3, so both are **partitioned again**. Median-of-3 for the left: a[0] = 3, a[2] = 1, a[4] = 6 -> pivot **3**. For the right: a[6] = 14, a[8] = 9, a[10] = 12 -> pivot **12**.",
+      "rubric": [
+        "(2) candidates 9, 7, 6 (indices 0, 5, 10), pivot 7 and array 9 2 14 5 12 6 1 10 3 13 7 after the swap with the last element",
+        "(1) first swap 9 <-> 3 (i at 0, j at 8)",
+        "(1) second swap 14 <-> 1 (i at 2, j at 6)",
+        "(1) third swap 12 <-> 6 (i at 4, j at 5)",
+        "(1) recognizes the crossing (i = 5, j = 4) and stops without a swap",
+        "(1) final array 3 2 1 5 6 7 14 10 9 13 12 with pivot at index 5",
+        "(1) both subarrays have size 5 > cutoff 3 so both are partitioned again (neither insertion sort)",
+        "(1) left pivot 3 (median of 3, 1, 6)",
+        "(1) right pivot 12 (median of 14, 9, 12)"
+      ]
+    },
+    {
+      "id": "mock1-q5",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "clustering",
+        "rehash",
+        "stability",
+        "adt",
+        "in-place"
+      ],
+      "points": 10,
+      "prompt": "**Question 5 (general knowledge, 2 points each, 10 points)**\n\nAnswer each part briefly (about two sentences each).\n\na) **(2 points)** Define **primary clustering** and **secondary clustering**. Which of linear probing, quadratic probing and double hashing suffers from each?\n\nb) **(2 points)** At what load condition does the textbook rehash a table that uses probing, and at what condition one that uses separate chaining? A probing table with TableSize 23 is rehashed: what is the new TableSize, and why must every element be re-inserted rather than copied to the same index?\n\nc) **(2 points)** What does it mean for a sorting algorithm to be **stable**? Of mergesort, textbook quicksort, heapsort and insertion sort, which are stable?\n\nd) **(2 points)** Is a priority queue an abstract data type or a data structure? Is a binary heap? Name one other way to implement a priority queue and give its cost for insert and deleteMin.\n\ne) **(2 points)** What does **in place** mean for a sorting algorithm? Which of mergesort, quicksort and heapsort are in place, and which needs O(n) extra space?",
+      "answer": "**a)** *Primary clustering*: with **linear probing**, occupied cells form big contiguous blocks; any key that hashes anywhere into a block must probe to its end and then makes the block bigger, so blocks keep growing. *Secondary clustering*: with **quadratic probing**, keys with the same initial hash value follow exactly the same probe sequence, so they pile up along one path (milder than primary). **Double hashing** avoids both, because the step size depends on the key.\n\n**b)** Probing: rehash when the table is more than half full (currentSize > TableSize/2, lambda > 0.5). Chaining: when lambda > 1 (more elements than buckets). New size = next prime at least twice the old size: nextPrime(46) = **47**. hash(x) = x mod TableSize depends on the size, so each element's cell changes; every element must be re-hashed (in old-index order) into the new table.\n\n**c)** A sort is stable if elements with equal keys keep their original relative order. **Mergesort** (the merge takes the left element on ties) and **insertion sort** (only shifts strictly greater elements) are stable; **quicksort** (long-distance swaps and the pivot swap) and **heapsort** are not.\n\n**d)** A priority queue is an **abstract data type** (a set of operations with promised behavior: insert, deleteMin, findMin). A binary heap is a **data structure** that implements it. Another implementation: a sorted array/list (insert O(n), deleteMin O(1)), an unsorted list (insert O(1), deleteMin O(n)), or a balanced BST (both O(log n)).\n\n**e)** In place: it sorts using only O(1) extra memory beyond the input array (quicksort's recursion stack, O(log n) on average, is conventionally ignored). **Heapsort** and **quicksort** are in place; **mergesort** needs a temporary array of O(n) to merge.",
+      "rubric": [
+        "(1) primary clustering = growing contiguous blocks of occupied cells, caused by linear probing",
+        "(1) secondary clustering = keys with the same hash value share one probe sequence, caused by quadratic probing (double hashing avoids both)",
+        "(1) rehash thresholds: probing when more than half full, chaining when lambda > 1",
+        "(1) new size 47 = nextPrime(2 x 23), and every element must be re-hashed because hash(x) depends on TableSize",
+        "(1) stable = equal keys keep their relative order",
+        "(1) mergesort and insertion sort are stable; quicksort and heapsort are not",
+        "(1) priority queue = ADT, binary heap = data structure implementing it",
+        "(1) a valid alternative implementation with correct insert / deleteMin costs",
+        "(1) in place = O(1) extra space beyond the array",
+        "(1) heapsort and quicksort in place; mergesort needs O(n) extra"
+      ]
+    },
+    {
+      "id": "mock1-q6",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "design",
+        "unordered_map",
+        "priority_queue",
+        "top-k",
+        "heap"
+      ],
+      "points": 14,
+      "prompt": "**Question 6 (design and analyze, 14 points)**\n\nA multiplayer game server writes a log of **m** score events, one per line: a player ID (a string) and an integer number of points (negative for a penalty). The log is in no particular order and IDs repeat. There are **n** distinct players (so n <= m). After reading the whole log, the server must print the IDs of the **k players with the highest total score**, from highest to lowest, where k is much smaller than n (but may still grow with the input).\n\nTo be most efficient as measured by algorithmic time complexity, what data structure(s) will you use and why? Describe your design step by step (name the STL containers and operations) and **fully analyze its complexity** in terms of m, n and k. Say average case versus worst case where it matters. Finally, name one simpler alternative design you rejected and give its cost.",
+      "answer": "**Step 1 - total per player.** The first need is to find a player's running total quickly, m times, so use a hash map `unordered_map<string, long long> total`. For each log line do `total[id] += points`: average **O(1)** each (treating an ID's length as constant), so **O(m)** average for the whole log. (A vector or list of players would cost O(n) per lookup, O(mn) total; an ordered `map` would cost O(log n) each, O(m log n) total.) In the worst case (every ID collides) each update costs O(n), so O(mn).\n\n**Step 2 - pick the k largest.** We do not need the players fully sorted, only the top k. Copy the n (total, id) pairs into a vector: O(n). Turn it into a max-heap with `make_heap` (or construct a `priority_queue` from the vector): buildHeap is **O(n)**. Then do `k` times: read `top()` (O(1)), print it, `pop()` (**O(log n)**). That is **O(k log n)**. (Equivalent alternative: keep a min-heap of size k while scanning the n players, O(log k) per player: O(n log k). Also correct; for small k the buildHeap approach, O(n + k log n), is smaller.)\n\n**Total.** The steps run one after another, so add them: O(m) + O(n) + O(n) + O(k log n) = **O(m + k log n)** average, since n <= m. Worst case (bad hashing) O(mn + k log n). Space O(n).\n\n**Rejected alternative.** Sort all n players by total (`sort` on the vector): O(n log n) instead of O(n + k log n); total O(m + n log n). For k << n this does more work than needed. (Using an ordered map in step 1 gives O(m log n) overall.)",
+      "rubric": [
+        "(3) chooses a hash map from ID to running total and justifies it (O(1) average lookup/update vs O(log n) for map or O(n) for a vector/list)",
+        "(1) step 1 costs O(m) on average (and O(mn) in the worst case) - average vs worst case is stated",
+        "(3) uses a heap for the top-k selection (priority_queue / make_heap, or a size-k min-heap) and justifies not fully sorting",
+        "(2) selection step analyzed correctly: buildHeap O(n) plus k pops of O(log n), i.e. O(n + k log n) (or O(n log k) for the size-k heap)",
+        "(2) combines the steps by addition into one tight total such as O(m + k log n) (using n <= m), average case",
+        "(1) loops/steps combined correctly (consecutive steps add, no unjustified multiplication)",
+        "(2) rejected alternative named (full sort, or ordered map) with its correct, larger cost"
+      ]
+    },
+    {
+      "id": "mock1-q7",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "big-o",
+        "geometric series",
+        "set",
+        "unordered_set",
+        "priority_queue"
+      ],
+      "points": 12,
+      "prompt": "**Question 7 (algorithm analysis, 12 points)**\n\nGive the **tight** big-O running time of each fragment in terms of the variables shown (n, m, k with k <= n), and justify it briefly. For (b), give both the average case and the worst case. Every operation not shown is O(1).\n\na) **(4 points)**\n```cpp\nint work = 0;\nfor (int i = 1; i <= n; i *= 2)\n    for (int j = 0; j < i; ++j)\n        ++work;\n```\n\nb) **(4 points)**\n```cpp\nstd::set<int> s;\nfor (int i = 0; i < n; ++i)\n    s.insert(a[i]);\nstd::unordered_set<int> u(s.begin(), s.end());\nint hits = 0;\nfor (int j = 0; j < m; ++j)\n    if (u.count(b[j]) > 0)\n        ++hits;\n```\n\nc) **(4 points)**\n```cpp\nstd::priority_queue<int> pq;\nfor (int i = 0; i < n; ++i) {\n    pq.push(a[i]);\n    if ((int)pq.size() > k)\n        pq.pop();\n}\n```",
+      "answer": "**a) O(n).** The inner loop runs i times for i = 1, 2, 4, ..., 2^floor(log n). The sum is a geometric series: 1 + 2 + 4 + ... + 2^t < 2 * 2^t <= 2n. (Not O(n log n): the inner loop is *not* n iterations each time.)\n\n**b) Average O(n log n + m); worst case O(n^2 + n*m).** The n `set::insert` calls cost O(log size) each; half of them cost about log n, so O(n log n) total. The range constructor of the `unordered_set` inserts n elements, O(1) average each: O(n) (O(n^2) if everything collides). The loop does m `count` calls, O(1) average each: O(m) (O(n) each in the worst case: O(nm)). Add the consecutive pieces: O(n log n + n + m) = O(n log n + m) average.\n\n**c) O(n log k).** The loop runs n times. The heap never holds more than k + 1 elements, so each `push` and each `pop` costs O(log(k+1)) = O(log k), not O(log n). Total O(n log k) (O(n) when k is a constant).",
+      "rubric": [
+        "(1) (a) O(n)",
+        "(3) (a) justification: geometric series 1 + 2 + 4 + ... < 2n (the plain answer O(n log n) loses the justification credit)",
+        "(1) (b) O(n log n) for the set inserts",
+        "(1) (b) unordered_set built and queried in O(n) and O(m) average",
+        "(1) (b) combined average bound O(n log n + m)",
+        "(1) (b) states the worst case separately (hash collisions: O(n^2 + nm))",
+        "(1) (c) loop of n iterations",
+        "(2) (c) heap size is at most k + 1 so push and pop are O(log k), not O(log n)",
+        "(1) (c) total O(n log k)"
+      ]
+    },
+    {
+      "id": "mock1-q8",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "unordered_map",
+        "counting",
+        "coding"
+      ],
+      "points": 12,
+      "prompt": "**Question 8 (coding, 12 points)**\n\nWrite a function that returns, **in their original order**, all the words that appear **exactly once** in the input vector. For example, `{\"red\", \"blue\", \"red\", \"green\", \"blue\", \"pink\"}` gives `{\"green\", \"pink\"}`. Use an `std::unordered_map`.\n\n```cpp\nstd::vector<std::string> uniqueWords(const std::vector<std::string>& words) {\n    // write code here\n}\n```\n\n(9 points for the code.) Then **(3 points)**: give the average-case and the worst-case running time in terms of n = words.size(), assuming each word has bounded length, and justify them.",
+      "answer": "```cpp\nstd::vector<std::string> uniqueWords(const std::vector<std::string>& words) {\n    std::unordered_map<std::string, int> count;\n    for (const std::string& w : words)\n        ++count[w];                      // operator[] creates the entry with 0, then ++ makes it 1\n    std::vector<std::string> result;\n    for (const std::string& w : words)   // second pass keeps the original order\n        if (count[w] == 1)\n            result.push_back(w);\n    return result;\n}\n```\n\n**Complexity.** Two passes over the n words, each doing one hash operation per word (`operator[]` in the first, a lookup in the second). Each hash operation is O(1) on average, so the function is **O(n) average** (two loops one after the other: n + n). In the worst case every word lands in the same bucket and each hash operation costs O(n), so the worst case is **O(n^2)**. (Iterating over the map instead of the vector would lose the original order.)",
+      "rubric": [
+        "(3) counts occurrences with an unordered_map<string,int> (e.g. ++count[w])",
+        "(3) second pass over the ORIGINAL vector (not over the map), so the order is preserved",
+        "(3) only words whose count is exactly 1 are appended to the result, which is returned (compiles, correct signature)",
+        "(1) complexity: O(n) average, with justification (two passes, O(1) average hash operations)",
+        "(1) worst case O(n^2) because of collisions",
+        "(1) states clearly which is the average and which the worst case"
+      ]
+    },
+    {
+      "id": "mock1-q9",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "priority_queue",
+        "comparator",
+        "coding",
+        "heap"
+      ],
+      "points": 12,
+      "prompt": "**Question 9 (coding, 12 points)**\n\nA task scheduler stores tasks as\n\n```cpp\nstruct Task {\n    std::string name;\n    int priority;   // larger number = more urgent\n    int arrival;    // smaller number = arrived earlier\n};\n```\n\nTasks must be run from the **highest priority** to the lowest; among tasks with the same priority the one that **arrived earliest** runs first. Using `std::priority_queue` (which is a max-heap), complete the code: write the comparison functor `Later`, and the function that returns the task names in the order they must run.\n\n```cpp\nstruct Later {\n    // write code here\n};\n\nstd::vector<std::string> scheduleOrder(const std::vector<Task>& tasks) {\n    // write code here\n}\n```\n\n(9 points for the code.) Then **(3 points)**: give the tight worst-case running time of `scheduleOrder` for n tasks and justify it.",
+      "answer": "```cpp\nstruct Later {\n    // priority_queue keeps the LARGEST element (per this \"less than\") on top.\n    // So \"a < b\" must mean \"a should come out AFTER b\".\n    bool operator()(const Task& a, const Task& b) const {\n        if (a.priority != b.priority)\n            return a.priority < b.priority;   // lower priority comes out later\n        return a.arrival > b.arrival;         // equal priority: later arrival comes out later\n    }\n};\n\nstd::vector<std::string> scheduleOrder(const std::vector<Task>& tasks) {\n    std::priority_queue<Task, std::vector<Task>, Later> pq;\n    for (const Task& t : tasks)\n        pq.push(t);                           // n pushes, O(log n) each\n    std::vector<std::string> order;\n    while (!pq.empty()) {\n        order.push_back(pq.top().name);       // top() is O(1)\n        pq.pop();                             // pop() is O(log n)\n    }\n    return order;\n}\n```\n\n**Complexity.** n `push` calls at O(log n) each = O(n log n); then n iterations each doing `top()` O(1), `pop()` O(log n), `push_back` amortized O(1) = O(n log n). The two loops are consecutive, so the total is **O(n log n)** worst case. (Building the heap with the range constructor would be O(n), but the n pops still cost O(n log n).)\n\nTrap: `priority_queue` puts the element that is *greatest according to the comparator* on top, so the functor must say \"a < b\" when a should run **after** b. Returning `a.priority > b.priority` would make the lowest priority run first.\n\n(`Task` is as declared in the question; the answer assumes `<queue>`, `<string>` and `<vector>` are included.)",
+      "rubric": [
+        "(3) priority comparison direction correct for a max-heap (a.priority < b.priority returns true)",
+        "(2) tie-break correct: for equal priority the later arrival is 'less' (a.arrival > b.arrival)",
+        "(1) declares std::priority_queue<Task, std::vector<Task>, Later>",
+        "(1) pushes all tasks",
+        "(1) loop calls top() then pop() until empty and records the name before popping",
+        "(1) returns the vector of names (compiles)",
+        "(1) n pushes + n pops each O(log n)",
+        "(1) total O(n log n) (two consecutive loops add)",
+        "(1) states it is the worst case / does not claim O(n)"
+      ]
+    }
+  ]
+}

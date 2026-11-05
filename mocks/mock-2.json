@@ -1,0 +1,240 @@
+{
+  "id": "mock-2",
+  "title": "Mock Exam 2",
+  "minutes": 70,
+  "total_points": 100,
+  "instructions": "Closed book, closed notes, no electronic devices. You have 70 minutes. Read every question fully before answering. Write all work you want graded on the FRONT of the page; the backs of pages are scrap and will not be graded. Provide only the number of examples/items a question asks for. For Big-O answers, give the tightest bound you know and justify it (a correct but loose bound earns no credit); say average case vs. worst case wherever it matters (especially for hashing). Use the TEXTBOOK (Weiss) version of every algorithm; a different but valid variant is graded as incorrect. Heaps use the textbook array layout (index 0 unused, root at index 1, children of i at 2i and 2i+1) unless a question says otherwise. Partitioning uses the textbook Section 7.7.2 Hoare method: swap the pivot with the last element, i starts at left and j at right-1, both i and j stop on elements equal to the pivot, and when they cross a[i] is swapped with the pivot. Array indices are 0-based unless stated. Code is C++11 or later using the standard library containers and algorithms; you are never asked to write a sorting algorithm yourself. Point values are shown next to each question.",
+  "questions": [
+    {
+      "id": "mock2-q1",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "hashing",
+        "double hashing",
+        "lazy deletion",
+        "hash2"
+      ],
+      "points": 12,
+      "prompt": "**Question 1 (hash table trace, 12 points)**\n\nA hash table uses **double hashing** with TableSize = 13, hash(x) = x mod 13 and hash2(x) = 7 - (x mod 7), so the i-th probe is (hash(x) + i * hash2(x)) mod 13. Deletion is **lazy** (the cell is marked DELETED, as in the textbook). As in the textbook's findPos, a search or an insertion passes over a DELETED cell that holds a different key and continues probing; a new key is placed in the first EMPTY cell its probe sequence reaches (DELETED cells are not reused). Do not rehash.\n\nStart with an empty table and perform, in order:\n\ninsert 18, insert 41, insert 22, insert 44, insert 59, insert 32, insert 31, **remove 18**, find 31, insert 70\n\na) **(6 points)** Show the table after the seven insertions. For every key that collides, show hash2(x) and the cells probed.\n\nb) **(2 points)** After remove 18, which cells does find 31 examine, in order, and what does it return?\n\nc) **(2 points)** Where does 70 end up? Show hash2(70) and the cells probed, then draw the final table.\n\nd) **(2 points)** Why would hash2(x) = x mod 7 be a bad choice? Why does the textbook want the table size to be prime?",
+      "answer": "Engine-verified (the engine's `?31` is the find; `-18` the removal):\n\n```text\ndouble hashing, TableSize 13, hash(x) = x mod 13, hash2(x) = 7 - (x mod 7)\ninsert 18: hash = 18 mod 13 = 5 -> placed at 5\ninsert 41: hash = 41 mod 13 = 2 -> placed at 2\ninsert 22: hash = 22 mod 13 = 9 -> placed at 9\ninsert 44: hash = 44 mod 13 = 5; hash2 = 7 - (44 mod 7) = 5; collisions at 5; tried h0=5, h1=10 -> placed at 10\ninsert 59: hash = 59 mod 13 = 7 -> placed at 7\ninsert 32: hash = 32 mod 13 = 6 -> placed at 6\ninsert 31: hash = 31 mod 13 = 5; hash2 = 7 - (31 mod 7) = 4; collisions at 5, 9; tried h0=5, h1=9, h2=0 -> placed at 0\nremove 18: probed 5 -> found at 5, marked DELETED (lazy deletion)\nfind 31: probed 5, 9, 0 -> found\ninsert 70: hash = 70 mod 13 = 5; hash2 = 7 - (70 mod 7) = 7; collisions at 5; tried h0=5, h1=12 -> placed at 12\n  0: 31\n  1:\n  2: 41\n  3:\n  4:\n  5: (deleted)\n  6: 32\n  7: 59\n  8:\n  9: 22\n 10: 44\n 11:\n 12: 70\nload factor 7/13 = 0.54\nanswer line: 0:31 2:41 5:D 6:32 7:59 9:22 10:44 12:70\n```\n**a)** After the seven inserts: 0:31, 2:41, 5:18, 6:32, 7:59, 9:22, 10:44. (44: home 5 taken by 18, hash2 = 7 - 2 = 5, next cell 5 + 5 = 10. 31: home 5 taken, hash2 = 7 - 3 = 4; cell 9 taken by 22; cell 13 mod 13 = 0 is free.)\n\n**b)** find 31 examines cells 5 (DELETED, holds 18, so keep going), 9 (22), 0 (31): **found**. Because 18 was only marked DELETED, 31's probe path was not broken.\n\n**c)** hash(70) = 5, hash2(70) = 7 - 0 = 7. Probe 0: cell 5 (DELETED, not reused), probe 1: (5 + 7) mod 13 = 12 (empty) -> 70 goes in cell **12**. Final: 0:31, 2:41, 5:DELETED, 6:32, 7:59, 9:22, 10:44, 12:70.\n\n**d)** x mod 7 can be 0, so the step would be 0 and the probe sequence would stay on the same occupied cell forever; 7 - (x mod 7) is always between 1 and 7. The step must never be 0, and with a **prime** TableSize every step 1..12 is relatively prime to 13, so the probe sequence visits every cell of the table before repeating.",
+      "rubric": [
+        "(2) 18->5, 41->2, 22->9, 59->7, 32->6 placed with no collision",
+        "(2) 44: home 5 collides, hash2 = 7 - (44 mod 7) = 5, probes 5, 10 -> placed at 10",
+        "(2) 31: home 5 collides, hash2 = 7 - (31 mod 7) = 4, probes 5, 9, 0 -> placed at 0",
+        "(1) 18's cell is marked DELETED (not emptied)",
+        "(1) find 31 probes 5 (deleted, skipped), 9, 0 and finds it",
+        "(1) hash2(70) = 7 and probes 5 (DELETED cell not reused) then 12",
+        "(1) 70 placed at cell 12 and final table shown correctly",
+        "(1) hash2 must never be 0 (x mod 7 can be 0, so the probe would never move)",
+        "(1) prime table size makes every step size cycle through all cells"
+      ]
+    },
+    {
+      "id": "mock2-q2",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "heaps",
+        "buildHeap",
+        "O(n)"
+      ],
+      "points": 10,
+      "prompt": "**Question 2 (heap trace, 10 points)**\n\nApply the textbook **buildHeap** (min-heap) to the following array stored in the textbook layout (index 0 unused, positions 1 through 12):\n\n`14  7  11  3  9  16  2  12  5  10  8  1`\n\na) **(7 points)** State the index at which buildHeap's loop starts and ends, then show the array (indices 1-12) after each call to percolateDown.\n\nb) **(1 point)** Why does the loop not start at index 12?\n\nc) **(2 points)** buildHeap makes about n/2 calls to percolateDown, each of which can cost O(log n), yet buildHeap is O(n). Explain why in a few sentences.",
+      "answer": "Engine-verified:\n\n```text\nbuildHeap (min-heap)\n  [0]=- | 14 7 11 3 9 16 2 12 5 10 8 1           # start (size 12); percolateDown from i = 6 down to 1\n  [0]=- | 14 7 11 3 9 1 2 12 5 10 8 16           # after percolateDown(6) (value 16)\n  [0]=- | 14 7 11 3 8 1 2 12 5 10 9 16           # after percolateDown(5) (value 9)\n  [0]=- | 14 7 11 3 8 1 2 12 5 10 9 16           # after percolateDown(4) (value 3)\n  [0]=- | 14 7 1 3 8 11 2 12 5 10 9 16           # after percolateDown(3) (value 11)\n  [0]=- | 14 3 1 5 8 11 2 12 7 10 9 16           # after percolateDown(2) (value 7)\n  [0]=- | 1 3 2 5 8 11 14 12 7 10 9 16           # after percolateDown(1) (value 14)\nfinal heap (from index 1): 1,3,2,5,8,11,14,12,7,10,9,16\n```\n**a)** The loop runs from i = n/2 = **6** down to **1**. After percolateDown(6): `14 7 11 3 9 1 2 12 5 10 8 16`; (5): `14 7 11 3 8 1 2 12 5 10 9 16`; (4): unchanged (3 is smaller than both children); (3): `14 7 1 3 8 11 2 12 5 10 9 16`; (2): `14 3 1 5 8 11 2 12 7 10 9 16`; (1): **1 3 2 5 8 11 14 12 7 10 9 16**.\n\n**b)** Nodes n/2 + 1 through n are leaves; they have no children, so they are already heaps of size 1.\n\n**c)** percolateDown(i) costs time proportional to the **height of node i**, not log n. In a complete tree about n/2 nodes have height 0, n/4 have height 1, n/8 height 2, and so on. The total work is at most the sum of all node heights = n * (1/4 + 2/8 + 3/16 + ...) < n, so buildHeap is **O(n)**. (n separate inserts would cost O(n log n) in the worst case.)",
+      "rubric": [
+        "(1) loop starts at i = n/2 = 6 and runs down to i = 1",
+        "(1) after percolateDown(6): 14 7 11 3 9 1 2 12 5 10 8 16",
+        "(1) after percolateDown(5): 14 7 11 3 8 1 2 12 5 10 9 16",
+        "(1) after percolateDown(4): unchanged (3 is smaller than its children)",
+        "(1) after percolateDown(3): 14 7 1 3 8 11 2 12 5 10 9 16",
+        "(1) after percolateDown(2): 14 3 1 5 8 11 2 12 7 10 9 16",
+        "(1) final heap 1 3 2 5 8 11 14 12 7 10 9 16",
+        "(1) indices past n/2 are leaves, already heaps",
+        "(1) percolateDown cost is proportional to the node's height, and most nodes are near the bottom",
+        "(1) sum of heights is bounded by n, so O(n)"
+      ]
+    },
+    {
+      "id": "mock2-q3",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "quickselect",
+        "median-of-3",
+        "hoare partition",
+        "cutoff"
+      ],
+      "points": 8,
+      "prompt": "**Question 3 (quickselect trace, 8 points)**\n\nUse the textbook **quickselect** (Figure 7.21) to find the **8th smallest** element (k = 8; k = 1 is the minimum) of\n\n`15  4  22  9  17  1  12  26  7  19  10  3`   (indices 0 through 11)\n\nUse median-of-3 pivot selection and the textbook Hoare partition. After a partition places the pivot at index i: if k <= i recurse on the left part [left, i-1]; if k = i + 1 the pivot is the answer; otherwise recurse on the right part [i+1, right]. (The indices are always indices into the whole array.) Use a cutoff of 3: a range of size 3 or less is sorted by insertion sort and the answer is read from it.\n\na) **(6 points)** For each partition, give the range it works on, the pivot value, and the whole array after the pivot is placed in its final position; say which range is recursed on. Give the final answer.\n\nb) **(2 points)** Give the average-case and worst-case running time of quickselect and explain what makes the worst case occur.",
+      "answer": "Engine-verified (the engine uses the same convention):\n\n```text\nquickselect k=8 (hoare, pivot median3, cutoff 3): 15,4,22,9,17,1,12,26,7,19,10,3\nquickSelect(0, 11, k=8)\n    [15 4 22 9 17 1 12 26 7 19 10 3]\nmedian-of-3: a[0]=15, a[5]=1 (center), a[11]=3 -> pivot 3; it is already the last element\n    [15 4 22 9 17 1 12 26 7 19 10 3]\ni stops at index 0, j stops at index 5: swap 15 and 1\n    [1 4 22 9 17 15 12 26 7 19 10 3]\ni stops at index 1 (4), j at index 0 (1): crossed, no swap\n    [1 4 22 9 17 15 12 26 7 19 10 3]\nswap a[1] with the pivot: pivot 3 is now at index 1 (left part 0..0, right part 2..11)\n    [1 3 22 9 17 15 12 26 7 19 10 4]\nk = 8 > i + 1 = 2 -> recurse RIGHT on 2..11\n    1 3 [22 9 17 15 12 26 7 19 10 4]\nquickSelect(2, 11, k=8)\n    1 3 [22 9 17 15 12 26 7 19 10 4]\nmedian-of-3: a[2]=22, a[6]=12 (center), a[11]=4 -> pivot 12; swap it with the last element a[11]\n    1 3 [22 9 17 15 4 26 7 19 10 12]\ni stops at index 2, j stops at index 10: swap 22 and 10\n    1 3 [10 9 17 15 4 26 7 19 22 12]\ni stops at index 4, j stops at index 8: swap 17 and 7\n    1 3 [10 9 7 15 4 26 17 19 22 12]\ni stops at index 5, j stops at index 6: swap 15 and 4\n    1 3 [10 9 7 4 15 26 17 19 22 12]\ni stops at index 6 (15), j at index 5 (4): crossed, no swap\n    1 3 [10 9 7 4 15 26 17 19 22 12]\nswap a[6] with the pivot: pivot 12 is now at index 6 (left part 2..5, right part 7..11)\n    1 3 [10 9 7 4 12 26 17 19 22 15]\nk = 8 > i + 1 = 7 -> recurse RIGHT on 7..11\n    1 3 10 9 7 4 12 [26 17 19 22 15]\nquickSelect(7, 11, k=8)\n    1 3 10 9 7 4 12 [26 17 19 22 15]\nmedian-of-3: a[7]=26, a[9]=19 (center), a[11]=15 -> pivot 19; swap it with the last element a[11]\n    1 3 10 9 7 4 12 [26 17 15 22 19]\ni stops at index 7, j stops at index 9: swap 26 and 15\n    1 3 10 9 7 4 12 [15 17 26 22 19]\ni stops at index 9 (26), j at index 8 (17): crossed, no swap\n    1 3 10 9 7 4 12 [15 17 26 22 19]\nswap a[9] with the pivot: pivot 19 is now at index 9 (left part 7..8, right part 10..11)\n    1 3 10 9 7 4 12 [15 17 19 22 26]\nk = 8 <= i = 9 -> recurse LEFT on 7..8\n    1 3 10 9 7 4 12 [15 17] 19 22 26\nsize 2 <= cutoff 3 at 7..8: insertion pass p=8: 17 moves left 0 place(s) to index 8\n    1 3 10 9 7 4 12 [15 17] 19 22 26\nk = 8: answer a[7] = 15\n    1 3 10 9 7 4 12 [15 17] 19 22 26\nfinal: 1,3,10,9,7,4,12,15,17,19,22,26   k=8 smallest = 15\n```\n**a)** Range 0..11: candidates 15, 1, 3 -> pivot 3 (already last); after partition `1 3 22 9 17 15 12 26 7 19 10 4`, pivot index 1; k = 8 > 2, recurse **right 2..11**. Range 2..11: candidates 22, 12, 4 -> pivot 12; after partition `1 3 10 9 7 4 12 26 17 19 22 15`, pivot index 6; k = 8 > 7, recurse **right 7..11**. Range 7..11: candidates 26, 19, 15 -> pivot 19; after partition `1 3 10 9 7 4 12 15 17 19 22 26`, pivot index 9; k = 8 <= 9, recurse **left 7..8** (size 2 <= cutoff, insertion sort: 15 17). The 8th smallest is a[7] = **15**.\n\n**b)** Average **O(n)** (each partition costs the size of the range and, with a reasonable pivot, the range shrinks geometrically: n + n/2 + n/4 + ... = O(n)); worst case **O(n^2)**, when the pivot is repeatedly an extreme value so the range only shrinks by one (e.g. first-element pivot on sorted input); median-of-3 makes that unlikely but not impossible.",
+      "rubric": [
+        "(2) range 0..11, pivot 3, array 1 3 22 9 17 15 12 26 7 19 10 4, k = 8 > 2 so recurse right on 2..11",
+        "(2) range 2..11, pivot 12, array 1 3 10 9 7 4 12 26 17 19 22 15, pivot at index 6, recurse right on 7..11",
+        "(1) range 7..11, pivot 19 at index 9, k = 8 <= 9 so recurse left on 7..8 (size 2, cutoff)",
+        "(1) answer 15",
+        "(1) average O(n) with a reason (the range shrinks geometrically / only one side is processed)",
+        "(1) worst case O(n^2) caused by repeatedly extreme pivots"
+      ]
+    },
+    {
+      "id": "mock2-q4",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "quicksort",
+        "hoare partition",
+        "duplicates",
+        "pivot"
+      ],
+      "points": 10,
+      "prompt": "**Question 4 (partition trace, 10 points)**\n\nA quicksort call on the subarray below (indices 0 through 10) has been told to use the element at **index 2** as its pivot (a randomly chosen pivot). Use the textbook Hoare partition (7.7.2).\n\n`12  7  10  3  15  9  10  1  14  6  11`\n\na) **(7 points)** Show the array after the pivot is swapped to the end, after every swap of a[i] and a[j] (say where i and j stopped), and after the pivot is placed in its final position. Give the pivot's final index.\n\nb) **(3 points)** Notice that the array contains a second 10. Why do the textbook's i and j both stop on elements equal to the pivot even though this causes extra swaps? What would happen to quicksort on an array in which every element is equal if they did not stop?",
+      "answer": "Engine-verified:\n\n```text\nhoare partition, pivot 2: 12,7,10,3,15,9,10,1,14,6,11\ngiven pivot index 2 -> pivot 10; swap it with the last element a[10]\n    [12 7 11 3 15 9 10 1 14 6 10]\ni stops at index 0, j stops at index 9: swap 12 and 6\n    [6 7 11 3 15 9 10 1 14 12 10]\ni stops at index 2, j stops at index 7: swap 11 and 1\n    [6 7 1 3 15 9 10 11 14 12 10]\ni stops at index 4, j stops at index 6: swap 15 and 10\n    [6 7 1 3 10 9 15 11 14 12 10]\ni stops at index 6 (15), j at index 5 (9): crossed, no swap\n    [6 7 1 3 10 9 15 11 14 12 10]\nswap a[6] with the pivot: pivot 10 is now at index 6 (left part 0..5, right part 7..10)\n    [6 7 1 3 10 9 10 11 14 12 15]\nfinal: 6,7,1,3,10,9,10,11,14,12,15   pivot ends at index 6\n```\n**a)** Pivot value a[2] = 10 is swapped with a[10]: `12 7 11 3 15 9 10 1 14 6 10`. i stops at 0 (12), j stops at 9 (6): swap -> `6 7 11 3 15 9 10 1 14 12 10`. i stops at 2 (11), j at 7 (1): swap -> `6 7 1 3 15 9 10 11 14 12 10`. i stops at 4 (15), j at 6 (**10, equal to the pivot, so j stops**): swap -> `6 7 1 3 10 9 15 11 14 12 10`. Then i stops at 6 (15) and j at 5 (9): crossed, no swap. Swap a[6] with the pivot: **6 7 1 3 10 9 10 11 14 12 15**, pivot index **6**.\n\n**b)** Stopping on equal keys costs a few extra swaps, but it keeps the two parts balanced when there are many duplicates. If every element equals the pivot, i and j each stop at every element, swap, and meet in the **middle**, so the partitions are about equal and quicksort is O(n log n). If they skipped over equal keys, i would run all the way to the end, every partition would be of size n-1 and 0, and quicksort would degrade to **O(n^2)** on an all-equal array.",
+      "rubric": [
+        "(1) pivot 10 (index 2) swapped with the last element: 12 7 11 3 15 9 10 1 14 6 10",
+        "(1) swap 12 <-> 6 (i at 0, j at 9) with array shown",
+        "(1) swap 11 <-> 1 (i at 2, j at 7) with array shown",
+        "(1) j stops at the 10 at index 6 (equal to pivot) and swaps with 15 at index 4: 6 7 1 3 10 9 15 11 14 12 10",
+        "(1) recognizes the crossing (i = 6, j = 5)",
+        "(1) swap a[6] with the pivot",
+        "(1) final array 6 7 1 3 10 9 10 11 14 12 15 with pivot index 6",
+        "(1) reason for stopping on equals: keeps partitions balanced with duplicates",
+        "(1) all-equal array: i and j meet in the middle, giving O(n log n)",
+        "(1) if they did not stop, partitions of size n-1 and 0, O(n^2)"
+      ]
+    },
+    {
+      "id": "mock2-q5",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "lower bound",
+        "quicksort",
+        "introsort",
+        "quadratic probing",
+        "lazy deletion"
+      ],
+      "points": 10,
+      "prompt": "**Question 5 (general knowledge, 2 points each, 10 points)**\n\nAnswer each part briefly (about two sentences each).\n\na) **(2 points)** What is the minimum number of comparisons that **any** comparison-based algorithm needs in the worst case to sort 5 distinct elements? Give the argument (decision tree) and the number.\n\nb) **(2 points)** A quicksort always uses the first element as its pivot. What is its running time on an array that is already sorted, and why?\n\nc) **(2 points)** What is **introsort**? Which three algorithms does it combine, when does it switch between them, and what is its worst-case running time?\n\nd) **(2 points)** State the textbook guarantee for quadratic probing and the two conditions it needs. Why do the first few probe positions have to be distinct?\n\ne) **(2 points)** Why can't a probing hash table delete a key by simply setting its cell back to EMPTY? What does the textbook do instead?",
+      "answer": "**a)** A comparison sort is a binary decision tree whose leaves are the possible orderings; there are 5! = 120 leaves. A binary tree with 120 leaves has height at least ceil(log2 120) = **7**, and the worst case needs as many comparisons as the height. (In general Omega(n log n).)\n\n**b)** **O(n^2)**. The first element of a sorted array is the minimum, so every partition splits into sizes 0 and n-1: T(n) = T(n-1) + cn = O(n^2).\n\n**c)** Introsort starts as **quicksort**; if the recursion depth exceeds about 2 log n it switches to **heapsort** for that part; when a subarray gets below a small size threshold it uses **insertion sort**. The depth limit keeps the quicksort part at O(n log n) and the heapsort part is O(n log n), and the insertion sorts total O(n), so the worst case is **O(n log n)**. This is what `std::sort` typically does.\n\n**d)** Theorem 5.1: if the table size is **prime** and the table is **at most half full**, a new element can always be inserted. The proof shows that the first TableSize/2 probe positions are all distinct (if two were equal, (i - j)(i + j) would be divisible by the prime, impossible for small i, j), so at least one of them is empty because at most half of the cells are used.\n\n**e)** If the cell is set to EMPTY, a later search for a key that had been placed after probing *past* this cell would stop at the empty cell and wrongly report \"not found\" (the probe chain is broken). The textbook uses **lazy deletion**: the cell is marked DELETED; searches continue past it, and it still counts as occupied for the rehash threshold.",
+      "rubric": [
+        "(1) decision tree / 5! = 120 leaves",
+        "(1) height >= ceil(log2 120) = 7 comparisons",
+        "(1) first-element pivot on sorted input: O(n^2)",
+        "(1) reason: partitions of sizes 0 and n-1 (T(n) = T(n-1) + cn)",
+        "(1) introsort = quicksort, then heapsort when depth exceeds about 2 log n, insertion sort for small subarrays",
+        "(1) worst case O(n log n)",
+        "(1) prime table size and at most half full guarantee insertion succeeds",
+        "(1) first TableSize/2 probe positions are distinct, so an empty cell must be among them",
+        "(1) clearing the cell breaks probe chains: later searches stop early and fail wrongly",
+        "(1) lazy deletion: mark DELETED, searches continue past it"
+      ]
+    },
+    {
+      "id": "mock2-q6",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "design",
+        "priority_queue",
+        "unordered_set",
+        "lazy deletion",
+        "lower bound"
+      ],
+      "points": 15,
+      "prompt": "**Question 6 (design and analyze, 15 points)**\n\nA print server receives **n** print jobs, each with a unique integer ID and an integer priority (larger = more urgent; ties may print in any order). Before any printing starts it also receives **c** cancellation requests, each naming the ID of one job (a job is cancelled at most once; c <= n). When all requests are in, the server prints the ID of every job that was not cancelled, in decreasing order of priority.\n\nTo be most efficient as measured by algorithmic time complexity, what data structure(s) will you use and why? Describe your design (name the STL containers and operations) and **fully analyze its complexity** in terms of n and c, stating average versus worst case where it matters. Then answer briefly: (i) can any algorithm that prints the surviving jobs in priority order beat your bound? (ii) if cancellations could instead arrive **while** jobs are already being printed, what small change keeps your design efficient?",
+      "answer": "**Design.**\n1. Read the c cancellation IDs into an `unordered_set<int> cancelled` (hash set): c inserts, O(1) average each = **O(c)** average. A hash set is the right tool because the only question we ask later is \"is this ID cancelled?\", and that is O(1) average (a `set` would cost O(log c) per question).\n2. Put the n jobs into a `priority_queue<pair<int,int>>` of (priority, ID), a max-heap. Building it from a vector (range constructor / `make_heap`) is **O(n)**; n individual `push` calls would be O(n log n) in the worst case. We need \"give me the highest-priority job\" repeatedly, which is exactly `top()` + `pop()`.\n3. Repeat n times: look at `top()` (O(1)), `pop()` (**O(log n)**), and print the ID only if `cancelled.count(id) == 0` (O(1) average).\n\n**Analysis.** The three steps run one after another, so add them: O(c) + O(n) + n * (O(log n) + O(1)) = **O(n log n + c) = O(n log n)** average (c <= n). Worst case: if the hash set degenerates, each `count` costs O(c), giving O(n log n + nc + c^2) = O(n^2) (never better than O(n log n)). Space O(n).\n\n(i) No. Printing the survivors in priority order is sorting them; every comparison-based algorithm needs Omega(m log m) comparisons for m items (decision-tree bound), and m can be n/2, so O(n log n) is optimal for comparison-based methods. (Equivalent design: erase cancelled jobs from an `unordered_map`, copy the survivors into a vector and sort it: also O(n log n + c).)\n\n(ii) Use **lazy deletion**: do not try to remove a job from the middle of the `priority_queue` (it has no search or erase; that would be O(n)). Just add the ID to the `cancelled` set (O(1)) and, when a job reaches the top, pop and discard it if its ID is in the set. Each job is pushed and popped once, so the cost stays O(log n) per job.",
+      "rubric": [
+        "(3) cancellations kept in a hash set (unordered_set) with O(1) average insert/membership, justified over set/vector",
+        "(3) jobs in a priority_queue (max-heap on priority), justified by the repeated 'get highest priority' operation (an alternative such as erase + sort is accepted if analyzed)",
+        "(2) the processing loop is described: pop the top, print the ID only if it is not in the cancelled set",
+        "(3) complexity: O(c) + O(n) (or O(n log n)) build + n pops at O(log n) = O(n log n + c), steps added",
+        "(1) states average vs worst case for the hashing part",
+        "(2) (i) comparison-sort lower bound Omega(n log n) for ordering the survivors, so the bound cannot be beaten",
+        "(1) (ii) lazy deletion: check the cancelled set when a job reaches the top; the priority_queue cannot erase from the middle"
+      ]
+    },
+    {
+      "id": "mock2-q7",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "big-o",
+        "unordered_map",
+        "priority_queue",
+        "average vs worst"
+      ],
+      "points": 10,
+      "prompt": "**Question 7 (algorithm analysis, 10 points)**\n\nLet n = a.size(), let d be the number of **distinct** values in a, and assume 1 <= k <= d. The function below returns the k most frequent values.\n\n```cpp\nstd::vector<int> topK(const std::vector<int>& a, int k) {\n    std::unordered_map<int, int> cnt;\n    for (int x : a)\n        ++cnt[x];                                                      // step 1\n    using P = std::pair<int, int>;                                     // (count, value)\n    std::priority_queue<P, std::vector<P>, std::greater<P>> pq;        // min-heap\n    for (const auto& kv : cnt) {                                       // step 2\n        pq.push({kv.second, kv.first});\n        if ((int)pq.size() > k)\n            pq.pop();\n    }\n    std::vector<int> res;\n    while (!pq.empty()) {                                              // step 3\n        res.push_back(pq.top().second);\n        pq.pop();\n    }\n    std::reverse(res.begin(), res.end());                              // step 4\n    return res;\n}\n```\n\na) **(4 points)** Give the tight **average-case** running time of each of steps 1-4 in terms of n, d and k.\n\nb) **(2 points)** Give the tight average-case running time of the whole function.\n\nc) **(2 points)** Give the tight **worst-case** running time of the whole function and say which step is responsible.\n\nd) **(2 points)** If `std::map` replaced `std::unordered_map`, what would the (worst-case) running time of the whole function be?",
+      "answer": "**a)** Step 1: n iterations of `++cnt[x]`, each O(1) average: **O(n)**. Step 2: the loop visits the d map entries; the heap never holds more than k + 1 elements, so each `push` and `pop` is O(log k): **O(d log k)**. Step 3: k pops at O(log k) each (the heap holds k elements): **O(k log k)**. Step 4: `reverse` on k elements: **O(k)**.\n\n**b)** The steps are consecutive, so add: O(n + d log k + k log k + k). Since k <= d, k log k <= d log k, so the total is **O(n + d log k)** average.\n\n**c)** Worst case (every key lands in one bucket): each `++cnt[x]` scans a chain of up to d entries, so step 1 is O(n * d) and the total is **O(nd + d log k)** (which is O(n^2) when d is about n). Step 1 is responsible; the heap steps are unaffected.\n\n**d)** With `std::map` each `++cnt[x]` is O(log d), so step 1 is O(n log d); the total is O(n log d + d log k) = **O(n log d)** (since d <= n and k <= d, d log k <= n log d).",
+      "rubric": [
+        "(1) step 1 is O(n) average",
+        "(1) step 2 is O(d log k) (heap size at most k + 1, not log d)",
+        "(1) step 3 is O(k log k)",
+        "(1) step 4 is O(k)",
+        "(1) steps added: O(n + d log k + k log k)",
+        "(1) simplified to O(n + d log k) because k <= d",
+        "(1) worst case O(nd + d log k) (collisions in step 1)",
+        "(1) step 1 identified as the cause (hash operations degrade to O(d))",
+        "(1) with std::map step 1 is O(n log d)",
+        "(1) total O(n log d)"
+      ]
+    },
+    {
+      "id": "mock2-q8",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "unordered_map",
+        "prefix sums",
+        "coding"
+      ],
+      "points": 13,
+      "prompt": "**Question 8 (coding, 13 points)**\n\nWrite a function that counts the **contiguous, non-empty subarrays** of `a` whose elements add up to exactly `k`. The array may contain negative numbers. For example, with `a = {3, 4, 7, 2, -3, 1, 4, 2}` and `k = 7` the answer is 4 (`{3,4}`, `{7}`, `{7,2,-3,1}`, `{1,4,2}`).\n\nThe function must run in **O(n) average time**, so you may not examine every pair of positions. Use `std::unordered_map` (hint: prefix sums).\n\n```cpp\nint countSubarraysWithSum(const std::vector<int>& a, int k) {\n    // write code here\n}\n```\n\n(10 points for the code.) Then **(3 points)**: give the average-case and worst-case running time and the extra space, with a brief justification.",
+      "answer": "```cpp\nint countSubarraysWithSum(const std::vector<int>& a, int k) {\n    std::unordered_map<long long, int> seen;   // prefix sum -> how many prefixes have that sum\n    seen[0] = 1;                               // the empty prefix\n    long long prefix = 0;\n    int count = 0;\n    for (int x : a) {\n        prefix += x;\n        auto it = seen.find(prefix - k);       // a subarray ending here has sum k iff an earlier prefix = prefix - k\n        if (it != seen.end())\n            count += it->second;\n        ++seen[prefix];                        // record AFTER counting so the subarray is non-empty\n    }\n    return count;\n}\n```\n\n**Why it works.** Let P(j) be the sum of the first j elements. The subarray from position i to j-1 has sum P(j) - P(i), so it equals k exactly when P(i) = P(j) - k. For each new prefix, the number of earlier prefixes with value `prefix - k` is the number of subarrays ending here with sum k. The map is seeded with {0 : 1} so subarrays starting at position 0 are found, and the current prefix is added *after* the lookup so only earlier prefixes are used (non-empty subarrays).\n\n**Complexity.** One pass of n iterations, each with one `find` and one `operator[]`, O(1) average: **O(n) average**; worst case all keys collide, each hash operation is O(n): **O(n^2)**. Extra space **O(n)** for up to n + 1 distinct prefix sums.",
+      "rubric": [
+        "(2) keeps a running prefix sum (long long or int)",
+        "(2) unordered_map from prefix sum to the number of times it has occurred, initialized with {0 : 1}",
+        "(3) for each element looks up prefix - k and adds its count to the answer",
+        "(2) records the current prefix in the map AFTER the lookup",
+        "(1) returns the count; compiles with a single pass",
+        "(1) O(n) average with justification (n iterations x O(1) average hash ops)",
+        "(1) worst case O(n^2) from collisions",
+        "(1) O(n) extra space"
+      ]
+    },
+    {
+      "id": "mock2-q9",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "set",
+        "lower_bound",
+        "bst",
+        "coding"
+      ],
+      "points": 12,
+      "prompt": "**Question 9 (coding, 12 points)**\n\nComplete the class below. `add(x)` stores a number. `closest(q)` returns the **stored value nearest to q**; if two stored values are equally near, return the smaller one. You may assume at least one value has been added before `closest` is called. Both operations must be O(log n) where n is the number of stored values, so choose your data structure accordingly.\n\n```cpp\nclass ClosestFinder {\npublic:\n    void add(int x) {\n        // write code here\n    }\n    int closest(int q) const {\n        // write code here\n    }\nprivate:\n    // write code here\n};\n```\n\n(9 points for the code.) Then **(3 points)**: give the running time of `add` and `closest` and explain why the data structure you chose can do this but `std::unordered_set` cannot.",
+      "answer": "```cpp\nclass ClosestFinder {\npublic:\n    void add(int x) { values.insert(x); }                  // O(log n)\n\n    int closest(int q) const {                             // precondition: at least one value stored\n        auto hi = values.lower_bound(q);                   // first stored value >= q, O(log n)\n        if (hi == values.begin())                          // nothing smaller than q\n            return *hi;\n        auto lo = std::prev(hi);                           // largest stored value < q\n        if (hi == values.end())                            // nothing >= q\n            return *lo;\n        long long dLo = (long long)q - *lo;\n        long long dHi = (long long)*hi - q;\n        return (dLo <= dHi) ? *lo : *hi;                   // tie -> the smaller value\n    }\n\nprivate:\n    std::set<int> values;\n};\n```\n\n**Complexity.** `add`: `set::insert` is O(log n) (balanced BST). `closest`: the member function `values.lower_bound(q)` descends the tree in O(log n); `std::prev` and the dereferences are O(1). The call must be the *member* `set::lower_bound`; the generic `std::lower_bound(values.begin(), values.end(), q)` would take O(n) on set iterators (they are not random access). A hash set stores keys by hash value, so it keeps no order: finding the nearest value would require scanning all n elements, O(n).",
+      "rubric": [
+        "(2) stores the values in a std::set<int> member (ordered, balanced BST) and add() inserts into it",
+        "(2) uses the MEMBER lower_bound (O(log n)) to find the first stored value >= q",
+        "(3) handles the boundary cases: no stored value smaller than q (return *hi) and no stored value >= q (return the predecessor)",
+        "(1) obtains the predecessor with std::prev (or --it) when both neighbours exist",
+        "(1) compares the two distances and returns the smaller value on a tie",
+        "(1) add and closest are both O(log n)",
+        "(1) notes that std::lower_bound on set iterators would be O(n) / uses the member function",
+        "(1) unordered_set has no order, so nearest-value needs an O(n) scan"
+      ]
+    }
+  ]
+}

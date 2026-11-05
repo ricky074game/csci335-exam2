@@ -1,0 +1,330 @@
+{
+  "topic": "heapsort",
+  "title": "Heapsort and Introsort (Ch 7.5, Sorting slides)",
+  "questions": [
+    {
+      "id": "heapsort-002",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "textbook-7.5",
+      "tags": [
+        "heapsort",
+        "trace",
+        "fig-7.8"
+      ],
+      "points": 10,
+      "prompt": "Heapsort the array 31, 41, 59, 26, 53, 58, 97 with the textbook algorithm (0-indexed max-heap). Show the array after buildHeap and after each deleteMax. (This is the book's running example, Figs 7.6-7.9.)",
+      "answer": "```\n31 41 59 26 53 58 97       # start (n = 7); buildHeap: percDown from i = 2 down to 0 (MAX-heap, 0-indexed)\n31 41 97 26 53 58 59       # buildHeap: after percDown(a, 2, 7) (value 59)\n31 53 97 26 41 58 59       # buildHeap: after percDown(a, 1, 7) (value 41)\n97 53 59 26 41 58 31       # buildHeap: after percDown(a, 0, 7) (value 31)\n97 53 59 26 41 58 31       # == heap built ==\n59 53 58 26 41 31 97       # deleteMax 97: swap a[0] with a[6], then percDown(a, 0, 6) -> heap = a[0..5], sorted = a[6..6]\n58 53 31 26 41 59 97       # deleteMax 59: swap a[0] with a[5], then percDown(a, 0, 5) -> heap = a[0..4], sorted = a[5..6]\n53 41 31 26 58 59 97       # deleteMax 58: swap a[0] with a[4], then percDown(a, 0, 4) -> heap = a[0..3], sorted = a[4..6]\n41 26 31 53 58 59 97       # deleteMax 53: swap a[0] with a[3], then percDown(a, 0, 3) -> heap = a[0..2], sorted = a[3..6]\n31 26 41 53 58 59 97       # deleteMax 41: swap a[0] with a[2], then percDown(a, 0, 2) -> heap = a[0..1], sorted = a[2..6]\n26 31 41 53 58 59 97       # deleteMax 31: swap a[0] with a[1], then percDown(a, 0, 1) -> heap = a[0..0], sorted = a[1..6]\n```\n\nAfter buildHeap the heap is `97 53 59 26 41 58 31` (Fig 7.8); after the first deleteMax it is `59 53 58 26 41 31 | 97` (Fig 7.9). **Sorted:** `26,31,41,53,58,59,97`.",
+      "rubric": [
+        "buildHeap from i = n/2 - 1 = 2 down to 0 gives 97 53 59 26 41 58 31",
+        "First deleteMax: swap a[0], a[6] and percDown on 6 elements gives 59 53 58 26 41 31 | 97",
+        "Each later step moves the next-largest to the left end of the sorted region",
+        "Final sorted array is 26,31,41,53,58,59,97"
+      ]
+    },
+    {
+      "id": "heapsort-003",
+      "type": "trace",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "heapsort",
+        "buildHeap",
+        "max-heap"
+      ],
+      "points": 6,
+      "prompt": "The heapsort of the array `12,5,9,20,3,17,8,14,1` begins with buildHeap (0-indexed max-heap, textbook Fig 7.10). Give the index where the first `percDown` call starts, the index where the last one starts, and the array after each `percDown` call. What is the max-heap array?",
+      "answer": "n = 9. The loop is `for (i = n/2 - 1; i >= 0; --i) percDown(a, i, n)`: it starts at i = 3 (the last internal node; indices 4..8 are leaves) and ends at i = 0.\n\n```\n12 5 9 20 3 17 8 14 1      # start (n = 9); buildHeap: percDown from i = 3 down to 0 (MAX-heap, 0-indexed)\n12 5 9 20 3 17 8 14 1      # buildHeap: after percDown(a, 3, 9) (value 20)\n12 5 17 20 3 9 8 14 1      # buildHeap: after percDown(a, 2, 9) (value 9)\n12 20 17 14 3 9 8 5 1      # buildHeap: after percDown(a, 1, 9) (value 5)\n20 14 17 12 3 9 8 5 1      # buildHeap: after percDown(a, 0, 9) (value 12)\n20 14 17 12 3 9 8 5 1      # == heap built ==\n```\n\n**Max-heap:** `20 14 17 12 3 9 8 5 1`.",
+      "rubric": [
+        "Starts at i = n/2 - 1 = 3 (not n/2) and ends at 0",
+        "Each percDown moves the LARGER child up while it exceeds the moved value",
+        "Intermediate arrays after each call are correct",
+        "Final max-heap is 20 14 17 12 3 9 8 5 1"
+      ]
+    },
+    {
+      "id": "heapsort-004",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "heapsort",
+        "deleteMax",
+        "trace"
+      ],
+      "points": 8,
+      "prompt": "Heapsort `23,9,31,4,15,27,12,6,18` (0-indexed max-heap). Give the array after buildHeap and after each of the first **three** deleteMax steps, marking where the sorted part begins. What is the array after all of the steps?",
+      "answer": "After buildHeap: `31 18 27 9 15 23 12 6 4`.\nAfter deleteMax 1: `27 18 23 9 15 4 12 6 | 31`\nAfter deleteMax 2: `23 18 12 9 15 4 6 | 27 31`\nAfter deleteMax 3: `18 15 12 9 6 4 | 23 27 31`\n(heap part before the bar, sorted part after it; each step swaps `a[0]` with `a[j]`, j = 8, 7, 6, then `percDown(a, 0, j)`).\n\nFinal sorted array: `4 6 9 12 15 18 23 27 31`.",
+      "rubric": [
+        "buildHeap result is 31 18 27 9 15 23 12 6 4",
+        "First three deleteMaxes swap a[0] with a[8], a[7], a[6] and percolate down in a heap of size 8, 7, 6",
+        "Sorted tail grows by one each step and is never touched again",
+        "Final sorted array is 4 6 9 12 15 18 23 27 31"
+      ]
+    },
+    {
+      "id": "heapsort-005",
+      "type": "trace",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "heapsort",
+        "deleteMax",
+        "mid-trace"
+      ],
+      "points": 6,
+      "prompt": "A heapsort (textbook 0-indexed max-heap) of 7 elements is partway through. The current array is `12 10 6 8 3 | 15 21`, where the bar separates the heap part (a[0..4]) from the sorted part. Perform the next two deleteMax steps and give the array after each.",
+      "answer": "Next deleteMax (j = 4): swap `a[0]` and `a[4]` giving `3 10 6 8 | 12 15 21`, then `percDown(a, 0, 4)` on the heap `a[0..3]`: result **`10 8 6 3 | 12 15 21`**.\nNext (j = 3): swap `a[0]` and `a[3]`, then `percDown(a, 0, 3)`: result **`8 3 6 | 10 12 15 21`**.",
+      "rubric": [
+        "Swaps a[0] with a[4] first (heap size becomes 4), then percolates down",
+        "Moves the larger child up and stops correctly",
+        "After the first step: 10 8 6 3 | 12 15 21",
+        "After the second step: 8 3 6 | 10 12 15 21"
+      ]
+    },
+    {
+      "id": "heapsort-007",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "exam2-practice",
+      "tags": [
+        "heapsort",
+        "complexity",
+        "analysis",
+        "professor-model"
+      ],
+      "points": 8,
+      "prompt": "(Professor's practice question) Analyze the complexity of heapsort.",
+      "answer": "Heapsort starts with an unsorted array, then builds a max heap (heapifies) in **O(n)** time: `percDown` runs for each internal node from n/2 - 1 down to 0 and a node of height h costs O(h); the sum of heights is O(n).\nIt then iteratively pops the largest element from the top of the heap, fixes the heap, and puts it where the last heap element used to be (swap `a[0]` with `a[j]`, then `percDown(a, 0, j)`), thus increasing the sorted portion at the end of the array by 1 and decreasing the size of the heap by 1.\nWe do this for n - 1 (about n) elements, and the time for popping the max of a heap, including fixing the heap, is **O(log n)** (the swapped-in element sinks at most the height of the heap).\nThus O(n) for buildheap + (n x O(log n)) for the n deletemaxes = **O(n log n)** total time (worst, average and best case for distinct keys). Extra space: **O(1)**, the sorting is done in place in the input array; heapsort is not stable.",
+      "rubric": [
+        "Names the two phases: buildHeap (O(n)) then n-1 deleteMax operations",
+        "Gives each deleteMax as O(log n) with a reason (percolate down the height of the heap)",
+        "Adds the phases: O(n) + n x O(log n) = O(n log n) (the larger term dominates)",
+        "Mentions in-place / O(1) extra space (and not stable)"
+      ]
+    },
+    {
+      "id": "heapsort-008",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "textbook-7.5",
+      "tags": [
+        "heapsort",
+        "comparisons",
+        "analysis"
+      ],
+      "points": 8,
+      "prompt": "Heapsort sorts N = 1023 elements. Using the textbook's analysis (7.5.1): (a) how many element comparisons does `percDown` use per level, and how many levels at most for a heap of size m? (b) Give an upper bound on the comparisons of the buildHeap phase. (c) Give an upper bound on the comparisons of the whole deleteMax phase, as a sum and approximately as 2N log N. (d) Is heapsort's comparison count larger or smaller than mergesort's (about N log N) and why does that matter in practice?",
+      "answer": "(a) **Two** comparisons per level (`a[child] < a[child+1]` to pick the larger child, then `tmp < a[child]`), and at most floor(log2 m) levels for a heap of size m.\n(b) buildHeap uses **fewer than 2N** comparisons: 2 per level times the sum of the heights (< N), so fewer than 2 x 1023 = 2046.\n(c) The deleteMax that runs on a heap of size j uses at most 2 floor(log2 j) comparisons, so the phase uses at most 2 x sum_(j=1..1022) floor(log2 j) = **16370** here (the book's form: at most 2 log(N - i + 1) for the i-th deleteMax, so 2N log N - O(N) in total, about 2 x 1023 x 10 = 20460). Overall worst case about **2N log N - O(N)**; random inputs use only slightly fewer.\n(d) Heapsort uses about **twice** as many comparisons as mergesort (N log N - O(N)). With cheap comparisons that is acceptable; with expensive comparisons (long strings, complicated objects) mergesort is preferable (and stable) if O(N) space is affordable.",
+      "rubric": [
+        "Two comparisons per level, floor(log2 m) levels",
+        "buildHeap < 2N comparisons",
+        "Phase 2 bound as a sum, about 2N log N (approx 2 x 1023 x 10)",
+        "Compares with mergesort (about twice the comparisons; matters when comparisons are expensive)"
+      ]
+    },
+    {
+      "id": "heapsort-009",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "heapsort",
+        "stability",
+        "in-place"
+      ],
+      "points": 6,
+      "prompt": "(a) Is heapsort **in place**? What extra space does it use? (b) Is it **stable**? Define stability and justify with a small example (tag equal keys by their input order). (c) Which of mergesort, quicksort, insertion sort, heapsort are stable?",
+      "answer": "(a) **In place**: the heap lives in the array being sorted (the cells freed by the shrinking heap hold the sorted part), so extra space is **O(1)** (`tmp`, `child`, loop indices); no second array, no recursion.\n(b) A sort is **stable** if equal keys keep their input order. Heapsort is **not**: the swap of `a[0]` with `a[j]` moves elements across long distances, and percDown's tie rules do not preserve order. Example: input `5a, 3b, 5c, 3d, 1e` (the letters record input order):\n\n```\n5a 3b 5c 3d 1e             # start (n = 5); buildHeap: percDown from i = 1 down to 0 (MAX-heap, 0-indexed)\n5a 3b 5c 3d 1e             # buildHeap: after percDown(a, 1, 5) (value 3b)\n5a 3b 5c 3d 1e             # buildHeap: after percDown(a, 0, 5) (value 5a)\n5a 3b 5c 3d 1e             # == heap built ==\n5c 3b 1e 3d 5a             # deleteMax 5a: swap a[0] with a[4], then percDown(a, 0, 4) -> heap = a[0..3], sorted = a[4..4]\n3d 3b 1e 5c 5a             # deleteMax 5c: swap a[0] with a[3], then percDown(a, 0, 3) -> heap = a[0..2], sorted = a[3..4]\n3b 1e 3d 5c 5a             # deleteMax 3d: swap a[0] with a[2], then percDown(a, 0, 2) -> heap = a[0..1], sorted = a[2..4]\n1e 3b 3d 5c 5a             # deleteMax 3b: swap a[0] with a[1], then percDown(a, 0, 1) -> heap = a[0..0], sorted = a[1..4]\n```\n\nOutput `1e 3b 3d 5c 5a`: the two 5's came out as `5c, 5a`, reversed (the 3's happened to stay in order, but stability is violated by the 5's). Even the 3-element input `1a, 2b, 2c` gives `1a, 2c, 2b`.\n(c) Stable: **mergesort** (take from the left run on ties) and **insertion sort** (only moves past strictly larger elements). Not stable: quicksort (partition swaps across the array), **heapsort**, selection sort. (`std::stable_sort` is the stable library sort; `std::sort` is introsort, not stable.)",
+      "rubric": [
+        "(a) In place with O(1) extra space: the heap shares the array, sorted tail fills freed cells",
+        "(b) Not stable, with a correct definition of stability",
+        "(b) A concrete example where equal keys are reordered (verified by tracing)",
+        "(c) Mergesort and insertion sort stable; quicksort and heapsort not"
+      ]
+    },
+    {
+      "id": "heapsort-010",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "heapsort",
+        "layout",
+        "binary-heap",
+        "traps"
+      ],
+      "points": 5,
+      "prompt": "Textbook heapsort (Fig 7.10) and the textbook `BinaryHeap` (Ch 6) store heaps differently. For a heap of 20 elements in each, give: (a) the children of index 7, (b) the parent of index 14, (c) the last internal node and whether it has one child or two, (d) the index where buildHeap starts and ends, (e) whether it is a min- or max-heap. Then say why heapsort uses a different layout.",
+      "answer": "| | Heapsort (0-indexed, n = 20) | Ch 6 BinaryHeap (1-indexed, N = 20) |\n|---|---|---|\n| (a) children of 7 | 2i+1 = **15** and 2i+2 = **16** | 2i = **14** and 2i+1 = **15** |\n| (b) parent of 14 | (14 - 1)/2 = **6** | 14/2 = **7** |\n| (c) last internal node | n/2 - 1 = **9**; children 19 and 20, but 20 is outside, so **one child** (19) | N/2 = **10**; children 20 and 21, so **one child** (20) |\n| (d) buildHeap | i = n/2 - 1 = **9** down to **0** (10 calls) | i = N/2 = **10** down to **1** (10 calls) |\n| (e) kind | **max**-heap | **min**-heap |\n\nHeapsort sorts *in place in the caller's array*, whose data start at index 0 and which has no spare cell 0 to waste; to keep O(1) extra space it uses a 0-indexed heap (children 2i+1, 2i+2). It uses a max-heap so that moving each maximum to the end of the array leaves the array in ascending order. The Ch 6 heap owns its array, leaves cell 0 free for the sentinel/tmp and uses a min-heap for deleteMin.",
+      "rubric": [
+        "Heapsort: children 2i+1, 2i+2 (15, 16), parent (i-1)/2 = 6, last internal node 9, buildHeap 9 down to 0",
+        "Ch 6: children 2i, 2i+1 (14, 15), parent i/2 = 7, last internal node 10, buildHeap 10 down to 1",
+        "Both last internal nodes have a single child (n even)",
+        "Max-heap for heapsort vs min-heap for Ch 6; reason for 0-indexed in-place layout"
+      ]
+    },
+    {
+      "id": "heapsort-013",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "textbook-7.5",
+      "tags": [
+        "heapsort",
+        "max-heap"
+      ],
+      "points": 4,
+      "prompt": "Why does heapsort build a **max**-heap to sort into ascending order? What would happen if it used a min-heap with the same in-place scheme?",
+      "answer": "Each deleteMax removes the largest remaining element and the shrinking heap frees the **last** cell of the array, so the maximum can be stored there: the array fills from the right with the largest values and ends **ascending**, with no second array. With a min-heap the same scheme would put the minimum in the last cell, so the array would end in **descending** order (to get ascending you would need an extra array, doubling the memory, or a reversing pass).",
+      "rubric": [
+        "Max goes into the last freed cell, so the array ends ascending",
+        "Min-heap would produce descending order (or need extra space)",
+        "Mentions the in-place trick of using the freed cell"
+      ]
+    },
+    {
+      "id": "heapsort-014",
+      "type": "knowledge",
+      "difficulty": 3,
+      "source": "slides",
+      "tags": [
+        "heapsort",
+        "invariant"
+      ],
+      "points": 5,
+      "prompt": "State the loop invariant of the second loop of heapsort (the `for (j = n-1; j > 0; --j)` loop), and use it to explain why the array is sorted at the end and why the loop can stop at j = 1.",
+      "answer": "**Invariant (at the start of the iteration for index j):** `a[0..j]` is a max-heap, and `a[j+1..n-1]` holds the n - 1 - j largest elements of the whole array in sorted (ascending) order; in particular every element of the heap is <= every element of the sorted part.\nInitially (j = n - 1) the heap is the whole array (buildHeap) and the sorted part is empty. The iteration swaps the heap's maximum `a[0]` (the largest in the heap, hence <= the sorted part and >= the rest of the heap) into cell j, extending the sorted part by one at its left end, and `percDown(a, 0, j)` restores the heap on `a[0..j-1]`.\nWhen j = 1 has run, the heap is the single cell `a[0]`, which is <= `a[1]` (the invariant), and `a[1..n-1]` is sorted, so the whole array is sorted; a heap of one element needs no deleteMax, so the loop stops at j = 1 (n - 1 iterations).",
+      "rubric": [
+        "Heap a[0..j] plus sorted a[j+1..n-1] of the largest elements",
+        "Maintenance: swap puts the heap maximum in cell j; percDown restores the heap of size j",
+        "Termination: j = 1 leaves a[0] <= a[1..], array sorted",
+        "Explains n - 1 iterations (last element is already in place)"
+      ]
+    },
+    {
+      "id": "heapsort-015",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "introsort",
+        "std::sort"
+      ],
+      "points": 5,
+      "prompt": "Describe introsort: which three algorithms does it combine, when does it switch from one to another, and why? Which C++ library function typically uses it, and is it stable?",
+      "answer": "**Introsort (introspective sort)** begins with **quicksort** (fastest on average) and\n- switches to **heapsort** when the recursion depth exceeds a limit based on the logarithm of the number of elements (about 2 log2 n): that means quicksort is performing badly (bad pivots), and heapsort guarantees **O(n log n)** worst case;\n- switches to **insertion sort** when the subarray is smaller than a small constant threshold (e.g. 16-20), because insertion sort has no overhead (no recursion, allocation, or buildHeap setup) and is very fast on tiny inputs.\nAll three are in place, so introsort is in place; it is **not stable**. In C++, **`std::sort`** typically uses introsort (`std::stable_sort` is the stable, merge-based alternative, which needs extra memory). Result: quicksort's speed on typical input with a worst case of O(n log n).",
+      "rubric": [
+        "Quicksort first; heapsort when depth exceeds about 2 log n; insertion sort for tiny subarrays",
+        "Reason for each switch (worst-case guarantee; low overhead for small inputs)",
+        "In place, not stable",
+        "std::sort uses it; stable_sort is different"
+      ]
+    },
+    {
+      "id": "heapsort-016",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "slides",
+      "tags": [
+        "introsort",
+        "complexity",
+        "proof",
+        "worst-case"
+      ],
+      "points": 10,
+      "prompt": "Prove that introsort (quicksort with a recursion-depth limit of about 2 log2 n that falls back to heapsort, and insertion sort on subarrays smaller than a constant c) runs in O(n log n) time in the **worst case**, by bounding each of its three portions.",
+      "answer": "**Quicksort portion: O(n log n).** The recursion stops at depth about 2 log2 n. The subarrays at any single depth are disjoint, so the partitioning done at one depth totals at most O(n) (each partition is linear in its subarray). With at most 2 log2 n depths this is O(n) x 2 log2 n = **O(n log n)**, no matter how bad the pivots are (this is the part that was O(n^2) for plain quicksort).\n**Heapsort portion: O(n log n).** Whenever a subarray of size m reaches the depth limit it is heapsorted in O(m log m) <= O(m log n). Those subarrays are disjoint, so the sizes add up to at most n and the total is at most O(n log n) (worst case: the entire array is heapsorted, O(n log n)).\n**Insertion-sort portion: O(n).** Each is run on a subarray of size s_i < c; insertion sort costs at most about s_i^2/2, and sum s_i <= n, so the total is at most sum s_i^2/2 <= (c/2) sum s_i <= cn/2 = O(n) because c is a constant.\n**Total:** O(n log n) + O(n log n) + O(n) = **O(n log n)** worst case. If the depth limit is never hit, only the quicksort and insertion-sort portions run and the first and third bounds already give O(n log n). On typical inputs the heapsort branch is not taken and the cost is quicksort's O(n log n) average.",
+      "rubric": [
+        "Quicksort part bounded by depth limit x linear work per depth = O(n log n)",
+        "Heapsort part: disjoint subarrays, sizes sum to at most n, each O(m log m), total O(n log n)",
+        "Insertion-sort part is O(n) because the threshold is constant",
+        "Adds the three portions to conclude O(n log n) worst case, and treats the no-fallback case"
+      ]
+    },
+    {
+      "id": "heapsort-017",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "slides",
+      "tags": [
+        "introsort",
+        "insertion-sort",
+        "complexity"
+      ],
+      "points": 8,
+      "prompt": "In introsort, subarrays smaller than a constant threshold c are finished with insertion sort, which is O(n^2). Explain why the total insertion-sort work over the whole run is only O(n). Use c = 20 and an input of n = 1,000,000 elements to compute the worst-case number of steps (approximate insertion sort's worst case on s elements by s^2/2), and compare with n = 1,000.",
+      "answer": "The subarrays that insertion sort receives are **disjoint** pieces of the array, each of size at most c, and a constant. If there are m such pieces of sizes s_1..s_m, then sum s_i <= n and the work is about sum s_i^2/2 <= (c/2) sum s_i <= **cn/2 = O(n)**. The worst case is as many pieces of size exactly c as possible: n/c pieces, each c^2/2 steps: (n/c)(c^2/2) = cn/2.\nFor c = 20: each piece costs about 20^2/2 = 200 steps. n = 1,000,000: 50,000 pieces x 200 = **10,000,000 steps** (= 10 n). n = 1,000: 50 pieces x 200 = 10,000 steps (also 10 n). Multiplying n by 1000 multiplies the work by 1000: **linear growth**, about c/2 = 10 steps per element. The quadratic cost applies only to the constant-size pieces, never to the whole array.",
+      "rubric": [
+        "Pieces are disjoint with size at most the constant c",
+        "Total sum s_i^2/2 <= (c/2) n = O(n), or (n/c)(c^2/2)",
+        "Computes 10,000,000 steps for n = 1,000,000 and shows it grows linearly with n",
+        "Notes the threshold must be constant"
+      ]
+    },
+    {
+      "id": "heapsort-018",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "heapsort",
+        "mergesort",
+        "quicksort",
+        "comparison"
+      ],
+      "points": 10,
+      "prompt": "Fill in the running time of each sort for the three inputs below (n distinct or equal keys as stated), and give each sort's extra space and stability. Use the textbook implementations: mergesort (top-down), quicksort with median-of-3 pivot and Hoare partitioning in which both scanning pointers stop on elements equal to the pivot, heapsort (Fig 7.10), insertion sort.\nInputs: (i) already sorted ascending (distinct), (ii) sorted descending (distinct), (iii) all n keys equal.",
+      "answer": "| Sort | sorted asc | sorted desc | all equal | Extra space | Stable |\n|---|---|---|---|---|---|\n| Insertion | O(n) | O(n^2) | O(n) | O(1) | yes |\n| Mergesort | O(n log n) | O(n log n) | O(n log n) | O(n) | yes |\n| Quicksort (median-of-3, Hoare) | O(n log n) | O(n log n) | O(n log n) | O(log n) stack avg | no |\n| Heapsort | Theta(n log n) | Theta(n log n) | O(n) | O(1) | no |\n\nReasons: insertion sort does inversions + n: none for sorted (O(n)), n(n-1)/2 for descending, none for all-equal (it only moves past strictly larger keys). Mergesort always splits in half and merges in O(n). Quicksort with **median-of-3** picks the middle element of sorted or reversed input, which is the true median, so the splits are even; with all keys equal both pointers stop on every element, swapping them and splitting in the middle (with a first/last-element pivot, sorted input would be O(n^2)). Heapsort does buildHeap O(n) and n - 1 deleteMaxes of O(log n) whatever the order; only when all keys are equal does `tmp < a[child]` fail immediately so every percDown is O(1) and the total is O(n) (a corner case).\nTakeaways: only heapsort and introsort/mergesort guarantee O(n log n) worst case; mergesort is stable but needs O(n) memory; heapsort needs O(1) memory but is not stable and is slower than quicksort in practice (cache behavior, about twice the comparisons).",
+      "rubric": [
+        "Insertion sort row correct (O(n), O(n^2), O(n))",
+        "Mergesort O(n log n) everywhere, O(n) space, stable",
+        "Quicksort with median-of-3 and stop-on-equal stays O(n log n) on all three; stack O(log n)",
+        "Heapsort Theta(n log n) for sorted/reversed; notes the all-equal exception or says O(n log n)",
+        "Stability/space columns correct"
+      ]
+    },
+    {
+      "id": "heapsort-019",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "sorting",
+        "selection",
+        "heapsort",
+        "mergesort",
+        "introsort"
+      ],
+      "points": 5,
+      "prompt": "Which sort would you choose in each situation, and why? (i) An embedded system with almost no spare memory that needs a guaranteed O(n log n) worst case. (ii) Records already sorted by date must now be sorted by name, keeping the date order among equal names. (iii) A general-purpose library sort for ints that should be fastest on average and still never degrade to O(n^2).",
+      "answer": "(i) **Heapsort**: O(n log n) worst case and **O(1)** extra space (in place). (Introsort also fits: in place, O(n log n) worst case, O(log n) stack.)\n(ii) A **stable** sort: **mergesort** (`std::stable_sort`), which keeps equal names in their existing (date) order; it needs O(n) extra space. Heapsort and quicksort are not stable.\n(iii) **Introsort** (what `std::sort` uses): quicksort's fast average case, heapsort fallback to cap the worst case at O(n log n), insertion sort for tiny subarrays; in place.",
+      "rubric": [
+        "(i) heapsort (or introsort) with O(1) space and worst-case guarantee",
+        "(ii) stable sort: mergesort/stable_sort, accepts O(n) space",
+        "(iii) introsort / std::sort with the reason (fast average + guaranteed worst case)"
+      ]
+    },
+    {
+      "id": "heapsort-020",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "textbook-6.4",
+      "tags": [
+        "heapsort",
+        "selection",
+        "top-k",
+        "design",
+        "cumulative"
+      ],
+      "points": 8,
+      "prompt": "You have n numbers and want the k largest, listed in descending order. Compare three solutions and give each one's time: (a) sort everything, (b) build a max-heap with buildHeap and call deleteMax k times, (c) keep a min-heap of size k while scanning, then empty it. Which is best for k = 100, n = 10^7? Which is best for k = n/2?",
+      "answer": "(a) `sort` then read the last k: **O(n log n)** (introsort), regardless of k.\n(b) buildHeap **O(n)** + k deleteMax x O(log n) = **O(n + k log n)**; the k outputs come out already in descending order. Extra space O(1) if done in place (the same idea as running heapsort for only k steps).\n(c) Scan n numbers; for each, compare with the heap's minimum (O(1)) and, if larger, replace it: deleteMin + insert, O(log k). This costs O(k + (n - k) log k) = **O(n log k)**; then popping the k elements costs O(k log k) giving them in ascending order (reverse to get descending): total O(n log k). Extra space O(k), and it works on a stream.\nk = 100, n = 10^7: (b) O(n + 100 log n) = O(n) and (c) O(n log 100) = O(n): both linear and far better than (a); (c) uses only 100 cells of memory, (b) needs all n in memory. k = n/2: (a), (b), (c) are all Theta(n log n); (b) is partial heapsort with n/2 pops; then quickselect + sorting only the top half would be O(n + k log k) average.",
+      "rubric": [
+        "(a) O(n log n)",
+        "(b) O(n + k log n) with reason (buildHeap + k deleteMax)",
+        "(c) O(n log k) with reason; O(k) space",
+        "Chooses sensibly for k = 100 (b or c, both O(n)) and k = n/2 (all Theta(n log n))"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+# Brightspace downloads (import them with: study setup material <zip>)
+*.zip
+# the professor's files and the textbook are copyrighted: each student imports their own
+material/
+# scratch
+scratch/
+__pycache__/
+*.pyc
+progress/*.tmp
+.claude/settings.local.json
+
+# focus mode / study browser (machine-local)
+.focus/
+.venv/

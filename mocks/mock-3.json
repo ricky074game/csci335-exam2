@@ -1,0 +1,241 @@
+{
+  "id": "mock-3",
+  "title": "Mock Exam 3",
+  "minutes": 70,
+  "total_points": 100,
+  "instructions": "Closed book, closed notes, no electronic devices. You have 70 minutes. Read every question fully before answering. Write all work you want graded on the FRONT of the page; the backs of pages are scrap and will not be graded. Provide only the number of examples/items a question asks for. For Big-O answers, give the tightest bound you know and justify it (a correct but loose bound earns no credit); say average case vs. worst case wherever it matters (especially for hashing). Use the TEXTBOOK (Weiss) version of every algorithm; a different but valid variant is graded as incorrect. Heaps use the textbook array layout (index 0 unused, root at index 1, children of i at 2i and 2i+1) unless a question says otherwise. Partitioning uses the textbook Section 7.7.2 Hoare method: swap the pivot with the last element, i starts at left and j at right-1, both i and j stop on elements equal to the pivot, and when they cross a[i] is swapped with the pivot. Array indices are 0-based unless stated. Code is C++11 or later using the standard library containers and algorithms; you are never asked to write a sorting algorithm yourself. Point values are shown next to each question.",
+  "questions": [
+    {
+      "id": "mock3-q1",
+      "type": "trace",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "hashing",
+        "separate chaining",
+        "rehash",
+        "load factor"
+      ],
+      "points": 14,
+      "prompt": "**Question 1 (hash table trace, 14 points)**\n\nA hash table uses **separate chaining**. It starts with TableSize = 5 and hash(x) = x mod TableSize. A new element is **appended to the end** of its bucket's list. Right after any insertion, if currentSize > TableSize (load factor above 1), the table is rehashed: the new size is the smallest prime that is at least twice the old size, and the old table is scanned from bucket 0 upward, each list from front to back, appending every element to its list in the new table. Insert, in this order:\n\n**15, 26, 37, 41, 52, 64, 78, 93, 12, 86**\n\na) **(5 points)** One insertion triggers a rehash. Which one, and what is the new TableSize? Draw the table immediately after the rehash is finished (every bucket's list, in order).\n\nb) **(5 points)** Draw the final table after all ten insertions.\n\nc) **(2 points)** After these ten insertions, how many more insertions (of new keys) are needed before the next rehash, and what will the new TableSize be?\n\nd) **(2 points)** What is the expected number of list nodes examined by an **unsuccessful** search in a chaining table with load factor lambda? What would happen to the cost of operations if this table were never rehashed while n grows?",
+      "answer": "Engine-verified. Trace of the whole sequence (the line starting `REHASH` shows the re-insertion order):\n\n```text\nseparate chaining, TableSize 5, hash(x) = x mod 5 (rehash on: textbook thresholds)\ninsert 15: hash = 15 mod 5 = 0 -> appended to bucket 0's list\ninsert 26: hash = 26 mod 5 = 1 -> appended to bucket 1's list\ninsert 37: hash = 37 mod 5 = 2 -> appended to bucket 2's list\ninsert 41: hash = 41 mod 5 = 1 -> appended to bucket 1's list\ninsert 52: hash = 52 mod 5 = 2 -> appended to bucket 2's list\ninsert 64: hash = 64 mod 5 = 4 -> appended to bucket 4's list\n   load factor 6/5 > 1 -> rehash\n   REHASH: new TableSize = nextPrime(2*5) = 11; re-inserting [15, 26, 41, 37, 52, 64] in old-table order with hash = x mod 11\ninsert 15: hash = 15 mod 11 = 4 -> appended to bucket 4's list\ninsert 26: hash = 26 mod 11 = 4 -> appended to bucket 4's list\ninsert 41: hash = 41 mod 11 = 8 -> appended to bucket 8's list\ninsert 37: hash = 37 mod 11 = 4 -> appended to bucket 4's list\ninsert 52: hash = 52 mod 11 = 8 -> appended to bucket 8's list\ninsert 64: hash = 64 mod 11 = 9 -> appended to bucket 9's list\ninsert 78: hash = 78 mod 11 = 1 -> appended to bucket 1's list\ninsert 93: hash = 93 mod 11 = 5 -> appended to bucket 5's list\ninsert 12: hash = 12 mod 11 = 1 -> appended to bucket 1's list\ninsert 86: hash = 86 mod 11 = 9 -> appended to bucket 9's list\n  0: -\n  1: 78 -> 12\n  2: -\n  3: -\n  4: 15 -> 26 -> 37\n  5: 93\n  6: -\n  7: -\n  8: 41 -> 52\n  9: 64 -> 86\n 10: -\nload factor 10/11 = 0.91\nanswer line: 1:[78,12] 4:[15,26,37] 5:[93] 8:[41,52] 9:[64,86]\n```\n**a)** The **6th insertion (64)** makes currentSize = 6 > 5, so the table is rehashed to nextPrime(2 x 5) = **11**. The old table, scanned in order, holds 15 | 26, 41 | 37, 52 | (empty) | 64, so the re-insertion order is 15, 26, 41, 37, 52, 64. The table right after the rehash (engine run on the first six keys):\n\n```text\n  0: -\n  1: -\n  2: -\n  3: -\n  4: 15 -> 26 -> 37\n  5: -\n  6: -\n  7: -\n  8: 41 -> 52\n  9: 64\n 10: -\nload factor 6/11 = 0.55\n```\n**b)** Final table (size 11): 1:[78, 12], 4:[15, 26, 37], 5:[93], 8:[41, 52], 9:[64, 86]. No second rehash (10 elements <= 11).\n\n**c)** currentSize is 10 and the table has 11 buckets; the rehash happens when currentSize > 11, i.e. at the **12th element, so 2 more insertions**. New size: nextPrime(2 x 11 = 22) = **23**.\n\n**d)** An unsuccessful search examines about **lambda** nodes on average (the bucket's list has length lambda on average), so it is O(1) while lambda <= 1. Without rehashing, lambda = n / TableSize grows linearly with n, so each list has length about n / 5 and every operation degrades to **O(n)**; rehashing keeps lambda near 1.",
+      "rubric": [
+        "(1) the rehash occurs at the 6th insertion (64) because currentSize 6 > TableSize 5",
+        "(1) new TableSize = nextPrime(10) = 11",
+        "(2) re-insertion done in old bucket order (15, 26, 41, 37, 52, 64), not original insertion order",
+        "(1) table after the rehash: 4:[15,26,37], 8:[41,52], 9:[64]",
+        "(2) final table: 78 appended to bucket 1, 93 in bucket 5, 12 appended after 78 in bucket 1, 86 appended after 64 in bucket 9",
+        "(2) all earlier elements still in the right buckets in the right list order (4:[15,26,37], 8:[41,52], 9:[64,86])",
+        "(1) no second rehash (10 <= 11)",
+        "(1) next rehash at the 12th element, i.e. after 2 more insertions",
+        "(1) new size nextPrime(22) = 23",
+        "(1) unsuccessful search examines about lambda nodes",
+        "(1) without rehashing the lists grow to about n/TableSize, so operations become O(n)"
+      ]
+    },
+    {
+      "id": "mock3-q2",
+      "type": "trace",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "heaps",
+        "insert",
+        "percolate up",
+        "duplicates"
+      ],
+      "points": 10,
+      "prompt": "**Question 2 (heap trace, 10 points)**\n\nThe following is a **min-heap** in the textbook layout (index 0 unused and used for the value being inserted; positions 1 through 12):\n\n`5  12  8  15  20  9  10  18  25  22  21  14`\n\nUsing the textbook **insert** (create a hole at the next free position, percolate it up while the new value is **strictly less** than the parent), insert the values **7, 3, 7, 2** in that order.\n\na) **(8 points)** For each insertion, show the path the hole takes (which parent values slide down) and write the heap array (positions 1 to n) after the insertion. Remember that the second 7 is equal to a value already in the heap.\n\nb) **(2 points)** What are the worst-case and the average-case running times of one insert on a heap with n elements? When does the worst case happen?",
+      "answer": "Engine-verified:\n\n```text\nmin-heap insert 7,3,7,2\n  [0]=7 | 5 12 8 15 20 9 10 18 25 22 21 14 _     # insert 7: hole created at index 13; 7 stored in index 0\n  [0]=7 | 5 12 8 15 20 _ 10 18 25 22 21 14 9     # 7 < parent 9 (index 6) -> slide 9 down to index 13; hole moves to 6\n  [0]=7 | 5 12 _ 15 20 8 10 18 25 22 21 14 9     # 7 < parent 8 (index 3) -> slide 8 down to index 6; hole moves to 3\n  [0]=- | 5 12 7 15 20 8 10 18 25 22 21 14 9     # place 7 in index 3 (parent 5 is not larger)\n  [0]=3 | 5 12 7 15 20 8 10 18 25 22 21 14 9 _   # insert 3: hole created at index 14; 3 stored in index 0\n  [0]=3 | 5 12 7 15 20 8 _ 18 25 22 21 14 9 10   # 3 < parent 10 (index 7) -> slide 10 down to index 14; hole moves to 7\n  [0]=3 | 5 12 _ 15 20 8 7 18 25 22 21 14 9 10   # 3 < parent 7 (index 3) -> slide 7 down to index 7; hole moves to 3\n  [0]=3 | _ 12 5 15 20 8 7 18 25 22 21 14 9 10   # 3 < parent 5 (index 1) -> slide 5 down to index 3; hole moves to 1\n  [0]=- | 3 12 5 15 20 8 7 18 25 22 21 14 9 10   # place 3 in index 1 (hole is the root)\n  [0]=7 | 3 12 5 15 20 8 7 18 25 22 21 14 9 10 _ # insert 7: hole created at index 15; 7 stored in index 0\n  [0]=- | 3 12 5 15 20 8 7 18 25 22 21 14 9 10 7 # place 7 in index 15 (parent 7 is not larger)\n  [0]=2 | 3 12 5 15 20 8 7 18 25 22 21 14 9 10 7 _ # insert 2: hole created at index 16; 2 stored in index 0\n  [0]=2 | 3 12 5 15 20 8 7 _ 25 22 21 14 9 10 7 18 # 2 < parent 18 (index 8) -> slide 18 down to index 16; hole moves to 8\n  [0]=2 | 3 12 5 _ 20 8 7 15 25 22 21 14 9 10 7 18 # 2 < parent 15 (index 4) -> slide 15 down to index 8; hole moves to 4\n  [0]=2 | 3 _ 5 12 20 8 7 15 25 22 21 14 9 10 7 18 # 2 < parent 12 (index 2) -> slide 12 down to index 4; hole moves to 2\n  [0]=2 | _ 3 5 12 20 8 7 15 25 22 21 14 9 10 7 18 # 2 < parent 3 (index 1) -> slide 3 down to index 2; hole moves to 1\n  [0]=- | 2 3 5 12 20 8 7 15 25 22 21 14 9 10 7 18 # place 2 in index 1 (hole is the root)\nfinal heap (from index 1): 2,3,5,12,20,8,7,15,25,22,21,14,9,10,7,18\n```\n**a)** Insert 7 (hole at 13): parent 9 slides down, parent 8 slides down, parent 5 is not larger -> `5 12 7 15 20 8 10 18 25 22 21 14 9`. Insert 3 (hole at 14): 10, 7, 5 slide down, 3 reaches the root -> `3 12 5 15 20 8 7 18 25 22 21 14 9 10`. Insert 7 (hole at 15): the parent (index 7) is also 7; 7 < 7 is false, so the hole stays -> `3 12 5 15 20 8 7 18 25 22 21 14 9 10 7`. Insert 2 (hole at 16): 18, 15, 12, 3 slide down and 2 reaches the root -> **2 3 5 12 20 8 7 15 25 22 21 14 9 10 7 18**.\n\n**b)** Worst case **O(log n)**: the new value is smaller than everything and climbs the whole height of the tree (as 2 and 3 did). Average case **O(1)**: the textbook shows an insertion moves up only about 1.6 levels on average (2.607 comparisons), because most elements of a heap are near the bottom.",
+      "rubric": [
+        "(2) insert 7: 9 and 8 slide down, result 5 12 7 15 20 8 10 18 25 22 21 14 9",
+        "(2) insert 3: 10, 7, 5 slide down, 3 at root, result 3 12 5 15 20 8 7 18 25 22 21 14 9 10",
+        "(2) insert 7: equal to its parent 7, strict < fails, stays at index 15",
+        "(2) insert 2: 18, 15, 12, 3 slide down, 2 at root, result 2 3 5 12 20 8 7 15 25 22 21 14 9 10 7 18",
+        "(1) worst case O(log n), when the new element is smaller than all ancestors (climbs to the root)",
+        "(1) average case O(1) (textbook: about 2.6 comparisons)"
+      ]
+    },
+    {
+      "id": "mock3-q3",
+      "type": "trace",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "heapsort",
+        "buildHeap",
+        "max-heap"
+      ],
+      "points": 8,
+      "prompt": "**Question 3 (heapsort trace, 8 points)**\n\nTrace the textbook **heapsort** (Figure 7.10: a **0-indexed max-heap** inside the array, children of i are 2i+1 and 2i+2, buildHeap with percDown from i = n/2 - 1 down to 0, then swap a[0] with a[j] and percDown(a, 0, j) for j = n-1 down to 1) on:\n\n`14  3  9  21  7  16  2  11  5  18`\n\na) **(3 points)** Show the array after each of the percDown calls of buildHeap, ending with the finished heap.\n\nb) **(3 points)** Show the whole array after each of the first three deleteMax passes (bar between heap and sorted part).\n\nc) **(2 points)** Why does heapsort use a **max**-heap to sort into ascending order? What order would the same procedure produce if a min-heap were used instead?",
+      "answer": "Engine-verified:\n\n```text\nheapsort 14,3,9,21,7,16,2,11,5,18  (textbook Fig. 7.10: 0-indexed max-heap)\n  14 3 9 21 7 16 2 11 5 18                 # start (n = 10); buildHeap: percDown from i = 4 down to 0 (MAX-heap, 0-indexed)\n  14 3 9 21 18 16 2 11 5 7                 # buildHeap: after percDown(a, 4, 10) (value 7)\n  14 3 9 21 18 16 2 11 5 7                 # buildHeap: after percDown(a, 3, 10) (value 21)\n  14 3 16 21 18 9 2 11 5 7                 # buildHeap: after percDown(a, 2, 10) (value 9)\n  14 21 16 11 18 9 2 3 5 7                 # buildHeap: after percDown(a, 1, 10) (value 3)\n  21 18 16 11 14 9 2 3 5 7                 # buildHeap: after percDown(a, 0, 10) (value 14)\n  21 18 16 11 14 9 2 3 5 7                 # == heap built ==\n  18 14 16 11 7 9 2 3 5 21                 # deleteMax 21: swap a[0] with a[9], then percDown(a, 0, 9) -> heap = a[0..8], sorted = a[9..9]\n  16 14 9 11 7 5 2 3 18 21                 # deleteMax 18: swap a[0] with a[8], then percDown(a, 0, 8) -> heap = a[0..7], sorted = a[8..9]\n```\n**a)** i = 4: `14 3 9 21 18 16 2 11 5 7`; i = 3: unchanged (21 is larger than its children); i = 2: `14 3 16 21 18 9 2 11 5 7`; i = 1: `14 21 16 11 18 9 2 3 5 7`; i = 0: **21 18 16 11 14 9 2 3 5 7**.\n\n**b)** Pass 1: 18 14 16 11 7 9 2 3 5 | 21. Pass 2: 16 14 9 11 7 5 2 3 | 18 21. Pass 3: 14 11 9 3 7 5 2 | 16 18 21.\n\n**c)** Each pass swaps the root with the last cell of the heap part; with a max-heap the root is the largest remaining element, which therefore lands in its final (rightmost) position, growing the sorted part from the right. A min-heap would put the smallest element in the last cell each time and produce the array in **descending** order.",
+      "rubric": [
+        "(1) buildHeap starts at i = 4 and runs down to 0",
+        "(2) states after the percDown calls are correct (i = 4: ...18 ... 7; i = 2: 16 moves up; i = 1: 21 moves up; i = 0: finished heap 21 18 16 11 14 9 2 3 5 7)",
+        "(1) pass 1: 18 14 16 11 7 9 2 3 5 | 21",
+        "(1) pass 2: 16 14 9 11 7 5 2 3 | 18 21",
+        "(1) pass 3: 14 11 9 3 7 5 2 | 16 18 21",
+        "(1) max-heap: the root is the largest element and goes to the last cell",
+        "(1) a min-heap would sort into descending order"
+      ]
+    },
+    {
+      "id": "mock3-q4",
+      "type": "trace",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "quicksort",
+        "median-of-3",
+        "hoare partition",
+        "cutoff"
+      ],
+      "points": 10,
+      "prompt": "**Question 4 (quicksort trace, 10 points)**\n\nSort the following array with the textbook **quicksort**: median-of-3 pivot selection (median of a[left], a[center], a[right], center = (left + right) / 2), the textbook **Hoare** partition, and a **cutoff** of 3 (any subarray of size 3 or less is sorted by insertion sort). Always finish the **left** subarray completely (including its insertion sorts) before touching the right one.\n\n`21  8  30  14  3  27  11  18  5  24  16  9  1`   (indices 0 through 12)\n\nFor every partition (every subarray of size greater than 3), write the range it works on, the three candidates and the pivot, and the **whole array** after the pivot has been placed in its final position. Then list the ranges that are finished by insertion sort and give the sorted result.\n\nScoring: each of the four partitions is worth 2 points (1 for the pivot, 1 for the array), and the insertion-sort ranges with the final sorted array are worth 2 points.",
+      "answer": "Engine-verified (arrays after each pivot placement, and the insertion-sort ranges):\n\n```text\nquicksort (hoare, pivot median3, cutoff 3): 21,8,30,14,3,27,11,18,5,24,16,9,1\nquicksort(0, 12)  depth 0\n    [21 8 30 14 3 27 11 18 5 24 16 9 1]\nmedian-of-3: a[0]=21, a[6]=11 (center), a[12]=1 -> pivot 11; swap it with the last element a[12]\nswap a[5] with the pivot: pivot 11 is now at index 5 (left part 0..4, right part 6..12)\n    [9 8 5 1 3 11 14 18 30 24 16 21 27]\nquicksort(0, 4)  depth 1\n    [9 8 5 1 3] 11 14 18 30 24 16 21 27\nmedian-of-3: a[0]=9, a[2]=5 (center), a[4]=3 -> pivot 5; swap it with the last element a[4]\nswap a[2] with the pivot: pivot 5 is now at index 2 (left part 0..1, right part 3..4)\n    [1 3 5 9 8] 11 14 18 30 24 16 21 27\nsize 2 <= cutoff 3 at 0..1: insertion pass p=1: 3 moves left 0 place(s) to index 1\n    [1 3] 5 9 8 11 14 18 30 24 16 21 27\nsize 2 <= cutoff 3 at 3..4: insertion pass p=4: 8 moves left 1 place(s) to index 3\n    1 3 5 [8 9] 11 14 18 30 24 16 21 27\nquicksort(6, 12)  depth 1\n    1 3 5 8 9 11 [14 18 30 24 16 21 27]\nmedian-of-3: a[6]=14, a[9]=24 (center), a[12]=27 -> pivot 24; swap it with the last element a[12]\nswap a[10] with the pivot: pivot 24 is now at index 10 (left part 6..9, right part 11..12)\n    1 3 5 8 9 11 [14 18 21 16 24 30 27]\nquicksort(6, 9)  depth 2\n    1 3 5 8 9 11 [14 18 21 16] 24 30 27\nmedian-of-3: a[6]=14, a[7]=18 (center), a[9]=16 -> pivot 16; it is already the last element\nswap a[7] with the pivot: pivot 16 is now at index 7 (left part 6..6, right part 8..9)\n    1 3 5 8 9 11 [14 16 21 18] 24 30 27\nsize 2 <= cutoff 3 at 8..9: insertion pass p=9: 18 moves left 1 place(s) to index 8\n    1 3 5 8 9 11 14 16 [18 21] 24 30 27\nsize 2 <= cutoff 3 at 11..12: insertion pass p=12: 27 moves left 1 place(s) to index 11\n    1 3 5 8 9 11 14 16 18 21 24 [27 30]\nfinal: 1,3,5,8,9,11,14,16,18,21,24,27,30\n```\n**Partitions in order.**\n\n1. Range 0..12: candidates 21, 11, 1 -> pivot **11**; array `9 8 5 1 3 11 14 18 30 24 16 21 27` (pivot at index 5).\n2. Range 0..4: candidates 9, 5, 3 -> pivot **5**; array `1 3 5 9 8 11 14 18 30 24 16 21 27` (pivot at index 2). Its subarrays 0..1 and 3..4 have size 2: insertion sort -> `1 3 5 8 9 11 14 18 30 24 16 21 27`.\n3. Range 6..12 (the left side is finished first): candidates 14, 24, 27 -> pivot **24**; array `1 3 5 8 9 11 14 18 21 16 24 30 27` (pivot at index 10).\n4. Range 6..9: candidates 14, 18, 16 -> pivot **16**; array `1 3 5 8 9 11 14 16 21 18 24 30 27` (pivot at index 7).\n\nInsertion sort finishes the ranges 0..1, 3..4, 8..9 and 11..12 (size 2 each; the single cell 6..6 needs nothing). Sorted: **1 3 5 8 9 11 14 16 18 21 24 27 30**.",
+      "rubric": [
+        "(1) partition 1 pivot 11 (candidates 21, 11, 1)",
+        "(1) partition 1 array: 9 8 5 1 3 11 14 18 30 24 16 21 27",
+        "(1) partition 2 (range 0..4) pivot 5 (candidates 9, 5, 3)",
+        "(1) partition 2 array: 1 3 5 9 8 11 14 18 30 24 16 21 27",
+        "(1) partition 3 (range 6..12) pivot 24 (candidates 14, 24, 27)",
+        "(1) partition 3 array: 1 3 5 8 9 11 14 18 21 16 24 30 27 (left side already finished by insertion sort)",
+        "(1) partition 4 (range 6..9) pivot 16 (candidates 14, 18, 16)",
+        "(1) partition 4 array: 1 3 5 8 9 11 14 16 21 18 24 30 27",
+        "(1) insertion-sort ranges 0..1, 3..4, 8..9, 11..12 identified",
+        "(1) final sorted array 1 3 5 8 9 11 14 16 18 21 24 27 30"
+      ]
+    },
+    {
+      "id": "mock3-q5",
+      "type": "knowledge",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "pivot selection",
+        "inversions",
+        "counting sort",
+        "set vs unordered_set"
+      ],
+      "points": 8,
+      "prompt": "**Question 5 (general knowledge, 2 points each, 8 points)**\n\nAnswer each part briefly (about two sentences each).\n\na) **(2 points)** A student implementing median-of-3 quicksort accidentally picks the **minimum** of a[left], a[center], a[right] instead of the median. Is the sort still correct? What happens to its efficiency, and on which kind of input is it worst?\n\nb) **(2 points)** How many swaps of adjacent elements does insertion sort perform on `5 8 1 7 3 2`? What does the average number of inversions in an n-element array tell you about every sort that only swaps adjacent elements?\n\nc) **(2 points)** What is the running time of counting sort on n integers that lie in the range 0 to k-1? When is it a poor choice, and why does it not violate the Omega(n log n) lower bound?\n\nd) **(2 points)** `std::set` and `std::unordered_set` both implement the set ADT. Give the cost of insert and find for each (state average/worst for the hash version), and name one operation the ordered set supports that the hash set cannot do efficiently.",
+      "answer": "**a)** It is still **correct**: any element is a valid pivot, partitioning still puts the pivot in its final place. But the pivot is never the median of the three (it is the smallest), so the splits are lopsided; on **already sorted** input the minimum of the three is a[left], so each partition peels off one element: T(n) = T(n-1) + cn = **O(n^2)**, the very case median-of-3 was meant to avoid. Even on random input the constant factor gets worse.\n\n**b)** Insertion sort does one swap per inversion. The array `5 8 1 7 3 2` has **10 inversions** (engine: (5,1) (5,3) (5,2) (8,1) (8,7) (8,3) (8,2) (7,3) (7,2) (3,2)), so 10 adjacent swaps. The average number of inversions in a random permutation of n distinct elements is n(n-1)/4, and each adjacent swap removes at most one inversion, so every adjacent-swap sort needs **Omega(n^2)** swaps on average.\n\n**c)** **O(n + k)**: one pass to count, one pass over the k counters, one pass to write out. It is poor when k is much larger than n (e.g. 32-bit keys, k = 2^32) or the keys are not small integers. It is not comparison-based (it uses the key as an array index), so the decision-tree lower bound does not apply.\n\n**d)** `std::set` (balanced BST): insert and find **O(log n)** worst case. `std::unordered_set` (hash): insert and find **O(1) average, O(n) worst case**. The ordered set also supports ordered operations: smallest/largest element, in-order traversal, `lower_bound`/range queries, the predecessor/successor of a value; the hash set cannot do these without scanning O(n).\n\n\nEngine check of part (b): `10 inversions: [(5, 1), (5, 3), (5, 2), (8, 1), (8, 7), (8, 3), (8, 2), (7, 3), (7, 2), (3, 2)]`",
+      "rubric": [
+        "(1) still correct (any element is a valid pivot)",
+        "(1) efficiency: pivot is never the median; sorted input gives O(n^2) behavior again",
+        "(1) 10 adjacent swaps (= number of inversions)",
+        "(1) average n(n-1)/4 inversions, each adjacent swap removes one, so Omega(n^2) average for adjacent-swap sorts",
+        "(1) counting sort O(n + k)",
+        "(1) poor when k is large relative to n / keys not small integers; not comparison-based so the bound does not apply",
+        "(1) set O(log n) for insert/find; unordered_set O(1) average, O(n) worst",
+        "(1) names an ordered-only operation (min/max, in-order traversal, lower_bound, range query)"
+      ]
+    },
+    {
+      "id": "mock3-q6",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "design",
+        "priority_queue",
+        "two heaps",
+        "median",
+        "streaming"
+      ],
+      "points": 16,
+      "prompt": "**Question 6 (design and analyze, 16 points)**\n\nNumbers arrive from a sensor one at a time, **n** in total (you do not know n in advance). After **each** arrival the system must immediately report the **median** of all numbers received so far (for an even count, report the smaller of the two middle values).\n\na) **(3 points)** Describe two straightforward designs and give the **total** time each takes for all n arrivals and reports.\n\nb) **(7 points)** Describe the design that is most efficient as measured by algorithmic time complexity. Name the data structures, the invariants you maintain, and exactly what you do for each arriving number and for each report. (Hint: heaps.)\n\nc) **(4 points)** Fully analyze the total running time of your design for all n arrivals and reports, and its space.\n\nd) **(2 points)** Show the contents of your data structures and the reported median after each of the numbers **5, 2, 8, 1** arrive.",
+      "answer": "**a)** (1) Keep a sorted `vector`: each arrival is found by binary search in O(log n) but inserting shifts up to n elements, O(n); the report is O(1). Total **O(n^2)**. (2) Store everything in a vector and run quickselect for the middle element after each arrival: O(n) average per report, total **O(n^2)** average (O(n^3) worst case). (An ordered `set` does not help: it has no way to jump to the middle element, `std::next(begin(), n/2)` is O(n).)\n\n**b)** Use **two heaps**: `lo`, a max-heap (`priority_queue<int>`) holding the smaller half of the numbers, and `hi`, a min-heap (`priority_queue<int, vector<int>, greater<int>>`) holding the larger half. Invariants: (1) every element of `lo` is <= every element of `hi`; (2) `|lo| == |hi|` or `|lo| == |hi| + 1`.\n- *Arrival of x*: if `lo` is empty or `x <= lo.top()` push x on `lo`, otherwise push it on `hi`. Then rebalance: if `|lo| > |hi| + 1`, move `lo.top()` to `hi`; else if `|hi| > |lo|`, move `hi.top()` to `lo`.\n- *Report*: the median (the smaller middle value when the count is even) is `lo.top()`.\n\n**c)** Each arrival does one push and at most one pop followed by one push, so a constant number of heap operations on heaps of at most n elements, each **O(log n)** worst case: O(log n) per arrival. A report is `top()`, **O(1)**. All n arrivals and reports: n * (O(log n) + O(1)) = **O(n log n)** worst case. Space **O(n)** (all numbers are stored). This beats the O(n^2) of part (a).\n\n**d)**\n| arrives | lo (max-heap) | hi (min-heap) | reported median |\n|---|---|---|---|\n| 5 | {5} | {} | 5 |\n| 2 | {2} (5 moved to hi) | {5} | 2 |\n| 8 | {5, 2} (5 moved back) | {8} | 5 |\n| 1 | {2, 1} (5 moved to hi) | {5, 8} | 2 |",
+      "rubric": [
+        "(1) design 1 (sorted vector with shifting inserts) with total O(n^2)",
+        "(1) design 2 (quickselect / sorting each time) with total O(n^2) (average)",
+        "(1) both reasoned as O(n) work per arrival",
+        "(2) two heaps: a max-heap for the smaller half and a min-heap for the larger half (types/directions correct)",
+        "(2) invariants: every element of lo <= every element of hi, and sizes differ by at most one with lo holding the extra",
+        "(2) arrival procedure: choose the heap by comparing to lo.top(), then rebalance by moving a top",
+        "(1) report is lo.top()",
+        "(1) each heap operation is O(log n) and an arrival uses a constant number of them",
+        "(1) total O(n log n) (n arrivals x O(log n), reports O(1))",
+        "(1) space O(n)",
+        "(1) report cost O(1) noted explicitly / consecutive costs combined correctly",
+        "(1) trace after 5 and 2: lo {5}, hi {}, median 5; then lo {2}, hi {5}, median 2",
+        "(1) trace after 8 and 1: medians 5 and 2 with the correct heap contents"
+      ]
+    },
+    {
+      "id": "mock3-q7",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "selection",
+        "quickselect",
+        "heap",
+        "buildHeap",
+        "big-o"
+      ],
+      "points": 10,
+      "prompt": "**Question 7 (algorithm analysis, 10 points)**\n\nYou must find the **k-th largest** of n distinct integers stored in an unsorted vector (1 <= k <= n). Consider four algorithms from the course:\n\n- **A**: sort the whole vector with `std::sort` and read the element at the right position.\n- **B**: run buildHeap on all n elements (max-heap), then do deleteMax k times; the last one removed is the answer.\n- **C**: keep a **min-heap of at most k elements**: for each of the n elements push it, and pop the minimum if the heap has more than k elements; the answer is the top at the end.\n- **D**: textbook quickselect (median-of-3 pivot, Hoare partition).\n\na) **(7 points)** Give the tight running time of each in terms of n and k: A (worst case), B (worst case), C (worst case), D (average case **and** worst case). Justify B, C and D in a sentence each.\n\nb) **(3 points)** Now let k = n/2 (the median). Simplify the bounds of B, C and D (average) to functions of n alone, and say which of the four is asymptotically best and why the two heap algorithms are no better than A.",
+      "answer": "**a)**\n- **A: O(n log n)**: introsort (std::sort) is O(n log n) worst case whatever k is.\n- **B: O(n + k log n)**: buildHeap is O(n); each of the k deleteMax operations is O(log n) (heap size is at most n).\n- **C: O(n log k)**: n iterations, and the heap never holds more than k + 1 elements, so each push/pop is O(log k).\n- **D: O(n) average, O(n^2) worst case**: each partition costs the size of the range and, on average, the range halves (n + n/2 + n/4 + ... = O(n)); with consistently bad pivots it only shrinks by one each time.\n\n**b)** For k = n/2: B = O(n + (n/2) log n) = **O(n log n)**; C = O(n log (n/2)) = **O(n log n)**; D average = **O(n)**. **D (quickselect)** is asymptotically best on average. The heap methods are no better than sorting because with k proportional to n they still perform Theta(n) heap operations of cost Theta(log n) each. (Only for small k, e.g. k = O(1) where B is O(n) and C is O(n), do the heaps beat sorting; D's worst case O(n^2) is the price for its speed.)",
+      "rubric": [
+        "(1) A: O(n log n)",
+        "(2) B: O(n + k log n) with buildHeap O(n) and k deleteMax of O(log n)",
+        "(2) C: O(n log k) because the heap never exceeds k + 1 elements",
+        "(1) D average O(n) with a reason (range shrinks geometrically)",
+        "(1) D worst case O(n^2)",
+        "(1) for k = n/2: B and C both become O(n log n)",
+        "(1) D (quickselect) is best, O(n) average",
+        "(1) heaps do Theta(n) operations of Theta(log n) when k is proportional to n, so no better than sorting"
+      ]
+    },
+    {
+      "id": "mock3-q8",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "set",
+        "lower_bound",
+        "sliding window",
+        "coding"
+      ],
+      "points": 12,
+      "prompt": "**Question 8 (coding, 12 points)**\n\nWrite a function that returns `true` if and only if there are two **different** indices i and j with `|i - j| <= indexDiff` **and** `|nums[i] - nums[j]| <= valueDiff`. Both `indexDiff` and `valueDiff` are >= 0, and the values may be as large as the full range of `int`.\n\nUse an ordered container so that the function runs in O(n log w) time, where w is the number of elements you keep in the window (a sliding window of the previous `indexDiff` elements). Hint: you only need to check **one** candidate from the window per element.\n\n```cpp\nbool containsNearbyAlmostDuplicate(const std::vector<int>& nums, int indexDiff, int valueDiff) {\n    // write code here\n}\n```\n\n(9 points for the code.) Then **(3 points)**: give the tight worst-case running time in terms of n = nums.size() and d = indexDiff, with a brief justification.",
+      "answer": "```cpp\nbool containsNearbyAlmostDuplicate(const std::vector<int>& nums, int indexDiff, int valueDiff) {\n    std::set<long long> window;                            // the values of the previous indexDiff positions\n    for (int i = 0; i < (int)nums.size(); ++i) {\n        long long x = nums[i];\n        auto it = window.lower_bound(x - valueDiff);       // smallest stored value >= x - valueDiff\n        if (it != window.end() && *it <= x + valueDiff)    // ...and it is also <= x + valueDiff\n            return true;\n        window.insert(x);\n        if (i >= indexDiff)\n            window.erase((long long)nums[i - indexDiff]);  // that position is now too far from i + 1\n    }\n    return false;\n}\n```\n\n**Why it works.** The window holds exactly the values at positions i - indexDiff .. i - 1, the only positions within index distance of i. A window value v satisfies |v - x| <= valueDiff iff x - valueDiff <= v <= x + valueDiff. The *smallest* window value that is >= x - valueDiff (found by `lower_bound`) is the best candidate: if it is also <= x + valueDiff we have a match, and if it is not, no window value lies in the interval. Every value is first checked and then inserted, so a duplicate value is caught by the next element (valueDiff >= 0). `long long` avoids overflow in `x - valueDiff` and `x + valueDiff`.\n\n**Complexity.** n iterations; each does one `lower_bound`, one `insert` and at most one `erase` on a balanced BST holding at most min(n, d) + 1 elements: O(log(min(n, d) + 1)) each. Total **O(n log min(n, d))** (O(n log n) when d >= n). Unlike a hash set, the ordered set is required because the test is a range test, not equality. Space O(min(n, d)).",
+      "rubric": [
+        "(2) maintains a std::set (ordered) window of the values of the previous indexDiff positions",
+        "(3) uses the member lower_bound(x - valueDiff) and checks that the element found is <= x + valueDiff (one candidate suffices)",
+        "(2) inserts the current value and evicts the value that leaves the window (index i - indexDiff)",
+        "(1) uses long long (or equivalent) to avoid overflow with x +/- valueDiff",
+        "(1) correct returns, compiles (true on a match, false after the loop)",
+        "(1) n iterations each with O(log w) set operations",
+        "(1) window size bounded by min(n, d) + 1, so O(n log min(n, d))",
+        "(1) explains why an ordered set (range query) is needed instead of unordered_set"
+      ]
+    },
+    {
+      "id": "mock3-q9",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "unordered_set",
+        "coding",
+        "amortized",
+        "run counting"
+      ],
+      "points": 12,
+      "prompt": "**Question 9 (coding, 12 points)**\n\nWrite a function that returns the length of the **longest run of consecutive integers** that all appear in `nums` (in any order, duplicates possible). For example, `{100, 4, 200, 1, 3, 2}` gives 4 (the run 1, 2, 3, 4), and an empty vector gives 0.\n\nIt must run in **O(n) average time**, so sorting is not allowed. Use `std::unordered_set`. (Assume the values stay clear of INT_MIN and INT_MAX so that x - 1 and x + len do not overflow.)\n\n```cpp\nint longestConsecutive(const std::vector<int>& nums) {\n    // write code here\n}\n```\n\n(8 points for the code.) Then **(4 points)**: explain why the running time is O(n) average even though there is a while loop nested inside a for loop, and give the worst case.",
+      "answer": "```cpp\nint longestConsecutive(const std::vector<int>& nums) {\n    std::unordered_set<int> present(nums.begin(), nums.end());   // O(n) average\n    int best = 0;\n    for (int x : present) {\n        if (present.count(x - 1) == 0) {                   // x is the START of a run\n            int len = 1;\n            while (present.count(x + len) > 0)             // walk the run\n                ++len;\n            best = std::max(best, len);\n        }\n    }\n    return best;\n}\n```\n\n**Complexity.** Building the set from the n numbers: O(n) average. The outer loop visits each distinct value once and does one O(1) average `count(x - 1)`. The inner `while` only runs for a value `x` that **starts a run** (x - 1 is absent), and it walks exactly that run. Each value belongs to exactly one run, so across the whole outer loop every value is walked over by the inner loop **at most once**: the inner loop does at most d <= n steps in total (not n steps per outer iteration). Total O(n) + O(n) + O(n) = **O(n) average**. In the worst case every hash operation degrades to O(n) (all values collide) and the function is **O(n^2)**. Space O(n).\n\nTrap: starting the walk from *every* x (without the `x - 1` test) makes the inner loop re-walk the same suffix of a run again and again: O(n^2) even with a perfect hash.",
+      "rubric": [
+        "(2) puts all the numbers in an unordered_set (duplicates collapse)",
+        "(3) only starts counting at a value whose predecessor x - 1 is NOT in the set",
+        "(2) walks upward counting while x + len is in the set",
+        "(1) tracks and returns the maximum run length (0 for an empty input)",
+        "(1) building the set and the outer loop are O(n) average",
+        "(2) the inner loop is executed only from run starts, so each element is visited at most once in total (not O(n^2))",
+        "(1) worst case O(n^2) from hash collisions"
+      ]
+    }
+  ]
+}

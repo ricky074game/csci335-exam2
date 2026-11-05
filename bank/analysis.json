@@ -1,0 +1,880 @@
+{
+  "topic": "analysis",
+  "title": "Complexity analysis and design questions (cumulative)",
+  "questions": [
+    {
+      "id": "analysis-001",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "exam2-practice",
+      "tags": [
+        "heapsort",
+        "buildheap",
+        "practice-question"
+      ],
+      "points": 6,
+      "prompt": "Analyze the time complexity of **heapsort** (the textbook in-place version: build a max-heap in the array being sorted, then repeatedly swap the maximum into the last position of the shrinking heap and fix the heap).\n\n(a) Give the cost of the build phase and of the repeated-removal phase separately, with the reason for each.\n(b) Give the total, as a tight bound. Does it depend on the input order?\n(c) Briefly argue that the bound is tight (it is not just an upper bound).\n(d) How much extra space does it use?\n(e) HW7 C writes `myHeapSort(vector<int>&)` with `std::make_heap` and `std::pop_heap`. Give its complexity the same way.",
+      "answer": "**(a)**\n* *Build phase.* The array is turned into a max-heap by calling `percDown` on indices n/2 - 1 down to 0 (textbook `buildHeap`). A node at height h moves down at most h levels, and about n/2^(h+1) nodes have height h, so the total work is the sum of h * n/2^(h+1) = O(n) (heap slides: 0*n/2 + 1*n/4 + 2*n/8 + ... = n). So building is **O(n)**, not O(n log n).\n* *Removal phase.* For j = n-1 down to 1: `swap(a[0], a[j])` is O(1) (the maximum goes to its final place, the heap shrinks by one), then `percDown(a, 0, j)` fixes the heap in O(log j) <= O(log n), because a percolate-down goes down at most the height of the heap, one level per O(1) step. That is n-1 iterations of O(log n): **O(n log n)**.\n\n**(b)** O(n) + O(n log n) = **O(n log n)**, and this holds in the best, average and worst case: the heap shape depends only on n, so the number of levels is always about log n regardless of the input order (heapsort is not adaptive).\n\n**(c)** Tight: the first n/2 removals each happen while the heap still has at least n/2 elements. The element moved to the root is a leaf value, so it typically sinks to the bottom, Omega(log n) steps each, giving Omega(n log n). Alternatively: heapsort is a comparison sort, so by the decision-tree theorem (n! leaves, depth >= ceil(log n!)) it needs Omega(n log n) comparisons in the worst case. Upper and lower bounds match: Theta(n log n) worst case.\n\n**(d)** O(1) extra space: the heap lives in the array being sorted (in place). It is not stable.\n\n**(e)** `make_heap` is O(n) (it is buildHeap). Each `pop_heap` is O(log n) (moves the max to the end and re-heapifies the shorter range), done n times: O(n log n). Total O(n) + O(n log n) = **O(n log n)**, the same as the textbook version. (`sort_heap` does the same loop internally.)",
+      "rubric": [
+        "Build phase O(n) with a reason (sum of heights, or 'half the nodes are leaves and move 0 levels'), not n log n",
+        "Removal phase: n iterations of an O(log n) percolate-down => O(n log n), with the reason (height of the heap)",
+        "Total O(n log n), added correctly (O(n)+O(n log n)), stated as best = average = worst",
+        "Tightness argument (half the removals on a big heap, or the comparison-sort lower bound)",
+        "Space O(1) / in place (and optionally not stable)",
+        "(e) make_heap O(n) + n pop_heap x O(log n) = O(n log n)"
+      ]
+    },
+    {
+      "id": "analysis-002",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "exam2-practice",
+      "tags": [
+        "splay",
+        "multi-variable",
+        "tight-bound",
+        "practice-question"
+      ],
+      "points": 8,
+      "prompt": "A list of *k* elements is inserted, one at a time, into a **splay tree** that currently holds *n* elements.\n\n(a) Give the time complexity of the whole algorithm **for an average input**, as a tight bound in O-notation, and justify it.\n(b) Prove or argue that the bound is **tight**, not just an upper bound.\n(c) What changes if the question asks for the **worst case of a single insertion**? For the **worst-case amortized** cost of the whole sequence?\n(d) Simplify your answer in the case k <= n.",
+      "answer": "**(a)** Average-case insertion into a splay tree holding N nodes is O(log N). But the tree does not stay at size n: the j-th inserted element goes into a tree of size n + j - 1 <= n + k, so each insertion costs O(log(n+k)) (not O(log n)). With k insertions the total is **O(k log(n+k))**.\n\n**(b)** Tight: half of the insertions - the last k/2 of them - go into a tree of size at least n + k/2. Each of those k/2 insertions costs, on average, at least about log(n + k/2) >= log((n+k)/2) = log(n+k) - 1. So the total is at least (k/2)(log(n+k) - 1) = Omega(k log(n+k)). The lower bound equals the upper bound, so the bound is tight: Theta(k log(n+k)).\n\n**(c)** *Single insertion, worst case:* a splay tree can be a chain, so one insertion (the descent plus splaying) can cost **O(n+k)**; the O(log) bound is not per operation. *Worst-case amortized:* any sequence of M operations costs O(M log N) in total, so the k insertions cost **O(k log(n+k))** in total in the worst case (individual insertions may be slow, but the total is not). So the formula is the same, but the justification is the amortized guarantee instead of an average over inputs.\n\n**(d)** If k <= n then n + k <= 2n, so log(n+k) <= log n + 1 = O(log n) and the total is **O(k log n)**. (If k > n there is no such simplification unless a relation between k and n is given; for k >= n it is O(k log k).)",
+      "rubric": [
+        "Per-insertion cost uses log(n+k), not log n, with the reason that the tree grows to n+k",
+        "Multiplies by k insertions: O(k log(n+k))",
+        "Tightness via 'last k/2 insertions are into a tree of size >= n + k/2', concluding Omega(k log(n+k))",
+        "(c) distinguishes single-op worst case O(n+k), amortized O(log) per op, and average",
+        "(d) correct simplification O(k log n) when k <= n, with the reason"
+      ]
+    },
+    {
+      "id": "analysis-003",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "exam2-practice",
+      "tags": [
+        "design",
+        "hashing",
+        "vector",
+        "practice-question"
+      ],
+      "points": 14,
+      "prompt": "You have a file with millions of names (unsorted) for a huge online seminar. When someone joins the seminar, if they are on the list they are admitted and their name is recorded in the order they joined. Each name can only be admitted once. At the end, you will need to print out every 100th guest in order of arrival, and they will receive prizes. Assume about half the people on the list will attend.\n\nTo be most efficient as measured by algorithmic time complexity, what data structure(s) will you use and why? Describe and **fully analyze** the complexity of your proposed design. (Let n be the number of names in the file.)",
+      "answer": "**Operations needed.** (1) Test whether a joining name is on the list, and make sure each name is admitted only once - many times. (2) Remember the order of arrival. (3) At the end, access every 100th guest in arrival order.\n\n**Design.**\n* For (1): an **`unordered_set<string>`** (hash). We only ask 'is this name present?' and need no order, so a hash gives O(1) average insert, find and erase.\n* For (2) and (3): a **`vector<string>`** with `push_back`. A hash cannot keep arrival order (it is unordered); a vector stores elements in the order they are appended and has O(1) random access.\n\n**Analysis.**\n1. Read the n names from the file and insert each into the hash: reading is sequential, O(n); each insert is O(1) average, so O(n) total (rehashes are amortized into the O(1)).\n2. As each guest joins: one `find`/`erase` in the hash, O(1) average. If found, erase the name (this is what enforces 'admitted only once': a second attempt finds nothing) and `push_back` it onto the vector, amortized O(1). About n/2 guests arrive, so O(n) total for both.\n3. At the end, access indices 99, 199, 299, ...: the vector has random access, so each is O(1); there are about (n/2)/100 of them, so at most O(n) (really O(n/100), which is O(n)).\n\nSteps are consecutive, so they add: O(n) + O(n) + O(n) = **O(n) total (average case)**.\n\n**Worst case.** If the hash degenerates (every name in one bucket) each hash operation costs O(n), so the worst case is O(n^2). With a balanced-tree `set` instead of the hash the algorithm would be O(n log n) in every case; the hash is chosen because its average cost is lower.\n\n**Space.** O(n) for the hash plus O(n) for the vector.",
+      "rubric": [
+        "Chooses a hash set (unordered_set) for the membership test, with the reason (many lookups, no order needed)",
+        "Chooses a vector with push_back for arrival order (or equivalent), with the reason; explains why a hash alone can't do it",
+        "Cost of each step with its reason: load names O(n), n/2 find+erase O(1) average each, push_back amortized O(1), n/200 indexed accesses O(1)",
+        "Adds the consecutive steps correctly to O(n)",
+        "States average vs worst case for the hash (worst O(n^2))",
+        "Handles 'admitted only once' (erase from the hash on admission)",
+        "Mentions that n/100 accesses is still O(n) / space cost"
+      ]
+    },
+    {
+      "id": "analysis-004",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "hashing",
+        "sorting",
+        "two-sum",
+        "naive-vs-sort-vs-hash"
+      ],
+      "points": 12,
+      "prompt": "**Classic hash table problem (slides).** Given an integer array of size n, check whether any 2 integers in it add up to x.\n\n(a) Describe the naive solution and give its time and extra space complexity.\n(b) Describe a solution that sorts first, and give its time and extra space.\n(c) Describe a hashing solution using an `unordered_set` and give its time (average and worst) and extra space. Be careful that an element cannot pair with itself.\n(d) Which would you choose if you need a worst-case guarantee? Which for the fastest typical running time?",
+      "answer": "**(a) Naive.** Two nested loops over all pairs (i, j), i < j, testing a[i] + a[j] == x. There are n(n-1)/2 pairs, each test O(1): **O(n^2) time, O(1) extra space.**\n\n**(b) Sort first.** Sort the array with `std::sort`: O(n log n) worst case (introsort), in place. Then use two pointers, i at the smallest and j at the largest element:\n* if a[i] + a[j] == x, found;\n* if the sum < x, then a[i] is too small to pair with anything <= a[j], so discard it: ++i;\n* if the sum > x, a[j] is too large: --j.\nEvery step discards one index, so at most n-1 steps: O(n). Total O(n log n) + O(n) = **O(n log n) worst case, O(1) extra space** (in-place sort). (Alternative: for each a[i], binary-search for x - a[i]: n * O(log n) = O(n log n), same bound.)\n\n**(c) Hashing.** `unordered_set<int> seen;` For each element a in the array: if `seen.count(x - a)` is nonzero, return true; then `seen.insert(a)`. Checking *before* inserting a means an element is never paired with itself (x = 2a needs a second copy of a to have been seen already). n iterations, each one find (O(1) average) and one insert (O(1) average): **O(n) average time**, **O(n^2) worst case** (all keys collide into one bucket, so each operation is O(n)), **O(n) extra space**.\n\n**(d)** For a worst-case guarantee: sorting, **O(n log n)** (the hash version is O(n^2) in its worst case, the same as the naive one). For the fastest typical time: hashing, O(n) average, at the cost of O(n) extra space. Sorting is also better if memory is tight; the sorted order is destroyed unless you sort (value, index) pairs.",
+      "rubric": [
+        "(a) naive O(n^2) from n(n-1)/2 pairs, O(1) space",
+        "(b) sort O(n log n) + linear two-pointer or binary-search scan with the reason it is linear (each step discards an index); total O(n log n)",
+        "(c) hash: n x O(1) average = O(n) average, O(n) space",
+        "(c) states the worst case O(n^2) for hashing",
+        "(c) avoids pairing an element with itself (check before insert)",
+        "(d) compares the three correctly (guarantee -> sort, typical -> hash, naive worst)"
+      ]
+    },
+    {
+      "id": "analysis-005",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "hw5",
+      "tags": [
+        "hw5",
+        "hashing",
+        "unordered_map",
+        "map",
+        "strings"
+      ],
+      "points": 8,
+      "prompt": "**HW5 Part 3.** A DNA string `s` has length n. Find every 10-letter substring that occurs more than once. A solution slides over `s`, takes `s.substr(i, 10)` for each valid i, and counts it in `unordered_map<string,int> sequence` with `sequence[sub]++`, then scans the map and collects the substrings whose count is > 1.\n\n(a) Give the time complexity of this solution, explaining the cost of each part. State average and worst case.\n(b) What if you had used an ordered `map<string,int>` instead? Give the complexity.\n(c) Suppose instead the substrings have a variable length L (a parameter). How do (a) and (b) change?",
+      "answer": "**(a)** There are n - 9 = O(n) substrings. For each one:\n* `substr(i, 10)` copies 10 characters: an 'expensive' but constant-time O(1) (10 is a constant);\n* `sequence[sub]++` hashes the 10-character string (O(1), constant length) and looks it up/inserts: O(1) average.\nSo O(1) average per substring and **O(n) average** for the loop. Then we iterate over the map: the number of entries is at most n - 9, and iterating a hash with a bounded load factor is O(n), and testing each count is O(1): O(n). The consecutive parts add: **O(n) average**. Worst case: if all substrings collide, each `[]` is O(number of entries) = O(n), so the worst case is O(n^2).\n\n**(b)** An ordered map is a balanced BST: each `[]` is O(log n) key comparisons (each comparison of two 10-character strings is O(1)). n of them: O(n log n); the final scan is O(n). Total **O(n log n)**, in the worst case as well (no hashing, so no degenerate case). This is slower on average than the hash (O(n)) but has no bad worst case.\n\n**(c)** With length-L substrings, `substr`, hashing and comparing are each O(L). (a) becomes O(nL) average (and O(n^2 L) worst); (b) becomes O(nL log n). If L is a fixed constant such as 10 the factor L disappears.",
+      "rubric": [
+        "(a) counts O(n) substrings and gives O(1) per substring (substr, hash, increment) with justification that length 10 is constant",
+        "(a) includes the O(n) pass over the map and adds the steps",
+        "(a) states average O(n) and worst-case O(n^2) for the hash",
+        "(b) ordered map O(log n) per access => O(n log n)",
+        "(c) variable length L adds a factor L to both (O(nL) vs O(nL log n))"
+      ]
+    },
+    {
+      "id": "analysis-006",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "set",
+        "lower_bound",
+        "sliding-window",
+        "hw4",
+        "multi-variable"
+      ],
+      "points": 8,
+      "prompt": "The following (HW4) solution checks whether, among the last `indexDiff` elements, some two values differ by at most `valueDiff`.\n\n```cpp\nbool containsNearbyAlmostDuplicate(vector<int>& nums, int indexDiff, int valueDiff) {\n    std::set<int> last_k;\n    for (auto it = nums.begin(); it != nums.end(); ++it) {\n        auto lb = last_k.lower_bound(*it - valueDiff);\n        if ( (lb != last_k.end()) && (*lb <= *it + valueDiff) )\n            return true;\n        last_k.insert(*it);\n        if ( it - nums.begin() >= indexDiff )\n            last_k.erase( *(it - indexDiff) );\n    }\n    return false;\n}\n```\nLet n = `nums.size()` and k = `indexDiff`.\n\n(a) Give the worst-case time complexity as a tight bound, analyzing every call in the loop.\n(b) How big does the set get, and why does that matter for the bound?\n(c) What would the complexity be if the `erase` line were deleted? Why?\n(d) Could an `unordered_set` replace the `set` here? Explain.",
+      "answer": "**(a)** The loop runs n times. Per iteration:\n* `lower_bound` on a set holding at most k+1 elements: O(log k) (balanced BST descent);\n* the boolean test, `end()`, dereference: O(1);\n* `insert`: O(log k);\n* the index test and the iterator arithmetic: O(1) (vector iterators are random access);\n* `erase(value)`: O(log k).\nA bunch of O(1) and O(log k) operations in sequence is O(log k) per iteration, n times: **O(n log k)** worst case.\n\n**(b)** The erase keeps the window at the last k elements: after each insertion the set holds at most k+1 elements (then k after the erase). The set never has size n, so every operation is O(log k) and not O(log n). That matters because k can be much smaller than n: n log k is smaller than n log n.\n\n**(c)** Without the `erase` the set keeps growing by one element per iteration (duplicates would have returned true already), reaching size n. Each operation is then O(log of current size), and the last n/2 of them cost at least log(n/2), so the total is **O(n log n)** - tight by the half-the-iterations argument - and the answer would also be wrong, because values outside the index window would still be matched.\n\n**(d)** No. The loop asks for the *nearest value to x in a range*: `lower_bound` returns the smallest element >= x - valueDiff, which needs an **ordered** container. A hash set has no order and no range query (only membership), so it could only test for equality (valueDiff = 0, the 'contains duplicate II' problem), where it gives O(n) average.",
+      "rubric": [
+        "(a) lists the cost of lower_bound, insert, erase as O(log k) each with the reason (balanced BST of size <= k+1) and the O(1) pieces",
+        "(a) multiplies by n iterations: O(n log k)",
+        "(b) set size is bounded by k+1 because of the erase; explains why that gives log k, not log n",
+        "(c) without erase the set grows to n so O(n log n) (and notes the logic would be wrong)",
+        "(d) says a hash can't do lower_bound/range search; only equality; O(n) average in that special case"
+      ]
+    },
+    {
+      "id": "analysis-008",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "selection",
+        "heap",
+        "quickselect",
+        "multi-variable",
+        "6A-6B"
+      ],
+      "points": 12,
+      "prompt": "Find the **k-th smallest** of n numbers (textbook section 6.4 and the Sorting slides). Consider four algorithms:\n\n1. sort the array, return a[k-1];\n2. **6A:** `buildHeap` on all n numbers (min-heap), then k `deleteMin`;\n3. **6B:** scan the numbers keeping a **max**-heap of the k smallest seen so far (push; if size > k, pop the max);\n4. **quickselect** (textbook, any reasonable pivot rule).\n\n(a) Give the time complexity of each, with the reason for each part.\n(b) Fill in the best algorithm by time for each of k = 5, k = sqrt(n), k = n/2, and justify.\n(c) When would you pick 6B over 6A even if 6A has the better time? When quickselect even though it has a bad worst case?",
+      "answer": "**(a)**\n1. **Sort:** O(n log n) (`std::sort`, worst case); index O(1). Total O(n log n).\n2. **6A:** buildHeap is O(n) (sum of heights); each `deleteMin` is O(log n) (percolate down in a heap of size <= n); k of them: O(k log n). Total **O(n + k log n)**.\n3. **6B:** each of the n elements causes one push O(log k) and at most one pop O(log k) on a heap of size <= k+1: **O(n log k)**, with O(k) space and a single pass (works on a stream).\n4. **Quickselect:** partition is O(n); then recurse into *one* side only. If the pivot splits the array roughly in half on average, T(n) = T(n/2) + O(n) = O(n) (cn + cn/2 + cn/4 + ... = 2cn). **O(n) average**, but if the pivot is always the min or max (e.g. first-element pivot on sorted input) T(n) = T(n-1) + O(n) = **O(n^2) worst case**.\n\n**(b)**\n| k | sort | 6A: n + k log n | 6B: n log k | quickselect | best |\n|---|---|---|---|---|---|\n| 5 (constant) | n log n | O(n) | O(n) (log 5 is a constant) | O(n) avg | 6A, 6B or quickselect: **O(n)** |\n| sqrt(n) | n log n | n + sqrt(n) log n = O(n) | n log sqrt(n) = O(n log n) | O(n) avg | **6A or quickselect, O(n)** |\n| n/2 | n log n | n + (n/2) log n = O(n log n) | O(n log n) | O(n) avg | **quickselect, O(n) average** (heap methods are O(n log n)) |\n\n**(c)** 6B uses O(k) memory and one pass, so choose it when the numbers arrive as a stream or n is too large to store/modify (6A needs all n in a heap). Quickselect is best on average for every k and uses O(1) extra space, but only has an average-case guarantee; if the input could be adversarial and a worst-case bound matters, use a heap method (or introselect/median-of-medians). It also rearranges the input array.",
+      "rubric": [
+        "Sort O(n log n); 6A O(n + k log n) with buildHeap O(n) justified; 6B O(n log k)",
+        "Quickselect O(n) average with the T(n)=T(n/2)+O(n) reasoning, and O(n^2) worst-case with its cause",
+        "Table (b): k=5 -> O(n); k=sqrt(n): 6A/quickselect O(n), 6B O(n log n); k=n/2: quickselect O(n), others n log n",
+        "(c) 6B for streams / O(k) space; quickselect for average speed but worst case O(n^2)",
+        "Uses the correct variables (n and k) throughout, not just n"
+      ]
+    },
+    {
+      "id": "analysis-009",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "design",
+        "unordered_set",
+        "vector",
+        "order",
+        "dedupe"
+      ],
+      "points": 8,
+      "prompt": "A stream of n items (strings) arrives. Output each distinct item exactly once, in the order of its **first appearance**. Choose data structures and **fully analyze** the complexity (average and worst case). Compare with two alternatives: using a `set` instead of a hash, and sorting first.",
+      "answer": "**Operations needed:** (1) 'have I seen this item before?' once per item; (2) record items in order of first appearance.\n\n**Design.** `unordered_set<string> seen` for (1), `vector<string> out` for (2).\n```cpp\nvector<string> dedupe(const vector<string>& stream) {\n    unordered_set<string> seen;\n    vector<string> out;\n    for (const string& s : stream)\n        if (seen.insert(s).second)   // .second is true only if s was NOT already present\n            out.push_back(s);\n    return out;\n}\n```\n**Analysis** (string length treated as a constant; otherwise multiply by L):\n* per item: `insert` = hash + lookup + possible insert, O(1) average; `push_back` amortized O(1);\n* n items: n x O(1) = **O(n) average**; worst case O(n^2) if all items collide into one bucket (each insert then scans O(n) items);\n* space: O(u) for the hash and the output, u = number of distinct items.\n\n**Alternatives.**\n* `set<string>` instead of the hash: each insert O(log u) (u distinct items so far): **O(n log u)**, in the worst case as well - slower on average but with no worst-case degeneration.\n* Sort first (`sort` + `unique`): O(n log n) and the original order is lost; to recover the first-appearance order you must sort (item, index) pairs, remove duplicates keeping the smallest index, then sort by index: O(n log n) overall. More complex and slower than the hash on average.",
+      "rubric": [
+        "Hash set for membership and vector for order, with reasons",
+        "insert().second idiom or equivalent check-then-insert; each O(1) average",
+        "Total O(n) average and O(n^2) worst case; space O(u)",
+        "set alternative O(n log u) and the sorting alternative O(n log n) with the order problem noted"
+      ]
+    },
+    {
+      "id": "analysis-010",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "design",
+        "unordered_map",
+        "priority_queue",
+        "top-k",
+        "multi-variable"
+      ],
+      "points": 12,
+      "prompt": "A text has n words, of which u are distinct. Return the k most frequent words (any order among the k). Design a solution, give the code skeleton or a precise description, and fully analyze it. Then give the complexity of at least two other ways to do the selection step and say when each is best.",
+      "answer": "**Operations:** (1) count occurrences of each word; (2) from the u (word, count) pairs, select the k largest counts.\n\n**Step 1 - count.** `unordered_map<string,int> cnt; for (w : words) ++cnt[w];` Each `[]` is O(1) average (hash a word of constant length), n words: **O(n) average** (O(n^2) worst case if everything collides; O(nL) average for words of length L).\n\n**Step 2 - select (size-k min-heap).** `priority_queue<pair<int,string>, vector<pair<int,string>>, greater<pair<int,string>>> pq;` For each of the u entries of `cnt`: `pq.push({count, word})`; if `pq.size() > k` then `pq.pop()` (removes the smallest count). The heap never exceeds k+1 elements, so each push/pop is O(log k): u x O(log k) = **O(u log k)**. Finally pop the k elements (O(k log k)). Space O(k) for the heap.\n\n**Total:** O(n) + O(u log k) + O(k log k) = **O(n + u log k)** average (since k <= u, the last term is absorbed). Because u <= n this is within O(n log k). Iterating the map is O(u).\n\n**Other ways to do step 2.**\n* Copy the u pairs to a vector and **sort** by count: O(u log u). Total O(n + u log u). Simplest; best when k is close to u.\n* `make_heap` (max-heap) on all u pairs O(u) then k `pop_heap`: **O(u + k log u)**: best when k is small, but O(u) extra space.\n* `nth_element` / quickselect on the u pairs: **O(u) average**, O(u^2) worst; total O(n + u) average. The best average time; then sort just the k winners if order is required (O(k log k)).\nA `map` instead of the hash for counting gives O(n log u) worst-case guaranteed.",
+      "rubric": [
+        "Hash map counting with ++cnt[w], O(1) average per word, O(n) total",
+        "Selection with a size-k heap: u pushes/pops of O(log k) each => O(u log k); explains why log k (heap capped at k)",
+        "Total O(n + u log k) average, with the worst case for the hash mentioned",
+        "At least two alternatives with correct costs (sort O(u log u); make_heap + k pops O(u + k log u); quickselect O(u) average)",
+        "Says when each alternative is best (k small vs k near u; space; average vs worst)"
+      ]
+    },
+    {
+      "id": "analysis-011",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "design",
+        "set",
+        "unordered_map",
+        "leaderboard",
+        "update"
+      ],
+      "points": 14,
+      "prompt": "A game has up to n players, each with a unique integer id and an integer score. Operations (given in any interleaved order, q operations in total):\n\n* `setScore(id, s)` - create the player or change the player's score to s;\n* `scoreOf(id)` - return the player's current score;\n* `top(k)` - return the k players with the highest scores, best first.\n\nWhich data structure(s) will you use, and why? Analyze the cost of each operation and the total for q operations. Explain why a `priority_queue` alone is not a good design, and what an operation 'rank(id)' (the position of a player in the sorted order) would cost with your design.",
+      "answer": "**Operations needed:** (1) look up a player's *current* score by id (to find the old score before an update, and for `scoreOf`); (2) keep the players ordered by score so the best k can be read off; (3) change a score = remove the player from the ordering and re-insert under the new score.\n\n**Design.**\n* `unordered_map<int,int> score` : id -> score. O(1) average lookup by id. (A hash is right here: we ask only by id, never by range.)\n* `set<pair<int,int>> board` : (score, id) pairs, ordered by score then id (the id makes the pairs unique). A balanced BST keeps the order, supports delete of an arbitrary element, and allows reading the maximum with `rbegin()`.\n\n**Analysis.**\n* `scoreOf(id)`: one hash lookup: **O(1) average**, O(n) worst case.\n* `setScore(id, s)`: look up the old score in the hash O(1) average; if present, `board.erase({old, id})` O(log n); `board.insert({s, id})` O(log n); update the hash O(1) average. Consecutive steps add: **O(log n)** per update (O(1) average hash part absorbed).\n* `top(k)`: start at `board.rbegin()` O(1) and take k steps backwards; each `++` on a reverse iterator is amortized O(1) (a single step can be O(log n)), so **O(k)** (k consecutive iterator steps cost O(k) in total; there is no search involved).\n* q operations: at most q updates x O(log n) + q hash operations x O(1) average = **O(q log n)** (q up to the number of operations; the board never has more than n entries so the log is log n).\n\n**Why not a `priority_queue` alone?** A heap gives only the maximum; reading the top k would remove them (k pops, O(k log n)) and have to be pushed back. More importantly, an update needs to find the player's old entry inside the heap, which costs **O(n)** because a heap has no search; the std::priority_queue has no decreaseKey at all. (A workaround is lazy deletion: push the new entry and ignore stale ones when popped, O(log n) per update but the heap grows to q entries.)\n\n**rank(id).** The position in the set is `std::distance(board.begin(), board.find({score[id], id}))`: finding is O(log n) but `distance` on bidirectional set iterators walks one step at a time, **O(n)**. The STL has no order-statistics tree, so rank is O(n) with this design; a sorted vector would make rank O(log n) by binary search but then every update would cost O(n) (shifting).",
+      "rubric": [
+        "Chooses a hash map (id->score) for lookups and an ordered set of (score,id) for ordering, with reasons",
+        "setScore = hash lookup + erase old + insert new = O(log n)",
+        "top(k) = O(k) by walking from rbegin(); scoreOf O(1) average",
+        "Total for q ops O(q log n), mentions the hash average/worst qualification",
+        "Explains why a plain priority_queue fails (no find/update of an arbitrary element, O(n) search)",
+        "rank costs O(n) because distance on set iterators is linear (and why)"
+      ]
+    },
+    {
+      "id": "analysis-012",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "design",
+        "priority_queue",
+        "merge",
+        "multi-variable",
+        "k-way"
+      ],
+      "points": 12,
+      "prompt": "You are given k sorted arrays with N elements in total (every array is non-empty, so N >= k). Produce one sorted array containing all N elements.\n\n(a) Analyze the approach 'merge array 1 with array 2, then the result with array 3, and so on'.\n(b) Analyze 'concatenate everything and sort'.\n(c) Design a faster approach with a priority queue and fully analyze it (time and extra space).\n(d) What does your answer in (c) give for k = 2, and for k = N?",
+      "answer": "**(a) Repeated pairwise merging.** Merging two sorted sequences of sizes a and b is O(a + b) (one pass: each comparison outputs one element). The accumulated result after merging j arrays has size about jN/k, and merging it with the next array costs about that much. Sum over the k-1 merges: about (N/k)(2 + 3 + ... + k) = O(kN). **O(kN) worst case** (about N k / 2 element moves).\n\n**(b) Concatenate and sort.** Copy all N elements, O(N), then `sort`: **O(N log N)**. It ignores that each array is already sorted.\n\n**(c) Min-heap of k entries.** Put the first element of each array into a `priority_queue` as a triple (value, array index, position in that array), ordered by value. Building it takes O(k) (or k pushes, O(k log k)). Then repeat N times: `top` O(1); `pop` O(log k) (the heap holds at most k entries); append the value to the output (amortized O(1), or O(1) if the output vector is reserved); if that array has a next element `push` it, O(log k). Each of the N rounds is O(log k), so the loop is O(N log k). Total **O(k + N log k) = O(N log k)** (since N >= k, the O(k) is absorbed). Extra space: **O(k)** for the heap (plus O(N) output).\n\nThis is tight in the comparison model: a k-way merge must at least decide which of the k fronts is smallest on each output, Omega(N log k) comparisons in general. It beats (a) because log k <= k and beats (b) because log k <= log N, and it uses the fact that the inputs are sorted.\n\n**(d)** k = 2: the heap has size 2, N x O(log 2) = O(N), the ordinary O(N) merge from mergesort. k = N (every array has one element): O(N log N), the same as sorting (the problem becomes sorting N numbers, so nothing better is possible).",
+      "rubric": [
+        "(a) pairwise merging O(kN), reasoned from merge cost O(a+b) and the growing accumulated array",
+        "(b) concatenate+sort O(N log N)",
+        "(c) heap of size k with one element per array; N rounds x O(log k) => O(N log k); O(k) extra space",
+        "(c) explains why log k (heap size is k, not N) and that N>=k absorbs the O(k) build",
+        "(d) k=2 gives O(N), k=N gives O(N log N)"
+      ]
+    },
+    {
+      "id": "analysis-013",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "design",
+        "hashing",
+        "sorting",
+        "intersection",
+        "multi-variable"
+      ],
+      "points": 8,
+      "prompt": "Two integer arrays have n and m elements (n <= m). Return the values that appear in both (each value once). Give three designs - hash, sort-both, and 'sort the smaller one' - with the full complexity of each (average and worst where relevant), and say which you would choose.",
+      "answer": "**Hash design.** Insert the n elements of the smaller array into an `unordered_set` (O(n) average). Scan the larger array; for each element, if it is in the set (find, O(1) average) add it to the result and erase it from the set (so each value is reported once, O(1) average). **O(n + m) = O(m) average**, O(nm) worst case (every operation O(n) when all keys collide), O(n) extra space.\n\n**Sort both.** Sort both arrays: O(n log n + m log m) (worst case, introsort). Walk both with two indices, advancing the smaller one (the merge idea): each step advances one index, so at most n + m steps, O(n + m). Total **O(n log n + m log m)**, in the worst case too; O(1) extra space (in-place sorts), output aside.\n\n**Sort the smaller one.** Sort only the n-element array, O(n log n); then for each of the m elements of the larger array run a binary search, O(log n) each: O(m log n). Total **O((n + m) log n)**, guaranteed worst-case, O(1) extra space. Cheaper than sorting both when m is much larger than n.\n\n**Choice.** Hashing is the best on average (linear). If a worst-case guarantee or little memory is required, sort the smaller array and binary-search (O((n+m) log n)).",
+      "rubric": [
+        "Hash: smaller into the set, scan larger => O(n+m) average, O(nm) worst, with reasons",
+        "Sort both + merge-style scan: O(n log n + m log m) with the O(n+m) scan justified",
+        "Sort smaller + binary search for the larger: O((n+m) log n)",
+        "Keeps both variables n and m; justifies the choice (average vs guarantee vs space)"
+      ]
+    },
+    {
+      "id": "analysis-014",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "design",
+        "unordered_map",
+        "anagrams",
+        "strings",
+        "multi-variable"
+      ],
+      "points": 10,
+      "prompt": "n lowercase words, each at most L characters long, are given. Group the words that are anagrams of each other. Design a solution and fully analyze it (average and worst case) in n and L. Give two different ways to make the grouping key and compare them, and compare with using `map` instead of `unordered_map`.",
+      "answer": "**Operations:** (1) compute a canonical key for each word that is the same for anagrams; (2) find/create the group for that key; (3) append the word to the group.\n\n**Design.** `unordered_map<string, vector<string>> groups;` For each word w: `groups[key(w)].push_back(w)`. At the end the values of the map are the groups.\n\n**Key 1 - sorted letters.** `key = w; sort(key.begin(), key.end());` costs O(L log L). Total key cost n x O(L log L).\n**Key 2 - letter counts.** Count the 26 letters into an array in O(L + 26), then build the key string from the 26 counts (e.g. a string of 26 characters or numbers): O(L + 26) = O(L) per word. Total n x O(L) = O(nL).\n\n**Map operations.** Hashing a key of length about L is O(L), `[]` finds the bucket in O(1) expected probes, and each comparison of the key with a stored key is O(L): O(L) average per access. `push_back` onto the group is amortized O(1). So per word: key + O(L) access + O(1).\n\n**Totals.**\n* sorted-letter keys: n x (O(L log L) + O(L)) = **O(n L log L) average**;\n* count keys: n x (O(L) + O(L)) = **O(nL) average**;\n* worst case (all keys collide): each access scans O(n) entries comparing O(L) characters: O(n^2 L) in either design.\nSpace: O(nL) for the groups and keys.\n\n**With `map` instead of `unordered_map`:** each access is O(log n) key comparisons, each O(L): O(L log n) per word, so **O(n L log n)** for the grouping in the worst case as well (guaranteed), plus the key-building cost (O(n L log L) or O(nL)): total O(nL(log n + log L)) with sorted keys. The hash is faster on average; the map has no degenerate case.",
+      "rubric": [
+        "Canonical key idea (sorted letters or letter counts) and a hash map from key to a list of words",
+        "Key cost per word: O(L log L) for sorting vs O(L) for counting, multiplied by n",
+        "Hash access cost O(L) (hash/compare the key), push_back amortized O(1); totals O(nL log L) and O(nL) average",
+        "Worst case for the hash stated (O(n^2 L))",
+        "map comparison: O(L log n) per word, so O(nL log n) plus key cost"
+      ]
+    },
+    {
+      "id": "analysis-015",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "design",
+        "priority_queue",
+        "scheduling",
+        "lower-bound"
+      ],
+      "points": 8,
+      "prompt": "A scheduler receives n tasks over time, each with an integer priority; at any time it must run the pending task with the **highest** priority next. Arrivals and runs are interleaved in an arbitrary order, and every task is eventually run.\n\n(a) Choose a data structure and analyze the total cost for the n arrivals and n runs. Why can't you claim O(1) per insertion even though heap insertion is O(1) on average?\n(b) Suppose all n tasks are known before any is run. What is the best way to build the structure, and what is the total?\n(c) Show that O(n log n) is the best possible for a comparison-based scheduler.\n(d) How would you break ties by arrival order?",
+      "answer": "**(a)** Use a **`priority_queue`** (binary heap). `push` is O(log n) worst case (percolate up at most the height of the heap), `top` O(1), `pop` is O(log n) (move the last element to the root and percolate down). n pushes + n pops: n x O(log n) + n x O(log n) = **O(n log n) worst case**. The O(1) *average* insert applies only if the new priorities come from the same distribution as the priorities already in the heap; when runs (pops) are interleaved with arrivals, the pops keep removing the best elements, so new arrivals tend to rise higher than average. So the average-case claim does not hold, and we use O(log n) per push.\n\n**(b)** Put all n tasks in a vector and call `make_heap` (or the priority_queue range constructor): **O(n)** (buildHeap). Then n pops: O(n log n). Total O(n) + O(n log n) = **O(n log n)**; the n pops dominate. Building the heap with n individual pushes would also be O(n log n) worst case, O(n) on average for random priorities.\n\n**(c)** If all tasks are known and are then run in priority order, the scheduler outputs the tasks in sorted order of priority; so it sorts n items using only comparisons. Any comparison sort needs Omega(n log n) comparisons in the worst case (decision tree with n! leaves has depth >= ceil(log n!) = Omega(n log n)). So Omega(n log n) is a lower bound, the heap meets it: Theta(n log n).\n\n**(d)** Store (priority, arrival counter) pairs where the counter is decreasing (or compare the counter second, earlier arrival wins). The comparison stays O(1), so the costs do not change.",
+      "rubric": [
+        "priority_queue / heap; push and pop O(log n) each, total O(n log n)",
+        "Explains why average O(1) insert doesn't apply (interleaved deletes change the distribution) or states worst-case O(log n)",
+        "(b) make_heap O(n) then n pops O(n log n); total O(n log n)",
+        "(c) lower bound: the run order is sorted order; comparison sorts need Omega(n log n)",
+        "(d) tie-break key (arrival counter) with no change to the Big-O"
+      ]
+    },
+    {
+      "id": "analysis-016",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "slides",
+      "tags": [
+        "design",
+        "sliding-window",
+        "multiset",
+        "priority_queue",
+        "deque",
+        "multi-variable"
+      ],
+      "points": 12,
+      "prompt": "An array has n numbers. For every window of w consecutive elements, report the maximum. Analyze (a) the naive method, (b) a `multiset` window, (c) a `priority_queue` of (value, index) with lazy deletion, and (d) a monotonic `deque` of indices (values decreasing from front to back; pop the back while it is smaller than the new element; pop the front when its index leaves the window). Give each cost in n and w. Include a warning about a classic bug in (b).",
+      "answer": "**(a) Naive.** There are n - w + 1 windows; scanning each is O(w): **O(nw)**.\n\n**(b) `multiset<int> win`.** For each element: `insert(a[i])` O(log w) (the window holds at most w+1 elements); once i >= w, remove the element leaving the window; read the max as `*win.rbegin()` O(1). Total **O(n log w)** worst case. **Bug to avoid:** `win.erase(a[i-w])` erases *every* copy of that value, so duplicates inside the window disappear; the correct removal is `win.erase(win.find(a[i-w]))`, which removes one copy: `find` O(log w) and erase by iterator amortized O(1).\n\n**(c) priority_queue with lazy deletion.** Push (a[i], i): O(log n) (the heap can hold up to n entries, since stale entries are removed only when they reach the top). Before reading the maximum, pop while `top().index <= i - w`. Each element is pushed once and popped at most once, so the total is n pushes + at most n pops: **O(n log n)** time, O(n) space. A bad case for the heap is increasing data (nothing is ever stale at the top, and the heap keeps growing).\n\n**(d) Monotonic deque.** Each index is pushed to the back once and removed once (either from the back, because a larger element arrived, or from the front, because it left the window). Each push/pop is O(1), so across the whole run there are at most 2n deque operations: **O(n) total**, amortized O(1) per element (a single step can pop many items, but the total number of pops is at most n). Space O(w). The maximum of the current window is always at the front: O(1).\n\n**Summary:** naive O(nw) > heap O(n log n) > multiset O(n log w) > deque O(n). The deque beats the multiset because it does not need to keep the window sorted.",
+      "rubric": [
+        "(a) naive O(nw) with the number of windows x window size",
+        "(b) multiset O(n log w) with insert/erase O(log w) and the max read from rbegin(); mentions erase(value) removes all copies",
+        "(c) lazy-deletion heap O(n log n): each element pushed once and popped at most once; heap size up to n",
+        "(d) deque O(n): each index pushed and popped at most once (amortized argument)",
+        "Variables n and w used correctly (log w vs log n)"
+      ]
+    },
+    {
+      "id": "analysis-017",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "design",
+        "set",
+        "lower_bound",
+        "range-query",
+        "distance"
+      ],
+      "points": 10,
+      "prompt": "A collection of n integers must support range queries `listRange(a, b)` (print all values x with a <= x <= b) and `countRange(a, b)` (how many values lie in [a, b]).\n\n(a) The collection also supports `add(x)` and `remove(x)`. Which structure do you use? Give the cost of all four operations, using `lower_bound`/`upper_bound`. Be precise about `countRange` with `std::distance`.\n(b) The collection never changes after it is built (q range queries come afterwards). Give a better design for `countRange` and its total cost for building plus q queries.\n(c) Why can't an `unordered_set` support these queries efficiently? What would the best you could do with it cost per query?",
+      "answer": "**(a)** Use `std::set<int>` (balanced BST, ordered).\n* `add(x)` / `remove(x)`: **O(log n)**.\n* `listRange(a, b)`: `auto lo = S.lower_bound(a)` (first element >= a) and `auto hi = S.upper_bound(b)` (first element > b), each **O(log n)**; then `for (it = lo; it != hi; ++it)` visits the m elements in the range at amortized O(1) per step: **O(log n + m)** where m is the number of values reported (output-sensitive; this is the best possible since m values must be printed).\n* `countRange(a, b)` with `std::distance(lo, hi)`: set iterators are only bidirectional, so `distance` walks m steps: **O(log n + m)**, *not* O(log n). The STL set has no way to count a range in O(log n) (it would need an order-statistic tree).\n\n**(b)** Static data: store the values in a **sorted `vector`** (sort once, O(n log n)). A vector iterator is random access, so `std::upper_bound(v.begin(), v.end(), b) - std::lower_bound(v.begin(), v.end(), a)` is two binary searches, O(log n) each, and the subtraction is O(1): **O(log n) per count**, independent of m. Total **O(n log n + q log n)**. (listRange is still O(log n + m).) A set would cost O(n log n) to build (n inserts) and O(log n + m) per count, which can be O(n) per query.\n\n**(c)** A hash set stores elements by hash value, so neighbouring values are scattered and there is no `lower_bound`; the only way to answer a range query is to scan all elements: **O(n) per query** (O(qn) for q queries), or, if the values are integers in a small known range R, to test each of the R values in [a, b] (O(b - a + 1) average). Hash tables give O(1) only for single-key insert/find/erase.",
+      "rubric": [
+        "(a) set; add/remove O(log n); listRange O(log n + m) with lower_bound/upper_bound",
+        "(a) notes that std::distance on set iterators makes countRange O(log n + m), not O(log n)",
+        "(b) sorted vector + two binary searches, O(log n) per count because vector iterators are random access; total O(n log n + q log n)",
+        "(c) hash has no order or range query; O(n) per query",
+        "Uses m (output size) as an additional variable"
+      ]
+    },
+    {
+      "id": "analysis-018",
+      "type": "proof",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "avl",
+        "tight-bound",
+        "summation",
+        "half-trick"
+      ],
+      "points": 8,
+      "prompt": "Insert n distinct keys one at a time into an initially empty **AVL tree** (keys in arbitrary order).\n\n(a) Give an upper bound for the total time and justify it.\n(b) Show that the bound is tight, in two ways: (i) with the summation of the per-insertion costs and the fact that log(n!) is Theta(n log n), and (ii) with the 'half the insertions' argument.\n(c) What is the total if the same keys, in increasing order, are inserted into a plain (unbalanced) BST? Why does the AVL tree avoid this?",
+      "answer": "**(a)** The i-th insertion goes into a tree of i-1 nodes. An AVL tree with s nodes has height at most about 1.44 log2(s+2) = O(log s) (a tree of height h has at least S(h) nodes, S(h) = S(h-1)+S(h-2)+1 grows exponentially). An insertion descends one root-to-null path, O(log s), then rebalances: height updates along that path O(log s) plus at most one single/double rotation, O(1). So the i-th insertion is O(log i) and the total is at most sum from i=1..n of c log i <= c n log n = **O(n log n)**.\n\n**(b)(i) Summation.** The new key is attached at a null link. In an AVL tree of height h every null link has depth at least about (h-1)/2 (the sibling of a null link has height <= 0, and going up one level can raise the height by at most 2), and h >= log2(s+1) - 1, so each insertion into a tree of size i costs Omega(log i). The total is at least c' sum log i = c' log(n!) and log(n!) = Theta(n log n) (n! <= n^n gives log(n!) <= n log n; n! >= (n/2)^(n/2) gives log(n!) >= (n/2) log(n/2)). So the total is Omega(n log n).\n\n**(b)(ii) Half the insertions.** The last n/2 insertions go into a tree with at least n/2 nodes, so each costs Omega(log(n/2)) = Omega(log n), for a total of at least (n/2) Omega(log n) = Omega(n log n).\n\nUpper and lower bounds agree: **Theta(n log n)**.\n\n**(c)** Plain BST, increasing keys: each new key is larger than all existing ones, so it goes to the end of a chain; the i-th insertion walks i-1 nodes: 1 + 2 + ... + (n-1) = n(n-1)/2 = **Theta(n^2)**. The AVL tree rebalances by rotations whenever the height difference of a node's subtrees reaches 2, so its height stays O(log n) for every input order and every insertion stays O(log n).",
+      "rubric": [
+        "(a) per-insertion O(log size) from the AVL height bound, plus O(1) rotations, summed to O(n log n)",
+        "(b)(i) writes the sum of logs = log(n!) and shows log(n!) is Theta(n log n)",
+        "(b)(ii) uses the last n/2 insertions into size >= n/2 for the lower bound",
+        "States Theta(n log n)",
+        "(c) BST with sorted keys: sum of 1..n-1 = Theta(n^2); AVL keeps height O(log n)"
+      ]
+    },
+    {
+      "id": "analysis-019",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "hashing",
+        "rehash",
+        "multi-variable",
+        "average-vs-worst",
+        "tight-bound"
+      ],
+      "points": 10,
+      "prompt": "A hash table with separate chaining (textbook version: rehash to the next prime >= 2 x TableSize when the load factor exceeds 1; each insert checks the list for the key and appends at the end) currently holds n elements. A batch of k new distinct keys is inserted.\n\n(a) Give the **average** time for the batch, and the role of rehashing.\n(b) Give the **worst-case** time for the batch, as a tight bound with a justification of tightness.\n(c) How does the answer to (a) change if k >= n, and if k = 1?",
+      "answer": "**(a) Average.** With a bounded load factor (rehash when it exceeds 1, so it is at most about 1), the expected list length is O(1), so one insert (hash, scan the list for the key, append) is O(1) average. k inserts: **O(k) average**. Rehashing: when the number of elements passes TableSize, all current elements are re-inserted into a table about twice as large, costing O(number of elements) = O(n + j) for the j-th insertion. Because the size doubles each time, the rehash costs over any run of insertions form 1 + 2 + 4 + ... (up to the current size), a geometric series bounded by twice the final size, so the rehash work is **amortized O(1) per insertion**, charged to the earlier insertions that filled the table. Strictly, one single rehash inside this batch can cost O(n + k); so the batch costs O(k) average amortized, and O(n + k) if a rehash falls inside it.\n\n**(b) Worst case.** If every key hashes to the same bucket (a bad hash function or adversarial keys) the chain is one list. The j-th new key must scan the whole list (n + j - 1 entries) to check for a duplicate before appending: sum over j=1..k of (n + j - 1) = kn + k(k-1)/2 = **O(k(n + k))**. (Plus rehashes, whose cost O(n + k) each is absorbed.) Tight: the last k/2 insertions each scan at least n + k/2 entries, so the total is at least (k/2)(n + k/2) = Omega(k(n+k)).\n\n**(c)** For k >= n the O(n + k) rehash cost is O(k), so the batch is simply **O(k) average**. For k = 1: one insert is O(1) average, but if it triggers a rehash it costs **O(n)**: a single operation can be expensive, which is why the guarantee is *amortized* over a sequence, not per operation.",
+      "rubric": [
+        "(a) O(1) average per insert because of the bounded load factor, total O(k) average",
+        "(a) explains rehash cost (O(size)) and why doubling makes it amortized O(1) per insertion",
+        "(b) worst case: one chain; j-th insert scans n+j entries; sum gives O(k(n+k))",
+        "(b) tightness via the last k/2 insertions scanning >= n + k/2",
+        "(c) k>=n gives O(k); k=1 can cost O(n) if it triggers the rehash (amortized vs single operation)"
+      ]
+    },
+    {
+      "id": "analysis-020",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "heap",
+        "multi-variable",
+        "buildheap",
+        "average-vs-worst",
+        "tight-bound"
+      ],
+      "points": 12,
+      "prompt": "A binary min-heap (textbook array version) currently holds n elements. A batch of k new elements is added.\n\n(a) Give the worst-case time if you insert them one at a time with `insert`, as a tight bound, and prove it is tight (give the adversarial input).\n(b) Give the average time if the new elements are random, and the condition that makes the average bound valid.\n(c) Another method: append all k to the end of the array and run `buildHeap` on the whole array of n + k. Give its cost, and decide when it beats the insert-one-at-a-time method in the worst case.",
+      "answer": "**(a)** The j-th insertion puts the element at the end (O(1), array doubling is amortized O(1)) and percolates it up at most the height of a heap of n + j elements, floor(log(n+j)) <= log(n+k). So each insert is O(log(n+k)) and the batch is **O(k log(n+k))** worst case. Tight: if the elements inserted are all smaller than everything in the heap, and decreasing (each smaller than the previous), each new element percolates up to the root, and the heap size during the last k/2 insertions is at least n + k/2, so each takes about log(n + k/2) steps; total >= (k/2) log(n + k/2) = Omega(k log(n+k)). (Engine check: inserting 9, 8, ..., 1 into an empty min-heap makes every new value rise to index 1.)\n\n**(b)** On average, a newly inserted random value percolates up O(1) levels (heap slides: the expected number of levels is a constant, because most of the nodes are near the bottom and a random value is larger than its parent's value most of the time), so each insert is O(1) average and the batch is **O(k) average**. The condition: the new values have the same probability distribution as the values already in the heap, and the insertions are not interleaved with deleteMins (deleting minima makes the remaining elements larger than the new ones on average, which breaks the assumption).\n\n**(c)** Append k elements (O(k), amortized) and run `buildHeap` on the n + k elements: the loop runs from (n+k)/2 down to 1, total O(n + k) (sum of heights), **O(n + k) worst case**, regardless of the input values. It beats the one-at-a-time method in the worst case when n + k < k log(n+k), i.e. roughly when k is larger than about (n+k)/log(n+k). For a small batch (k = 1) buildHeap costs O(n) while an insert costs O(log n), so insert is much better. For k = n, buildHeap is O(n) versus O(n log n). In the average case with random values, individual inserts (O(k)) are always at least as good as buildHeap (O(n + k)), because buildHeap has to touch the n existing elements.",
+      "rubric": [
+        "(a) worst case O(k log(n+k)) using log of the final size n+k, not log n",
+        "(a) tightness: decreasing values each rise to the root and the second half of the inserts see a heap of size >= n+k/2",
+        "(b) average O(k) with the reason (O(1) expected levels) and the validity condition (same distribution, no interleaved deletes)",
+        "(c) buildHeap on n+k is O(n+k) worst case regardless of the input",
+        "(c) compares the two methods: buildHeap wins for large k (about k > n/log n), insert wins for small k"
+      ]
+    },
+    {
+      "id": "analysis-021",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "code-analysis",
+        "set",
+        "unordered_set",
+        "loop",
+        "hidden-cost"
+      ],
+      "points": 8,
+      "prompt": "Analyze each function. Let n = `v.size()`. Give the cost of every line, then the total, and say average vs worst where it matters.\n\n```cpp\nint f1(const vector<int>& v) {\n    int c = 0;\n    for (size_t i = 0; i < v.size(); ++i) {\n        set<int> s(v.begin(), v.end());\n        c += s.count(v[i]);\n    }\n    return c;\n}\nint f2(const vector<int>& v) {\n    set<int> s(v.begin(), v.end());\n    int c = 0;\n    for (size_t i = 0; i < v.size(); ++i)\n        c += s.count(v[i]);\n    return c;\n}\nint f3(const vector<int>& v) {\n    unordered_set<int> s(v.begin(), v.end());\n    int c = 0;\n    for (size_t i = 0; i < v.size(); ++i)\n        c += s.count(v[i]);\n    return c;\n}\n```\n(a) f1, with a tightness remark. (b) f2. (c) f3. (d) Which line of f1 causes the extra factor and how was it removed in f2?",
+      "answer": "**(a) f1.** The loop runs n times. In each iteration:\n* `set<int> s(v.begin(), v.end())` builds a set from n elements: n inserts into a balanced BST of size up to n, each O(log n): **O(n log n)** (it is O(n) only if the input is already sorted, which we may not assume);\n* `s.count(v[i])`: O(log n);\n* `c +=`: O(1); destroying `s` at the end of the iteration: O(n).\nOne iteration is O(n log n) + O(log n) + O(n) = O(n log n); n iterations: **O(n^2 log n)**. Tight: the construction does Omega(n log n) work in each of the n iterations (the last n/2 of the inserts in each construction see a set of size >= n/2 when the elements are distinct).\n\n**(b) f2.** One construction O(n log n), then n iterations of `count` O(log n) = O(n log n); destruction O(n). Total **O(n log n)**.\n\n**(c) f3.** Constructing an unordered_set from n elements: n inserts, each O(1) average: O(n) average (O(n^2) worst case); n `count` calls O(1) average: O(n). Total **O(n) average, O(n^2) worst case**.\n\n**(d)** The set construction in f1 is loop-invariant (it does not depend on i), but it was placed inside the loop and rebuilt n times; f2 hoists it out of the loop, so it is paid once and the loop contributes only n x O(log n).",
+      "rubric": [
+        "f1: construction O(n log n) per iteration, count O(log n), n iterations => O(n^2 log n)",
+        "f2: build once O(n log n) + n x O(log n) => O(n log n)",
+        "f3: unordered_set O(n) average and O(n^2) worst case",
+        "Identifies the loop-invariant construction as the cause (hoisting)",
+        "Reasons given for each call's cost (balanced BST depth log n; hash O(1) average)"
+      ]
+    },
+    {
+      "id": "analysis-022",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "hw5",
+      "tags": [
+        "code-analysis",
+        "unordered_map",
+        "operator[]",
+        "average-vs-worst",
+        "trap"
+      ],
+      "points": 8,
+      "prompt": "```cpp\n// count how many elements of b occur in a   (a has n elements, b has m elements)\nint countCommon(const vector<int>& a, const vector<int>& b) {\n    unordered_map<int,int> mp;\n    for (int x : a) mp[x] = 1;\n    int c = 0;\n    for (int y : b) if (mp[y] == 1) ++c;\n    return c;\n}\n```\n(a) Give the average and the worst-case complexity, line by line.\n(b) The HW5 handout warns about `operator[]`. What exactly does this code do wrong (or inefficiently), and what does it do to the size of the map and to the later cost of the loop?\n(c) Rewrite the second loop to avoid the problem and give the new complexity.",
+      "answer": "**(a)** First loop: n iterations, each `mp[x] = 1` is a find-or-insert in a hash: **O(1) average**, O(size) = O(n) worst case. So O(n) average, O(n^2) worst. Second loop: m iterations of `mp[y]` (O(1) average, O(size) worst, where the size is up to n + m as described below) and a comparison O(1): O(m) average, O(m(n+m)) worst. Total **O(n + m) average**, **O((n + m)^2) worst case**. Space O(n + m).\n\n**(b)** `mp[y]` is not a pure lookup: if y is not a key, `operator[]` **inserts** y with a default-constructed value (0). So every element of b that is not in a gets added to the map, which then holds up to n + m entries, not n. The answer is still correct (the new entries have value 0, never 1), but (1) memory grows from O(n) to O(n+m), (2) the table may rehash extra times (each rehash O(size), amortized O(1)), and (3) the lookups of later elements operate in a bigger table, which only increases the worst case (lists/probe sequences of up to n + m entries). The average cost per operation stays O(1) because the load factor is kept bounded by rehashing.\n\n**(c)** Use a non-inserting lookup: `if (mp.find(y) != mp.end()) ++c;` or `if (mp.count(y)) ++c;`, or use an `unordered_set<int>` since the value is never used. The map holds only the n keys of a: second loop O(m) average, O(mn) worst; total O(n + m) average, O(n^2 + mn) worst, O(n) space.",
+      "rubric": [
+        "(a) both loops O(1) average per operation, total O(n+m) average; worst case O(1)->O(size) gives quadratic",
+        "(b) identifies that operator[] inserts a default entry for missing keys",
+        "(b) consequences: map grows to n+m entries, memory, extra rehashing, worse worst case",
+        "(c) find()/count() or an unordered_set, with the new bounds",
+        "States average vs worst for hashing explicitly"
+      ]
+    },
+    {
+      "id": "analysis-023",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "code-analysis",
+        "priority_queue",
+        "loop",
+        "tight-bound"
+      ],
+      "points": 8,
+      "prompt": "```cpp\nint lastStone(vector<int>& stones) {                 // n = stones.size() >= 1\n    priority_queue<int> pq(stones.begin(), stones.end());\n    while (pq.size() > 1) {\n        int a = pq.top(); pq.pop();\n        int b = pq.top(); pq.pop();\n        if (a != b) pq.push(a - b);\n    }\n    return pq.empty() ? 0 : pq.top();\n}\n```\n(a) Give the cost of the constructor and of each line in the loop.\n(b) Bound the number of iterations of the loop and give the total, with the reason.\n(c) Show that your bound is tight (give an input family and the half-the-iterations argument).\n(d) Replace the constructor line by `priority_queue<int> pq; for (int x : stones) pq.push(x);`. Does the Big-O of the function change? Which version is better in the worst case?",
+      "answer": "**(a)** The range constructor copies the elements into the vector and calls `make_heap` (buildHeap): **O(n)**. In the loop: `size()` O(1); `top` O(1); `pop` O(log s) for a heap of size s <= n, i.e. O(log n); a second `top`/`pop`, O(log n); the comparison O(1); `push` O(log n).\nPer iteration O(log n).\n\n**(b)** Each iteration removes two elements and adds at most one, so the size drops by at least 1 per iteration: at most n - 1 iterations. Total = O(n) + (n - 1) x O(log n) = **O(n log n)**.\n\n**(c)** Take the stones 1, 2, 4, 8, ..., 2^(n-1): the two largest are 2^(n-1) and 2^(n-2), which differ, so the result 2^(n-2) is pushed; now the two largest are 2^(n-2) (the new stone) and 2^(n-3), which differ again, and so on. Every iteration pushes a result, the size goes n, n-1, ..., 2 and the loop runs n-1 times. The first n/2 iterations happen while the heap has at least n/2 elements, each doing pops and a push of cost Omega(log n) in the worst case, so the total is Omega(n log n). Hence **Theta(n log n)** in the worst case.\n\n**(d)** Building by n individual pushes costs O(n log n) in the worst case (O(n) average for random order), but that is dominated by the loop, which is O(n log n) anyway: **the total stays O(n log n)**. The range-constructor version is better in the worst case for the construction part (O(n) vs O(n log n)) though not for the whole function.",
+      "rubric": [
+        "(a) constructor = make_heap O(n); pop/push O(log n); top/size O(1)",
+        "(b) at most n-1 iterations because each removes 2 and adds <= 1; total O(n log n)",
+        "(c) tight: an input where every iteration shrinks the size by exactly 1, with the half-iterations argument",
+        "(d) total unchanged O(n log n); range constructor is O(n) vs n pushes O(n log n) worst case"
+      ]
+    },
+    {
+      "id": "analysis-024",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "code-analysis",
+        "vector",
+        "list",
+        "deque",
+        "hidden-cost"
+      ],
+      "points": 8,
+      "prompt": "Give the tight worst-case complexity of each function and the reason (n is the argument unless stated).\n\n```cpp\nvoid g1(vector<int>& v, int n) { for (int i = 0; i < n; ++i) v.insert(v.begin(), i); }\nvoid g2(list<int>& L, int n)   { for (int i = 0; i < n; ++i) L.push_front(i); }\nvoid g3(list<int>& L, int n)   { for (int i = 0; i < n; ++i) { auto it = L.begin(); std::advance(it, i / 2); L.insert(it, i); } }\nvoid g4(vector<int>& v)        { while (!v.empty()) v.erase(v.begin()); }      // n = v.size()\nvoid g5(vector<int>& v, int n) { for (int i = 0; i < n; ++i) v.push_back(i); }\n```\nHow would you fix g4 so that it is O(n), and what does that tell you about g3?",
+      "answer": "**g1: O(n^2).** `v.insert(v.begin(), i)` shifts all current elements one place to the right: i elements at iteration i. 0 + 1 + ... + (n-1) = n(n-1)/2.\n\n**g2: O(n).** `list::push_front` is O(1) (a constant number of pointer changes); n of them.\n\n**g3: O(n^2).** `list::insert` at an iterator is O(1), but reaching position i/2 takes `advance` i/2 steps (a list has no random access): sum of i/2 over i = O(n^2). (Tight: the last n/2 iterations each walk at least n/4 steps.)\n\n**g4: O(n^2).** `erase` of the first element of a vector shifts all remaining elements left: n-1, n-2, ... 1, i.e. n(n-1)/2. Fix: erase from the back (`pop_back` O(1)), or iterate and process the elements by index then `clear()`: O(n); or use a `deque`/`list` (`pop_front` O(1)) if the front removal is needed.\n\n**g5: O(n) amortized.** `push_back` is amortized O(1): the reallocations happen at sizes 1, 2, 4, 8, ... and copy 1 + 2 + 4 + ... < 2n elements in total. (A single push_back may cost O(n).)\n\n**Moral for g3:** a list is great only if you already *hold the iterator*; finding the position is O(position), so insert-at-index on a list is O(i), no better than the vector's O(n) shift.",
+      "rubric": [
+        "g1 O(n^2) with the shift reason and the sum n(n-1)/2",
+        "g2 O(n) and g5 O(n) amortized with the doubling argument",
+        "g3 O(n^2): list insert is O(1) but advance is O(i)",
+        "g4 O(n^2) and a correct O(n) fix",
+        "Gives a reason for each, not just the bound"
+      ]
+    },
+    {
+      "id": "analysis-025",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "code-analysis",
+        "map",
+        "log-of-square",
+        "nested-loops"
+      ],
+      "points": 8,
+      "prompt": "```cpp\nvoid h1(int n) {\n    map<pair<int,int>,int> m;\n    for (int i = 0; i < n; ++i)\n        for (int j = 0; j < n; ++j)\n            m[{i, j}] = i * j;\n}\nvoid h2(int n) {\n    map<pair<int,int>,int> m;\n    for (int i = 0; i < n; ++i)\n        for (int j = 0; j < i; ++j)\n            m[{i, j}] = i * j;\n}\nvoid h3(int n) {\n    unordered_map<long long,int> m;\n    for (int i = 0; i < n; ++i)\n        for (int j = 0; j < n; ++j)\n            m[(long long)i * n + j] = i * j;\n}\n```\nGive the complexity of each (average and worst for h3). Explain why the log factor is log n and not log(n^2) (or why it does not matter).",
+      "answer": "**h1.** The nested loops run n^2 times; each iteration is one `m[{i,j}] = ...`: find-or-insert in a balanced BST holding up to n^2 entries, O(log(n^2)) comparisons, each a constant-time pair comparison. log(n^2) = 2 log n = O(log n), so the total is **O(n^2 log n)**. (Tight: the last n^2/2 inserts see at least n^2/2 entries, each costing Omega(log(n^2/2)) = Omega(log n).)\n\n**h2.** The inner loop runs i times: 0 + 1 + ... + (n-1) = n(n-1)/2 = Theta(n^2) iterations, each O(log(size)) with size <= n^2/2, i.e. O(log n): **O(n^2 log n)**.\n\n**h3.** Same n^2 iterations, each a hash insert/find: O(1) average, O(size) = O(n^2) worst. The key (long long) is hashed in O(1). Total **O(n^2) average**, O(n^4) worst case (n^2 iterations x O(n^2)). The multiplication and addition are O(1).\n\n**Why the log is log n:** the map's size is Theta(n^2), so the cost per operation is log(n^2) = 2 log n, a constant multiple of log n. A polynomial size changes only the constant inside the logarithm, so the extra factor is Theta(log n), not log^2 n or n.",
+      "rubric": [
+        "h1 and h2 are both O(n^2 log n) with the iteration counts n^2 and n(n-1)/2",
+        "Uses log(n^2) = 2 log n = O(log n)",
+        "h3 O(n^2) average and O(n^4) worst case with reasons",
+        "Notes that pair comparison and long long hashing are O(1)",
+        "Tightness remark or explanation of why the log factor can't be dropped"
+      ]
+    },
+    {
+      "id": "analysis-026",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "code-analysis",
+        "unordered_map",
+        "strings",
+        "multi-variable"
+      ],
+      "points": 8,
+      "prompt": "```cpp\nstring mostCommon(const vector<string>& words) {     // n words, each of length <= L, u distinct\n    unordered_map<string,int> freq;\n    for (const string& w : words) ++freq[w];\n    string best; int bestCount = 0;\n    for (const auto& kv : freq)\n        if (kv.second > bestCount) { best = kv.first; bestCount = kv.second; }\n    return best;\n}\n```\n(a) Give the complexity in n, L and u (average and worst).\n(b) Now assume L is a small constant. Simplify. What is the cost of the second loop in terms of n?\n(c) Replace `unordered_map` by `map` and give the new complexity.\n(d) A student replaces everything by sorting `words` and scanning runs of equal words. Give that complexity.",
+      "answer": "**(a)** First loop: n words; for each, `freq[w]` hashes the string (reads all its characters: O(L)), finds the bucket (O(1) expected probes) and compares the key with the entries it finds (each comparison O(L)): **O(L) average** per word; the `++` is O(1). Total **O(nL) average**. Worst case (all words collide into one bucket): each access compares with up to u entries, each comparison O(L): O(uL) per access, **O(n u L) <= O(n^2 L)** total. Second loop: iterating the u entries is O(u) (bounded load factor), and `kv.second > bestCount` is O(1); copying `best = kv.first` costs O(L), but it happens at most u times: O(uL). Total **O(nL + uL) = O(nL)** average since u <= n.\n\n**(b)** With L constant: O(n) average, O(n^2) worst; the second loop is O(u) = O(n).\n\n**(c)** With `map<string,int>`: each access does O(log u) string comparisons of O(L) each: O(L log u) per word, total **O(nL log u)** worst case, O(nL log n) at most. The second loop is O(u) plus O(uL) for the copies. No worst-case degeneration but slower on average than the hash.\n\n**(d)** Sorting n strings with a comparison sort does O(n log n) string comparisons, each O(L): **O(nL log n)**, then one scan of the n sorted words comparing neighbours: O(nL). Total O(nL log n), a worst-case guarantee, with no hash table and O(1) extra space (in-place sort).",
+      "rubric": [
+        "(a) per-word cost O(L) for hashing/comparing; total O(nL) average; worst O(n^2 L)",
+        "(a) the scan of the table is O(u) (plus O(L) per copy), absorbed because u <= n",
+        "(b) constant L gives O(n) average / O(n^2) worst",
+        "(c) map: O(L log n) per word => O(nL log n)",
+        "(d) sort-based: O(nL log n) worst case, scan O(nL)"
+      ]
+    },
+    {
+      "id": "analysis-027",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "cost-table",
+        "recall",
+        "stl"
+      ],
+      "points": 6,
+      "prompt": "Give the complexity (worst case unless you say otherwise; give the average too for hash and heap operations) and a one-phrase reason for each. Let n be the number of elements.\n\n1. `vector::push_back` 2. `vector::insert` at the front 3. `list::insert` at an iterator 4. `list` access to the k-th element\n5. `set::insert` 6. `set::lower_bound` 7. `unordered_map::operator[]` 8. `unordered_set::find`\n9. `priority_queue::push` 10. `priority_queue::pop` 11. `make_heap` (buildHeap) 12. `priority_queue::top`\n13. `std::sort` 14. `binary_search` on a sorted vector 15. splay-tree insert (single / amortized) 16. quickselect",
+      "answer": "1. amortized **O(1)** (one reallocation in n costs O(n) but the doubling spreads it out); worst single call O(n).\n2. **O(n)** - every element shifts one place right.\n3. **O(1)** - a constant number of pointer changes (given the iterator).\n4. **O(k)** - walk the links.\n5. **O(log n)** - balanced BST: descent along one path.\n6. **O(log n)** - same descent.\n7. **O(1) average, O(n) worst** - hash; worst case every key in one bucket. It inserts when the key is missing.\n8. **O(1) average, O(n) worst.**\n9. **O(log n) worst case**, O(1) average for random values - percolate up through at most the height.\n10. **O(log n)** worst and average - percolate down through at most the height.\n11. **O(n)** - sum of node heights, not n log n.\n12. **O(1)** - the root.\n13. **O(n log n)** worst case (introsort: quicksort, heapsort fallback, insertion sort for small ranges).\n14. **O(log n)** - halves the range each step; needs random access (vector).\n15. single insert worst case **O(n)**; **O(log n) amortized** (any M operations O(M log n)); average O(log n).\n16. **O(n) average, O(n^2) worst** - one partition O(n), then recursion into one side only.",
+      "rubric": [
+        "Items 1-4: amortized O(1) / O(n) / O(1) / O(k) with reasons",
+        "Items 5-8: O(log n), O(log n), O(1) avg + O(n) worst for both hash operations",
+        "Items 9-12: push O(log n) (avg O(1)), pop O(log n), make_heap O(n), top O(1)",
+        "Items 13-14: sort O(n log n), binary search O(log n)",
+        "Items 15-16: splay single O(n) / amortized O(log n); quickselect O(n) avg, O(n^2) worst"
+      ]
+    },
+    {
+      "id": "analysis-028",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "design",
+        "choose-structure",
+        "stl"
+      ],
+      "points": 6,
+      "prompt": "For each requirement, name the best STL container (or combination) and give the cost of the key operation(s), with a one-line reason.\n\n(a) Ask 'have I seen this id before?' for millions of ids; no ordering needed.\n(b) Keep a changing collection and repeatedly get and remove the smallest element.\n(c) Keep a changing collection of numbers and list all values in [a, b], plus insert/delete.\n(d) Remember the order in which items arrived and read the 1000th arrival directly.\n(e) Remove an element from the middle of a long sequence when you already hold an iterator to it, many times.\n(f) Count how many times each word appears.\n(g) A fixed set of n numbers, then q queries 'is x present?' with a worst-case guarantee.",
+      "answer": "(a) **`unordered_set`** - membership is the only operation: O(1) average per query (O(n) worst), no order needed.\n(b) **`priority_queue`** (min-heap via `greater<>`) - `top` O(1), `pop` O(log n), `push` O(log n). (A `set` also works at O(log n) per operation and additionally supports arbitrary delete.)\n(c) **`set`** - insert/erase O(log n); `lower_bound(a)` then walk to `upper_bound(b)`: O(log n + m) for m reported values. A hash cannot do ranges.\n(d) **`vector`** with `push_back` (amortized O(1)) and `v[999]` O(1) - random access preserves the arrival order.\n(e) **`list`** - `erase(it)` is O(1); a vector would need O(n) to shift.\n(f) **`unordered_map<string,int>`** with `++cnt[w]` - O(1) average per word (`map` is O(log n) but ordered).\n(g) **sorted `vector` + `binary_search`** (sort once O(n log n), query O(log n) worst case), or a `set` (O(log n) per query); an `unordered_set` has only an average-case bound of O(1).",
+      "rubric": [
+        "(a) unordered_set with O(1) average and reason (no order needed)",
+        "(b) heap/priority_queue or set with correct costs",
+        "(c) set with lower_bound and O(log n + m)",
+        "(d), (e) vector and list with the reason (random access vs O(1) erase at an iterator)",
+        "(f), (g) unordered_map counting; worst-case-guaranteed lookup via sorted vector or set"
+      ]
+    },
+    {
+      "id": "analysis-029",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "amortized",
+        "average-vs-worst",
+        "definitions"
+      ],
+      "points": 6,
+      "prompt": "(a) Define **worst-case**, **average-case** and **amortized** cost in one sentence each.\n(b) Classify each guarantee as one of the three and say what would make it fail: (i) `vector::push_back` is O(1); (ii) splay-tree insert is O(log n); (iii) `unordered_set::insert` is O(1); (iv) quicksort is O(n log n); (v) heap insert is O(1); (vi) AVL insert is O(log n).",
+      "answer": "**(a)** *Worst case:* the maximum cost of one operation over all inputs of size n. *Average case:* the expected cost over a probability distribution of inputs (e.g. random keys or a random hash). *Amortized:* the cost of a whole sequence of M operations (worst sequence) divided by M - no probability involved, a guarantee on the total even though one operation may be expensive.\n\n**(b)**\n* (i) **amortized**: a single push_back that triggers a reallocation costs O(n); any n pushes cost O(n) in total (doubling).\n* (ii) **worst-case amortized** (any M operations cost O(M log n)); a single insertion can be O(n). The average case on random input is also O(log n).\n* (iii) **average case** (assuming a good hash function and a bounded load factor); the worst case is O(n) when all keys collide; rehash adds an amortized O(1).\n* (iv) **average case**; the worst case is O(n^2) when the pivot is always the min or max (e.g. sorted input with first-element pivot).\n* (v) **average case**, for values drawn from the same distribution as the values in the heap and not alternated with deleteMin; worst case O(log n).\n* (vi) **worst case**: per operation, for every input and order (height O(log n) is maintained by rotations).",
+      "rubric": [
+        "(a) three correct, distinct definitions (amortized = sequence total / M, no probability)",
+        "(b)(i) amortized with the reason; (ii) worst-case amortized with single-op O(n) mention",
+        "(b)(iii) and (iv) average case with their worst cases O(n) and O(n^2)",
+        "(b)(v) average with the condition; (vi) worst case"
+      ]
+    },
+    {
+      "id": "analysis-030",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "exam2-practice",
+      "tags": [
+        "multi-variable",
+        "log",
+        "simplification"
+      ],
+      "points": 5,
+      "prompt": "Simplify each bound, or say that it cannot be simplified, and give the reason.\n\n(a) k inserts into a balanced BST of size n, giving O(k log(n+k)), when k <= n.\n(b) The same when k = n^2.\n(c) The same when k = 2^n.\n(d) The same when k = sqrt(n).\n(e) Which is larger for k = n/2: n log k or k log n? Which for k = log n?",
+      "answer": "(a) n + k <= 2n so log(n+k) <= log n + 1 = O(log n): **O(k log n)**.\n(b) n + n^2 <= 2n^2, log(n + n^2) <= 2 log n + 1 = O(log n): **O(k log n)** = O(n^2 log n). A polynomial relation only changes the constant inside the log.\n(c) log(n + 2^n) = Theta(n): **O(k n)**; no simplification to log n is possible - here the tree becomes exponentially large, so the depth is about n.\n(d) k = sqrt(n) <= n, so as in (a): **O(sqrt(n) log n)**.\n(e) For k = n/2: n log k = n log(n/2) = n log n - n = Theta(n log n) and k log n = (n/2) log n = Theta(n log n): **same order** (they differ by a constant factor 2 in the leading term). For k = log n: n log k = n log log n and k log n = log^2 n: **n log k is larger** (n log log n beats log^2 n for large n, since n grows faster than any power of log n).",
+      "rubric": [
+        "(a) O(k log n) with log(n+k) <= log(2n) argument",
+        "(b) O(k log n) (polynomial relation) with the log(n^2) = 2 log n reasoning",
+        "(c) O(kn): log(2^n) = n, no simplification",
+        "(d) O(sqrt(n) log n)",
+        "(e) same order for k=n/2; n log k bigger for k=log n, with a reason"
+      ]
+    },
+    {
+      "id": "analysis-031",
+      "type": "proof",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "amortized",
+        "vector",
+        "rehash",
+        "proof"
+      ],
+      "points": 8,
+      "prompt": "(a) Prove that n `push_back` calls on an initially empty `vector` that doubles its capacity when full cost O(n) in total, so push_back is amortized O(1). Why does growing the capacity by a fixed constant c (say 10) fail?\n(b) A hash table with separate chaining doubles its size (to the next prime >= twice the size) whenever the load factor exceeds 1. Show that the total rehashing cost of n insertions is O(n), so the cost per insertion, rehashing included, is O(1) amortized (on top of the O(1) average insert).\n(c) Why is the insertion that triggers a rehash O(n), and why is this not a contradiction with 'O(1) insert'?",
+      "answer": "**(a)** Suppose the capacity doubles from 1: reallocations happen when the size is 1, 2, 4, ..., 2^j, where 2^j < n <= 2^(j+1). A reallocation at size s copies s elements. Total copying = 1 + 2 + 4 + ... + 2^j = 2^(j+1) - 1 < 2n. Each of the n push_backs also writes its element, O(1): n. Total < 3n = **O(n)**, so the amortized cost per push_back is O(n)/n = **O(1)**. *Fixed increment c:* a reallocation happens every c pushes and copies the current size s: copies c + 2c + 3c + ... up to n: about n^2/(2c) = Theta(n^2) total, amortized Theta(n) per push_back. The growth must be by a constant *factor*.\n\n**(b)** The rehash from a table of size T happens when there are about T elements (load factor just above 1): it re-inserts about T elements into a table of size about 2T, costing O(T) (hash and append each element: O(1) each; allocating and scanning the table O(T)). After that the load factor is about 1/2, so at least about T more insertions are needed before the next rehash (when the count passes 2T). The rehash costs are therefore about T, 2T, 4T, ..., up to the final table size T_f <= O(n): the geometric sum is < 2 T_f = O(n). So over n insertions the rehashing adds O(n) in total: **O(1) amortized per insertion**, in addition to the O(1) average cost of the insertion itself (finding the list and appending to it). (Finding the next prime is lower-order work.)\n\n**(c)** The insertion that makes the load factor exceed 1 must re-insert all current elements, so that one operation is Theta(n). 'O(1) insert' is an *amortized* (and average-case) statement about a sequence of insertions: n insertions cost O(n) in total, not that every single one is cheap. It is the same situation as vector push_back.",
+      "rubric": [
+        "(a) sizes at reallocation 1,2,4,...; the geometric sum < 2n; total O(n), amortized O(1)",
+        "(a) constant increment gives about n^2/(2c) copying: Theta(n) amortized",
+        "(b) rehash costs T, 2T, 4T... form a geometric series bounded by about twice the final size; amortized O(1) per insertion",
+        "(b) explains that the load factor is halved after a rehash so about T more inserts are needed before the next",
+        "(c) a single insertion can be Theta(n); the claim is amortized/average, not per-operation worst case"
+      ]
+    },
+    {
+      "id": "analysis-032",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "design",
+        "counting",
+        "sort-vs-hash",
+        "counting-sort"
+      ],
+      "points": 8,
+      "prompt": "Count the number of **distinct** values in an array of n integers. Give four solutions with their complexity (average and worst where hashing is involved) and extra space: (a) `set`; (b) sort + scan; (c) `unordered_set`; (d) if all values are known to be in the range [0, R), a boolean array. When is (d) better than (b), and when worse?",
+      "answer": "**(a) `set<int>`**: insert every element, answer = `size()`. n inserts into a balanced BST of size at most u (the number of distinct values): O(log u) each, **O(n log u) worst case = O(n log n)**; space O(u).\n\n**(b) Sort + scan**: `sort` O(n log n) worst case (introsort); scan once counting positions where a[i] != a[i-1]: O(n). Total **O(n log n)**; O(1) extra space if sorted in place (the input is rearranged).\n\n**(c) `unordered_set<int>`**: n inserts, each O(1) average: **O(n) average**, O(n^2) worst; space O(u). (The answer is `size()`.)\n\n**(d) Boolean array** of size R (direct address table / bit array): for each element mark `seen[x] = true` and count the first time: **O(n + R)** (initializing the array O(R), n O(1) steps), deterministic, no hashing; space O(R).\n\n**Comparison with sorting:** (d) is better than (b) when n + R < n log n, i.e. when R = O(n) (or R is o(n log n)): then it is linear. It is worse when R is huge compared with n (e.g. R = n^2 gives O(n^2) time and memory, and R = 2^32 may not fit). This is the same limitation as direct address tables and counting sort: O(n + R) is only good when the range R is small.",
+      "rubric": [
+        "(a) set O(n log n) (or O(n log u)) with reason",
+        "(b) sort + linear scan O(n log n), in-place",
+        "(c) unordered_set O(n) average, O(n^2) worst",
+        "(d) boolean array O(n + R) time and O(R) space",
+        "Compares (d) vs (b): good when R = O(n), bad when R is large (O(n+R) vs O(n log n))"
+      ]
+    },
+    {
+      "id": "analysis-033",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "design",
+        "unordered_map",
+        "sliding-window",
+        "strings",
+        "leetcode"
+      ],
+      "points": 10,
+      "prompt": "**Slides (Leetcode hashing questions): longest substring without repeating characters.** Given a string s of length n, find the length of the longest substring in which no character repeats.\n\n(a) Give the brute-force solution and its complexity.\n(b) Give the solution that uses a hash map storing the **last position** of each character, and fully analyze it (character set of size at most 256, or a general alphabet of size A).\n(c) Compare with a sliding window using an `unordered_set` that removes characters from the left.",
+      "answer": "**(a) Brute force.** For every start i, extend j until a repeat appears, using a set (or a scan) to test repeats: with a hash set for the test, O(n) starts x O(n) extensions = **O(n^2) average**; with a repeat test by scanning the current substring, O(n^3). Space O(A).\n\n**(b) Last-position map.** Maintain `unordered_map<char,int> last` and the start `left` of the current window. For each j from 0 to n-1: if s[j] is in `last` and `last[s[j]] >= left`, move `left = last[s[j]] + 1` (jump past the previous occurrence); then set `last[s[j]] = j` and update `best = max(best, j - left + 1)`. Each iteration does O(1) work: one find, one update, comparisons: O(1) average for the hash operations. One pass over n characters: **O(n) average** (O(nA) worst case if every operation degrades to O(size), size <= A). Space **O(min(n, A))**. (For a char alphabet of fixed size 256 the hash can be replaced by an array of 256 ints: O(n) deterministic.)\n\n**(c) Sliding window with a set.** Keep a set of the characters in the window. For each j: while s[j] is in the set, erase s[left] and ++left; then insert s[j]. The right pointer moves n times; the left pointer also moves at most n times in total (it never moves backwards): at most 2n set operations, each O(1) average: **O(n) average**, also linear but with up to 2n hash operations instead of n. Both are linear; (b) is simpler to analyze as one pass and jumps `left` in one step.",
+      "rubric": [
+        "(a) brute force O(n^2) with a set (or O(n^3) without)",
+        "(b) last-position map: one pass, O(1) average per character, O(n) average total",
+        "(b) space O(min(n, A)) and worst case mentioned (hash degeneration)",
+        "(c) two-pointer window: each pointer moves at most n times, total O(n) average",
+        "Compares the solutions"
+      ]
+    },
+    {
+      "id": "analysis-034",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "design",
+        "priority_queue",
+        "two-heaps",
+        "median",
+        "stream"
+      ],
+      "points": 12,
+      "prompt": "Numbers arrive one at a time. After each arrival you must report the median of all numbers seen so far (for an even count, the lower of the two middle values).\n\n(a) Give a naive solution and its total cost for n numbers.\n(b) Design a solution with two heaps and fully analyze it: say what each heap holds, how the sizes are maintained, the cost of `add` and `median`, and the total for n numbers.\n(c) Why does the O(1) average-case heap insert not give an O(n) total?",
+      "answer": "**(a) Naive.** Keep a `vector` and, after each arrival, sort it (O(i log i)) and read the middle: total sum of i log i = **O(n^2 log n)**. Better: keep the vector sorted and insert each number with a binary search (O(log i)) and a shift (O(i)): O(i) per number, total **O(n^2)**; median O(1).\n\n**(b) Two heaps.** `lo`: a max-heap holding the smaller half (its top is the lower median); `hi`: a min-heap holding the larger half. Invariants: every element of `lo` <= every element of `hi`; `lo.size()` is equal to `hi.size()` or one larger.\n* `add(x)`: if `lo` is empty or x <= `lo.top()` push x into `lo`, else push into `hi` (top O(1), push O(log n)). Rebalance: if `lo.size() > hi.size() + 1`, move `lo.top()` to `hi` (pop O(log n) + push O(log n)); if `lo.size() < hi.size()`, move `hi.top()` to `lo`. At most one move is needed. So `add` is **O(log n)** worst case.\n* `median()`: `lo.top()`: **O(1)**.\nTotal for n numbers: n x O(log n) = **O(n log n)**; O(n) space. (Tight in the worst case: the last n/2 pushes happen on a heap of size >= n/4 and the pops/pushes of the rebalancing can percolate the full height.)\n\n**(c)** Average-case O(1) insertion requires the new values to be distributed like the values already in the heap and no interleaved deletions. Here values can arrive in any order (e.g. increasing: every new value goes into `hi` and then rebalancing moves tops between the two heaps), and the rebalancing performs pops, which break the assumption, so we only claim the worst case O(log n) per add.",
+      "rubric": [
+        "(a) naive sort each time O(n^2 log n) or sorted insertion O(n^2)",
+        "(b) max-heap for the lower half, min-heap for the upper half, size invariant, at most one transfer per add",
+        "(b) add O(log n), median O(1), total O(n log n)",
+        "(c) explains the average-case insertion assumptions fail with pops / arbitrary order",
+        "Space O(n) and tight-bound remark optional"
+      ]
+    },
+    {
+      "id": "analysis-035",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "design",
+        "unordered_map",
+        "map",
+        "multiset",
+        "two-structures"
+      ],
+      "points": 10,
+      "prompt": "An inventory has up to n products, each with a unique integer id and an integer price. Operations: `addProduct(id, price)`, `changePrice(id, newPrice)`, `priceOf(id)`, `removeProduct(id)`, `cheapest()` (id of the cheapest product), and `inRange(lo, hi)` (list the ids of all products with lo <= price <= hi; m of them are reported).\n\nDesign the structures and give the cost of every operation. Which structure answers which operations, and why does one structure not suffice?",
+      "answer": "**Needs:** lookup by id (point queries) and order by price (min and range). A hash alone cannot do min or ranges; an ordered set alone makes lookups by id O(n) (it is ordered by price). So use two structures kept in sync.\n\n* `unordered_map<int,int> price` : id -> price. O(1) average to find a product's current price (and to find the old price before a change or removal).\n* `set<pair<int,int>> byPrice` : (price, id) pairs, ordered by price then id (unique pairs). Balanced BST: min = `*byPrice.begin()` in O(1); range with `lower_bound({lo, INT_MIN})` and `upper_bound({hi, INT_MAX})`.\n\n**Costs.**\n* `addProduct`: insert into the hash O(1) average + insert into the set **O(log n)** => **O(log n)**.\n* `priceOf`: hash find **O(1) average**.\n* `removeProduct`: hash find O(1), `byPrice.erase({p, id})` O(log n), hash erase O(1): **O(log n)**.\n* `changePrice`: find old price O(1); erase old pair O(log n); insert new pair O(log n); update hash O(1): **O(log n)**.\n* `cheapest`: `byPrice.begin()` **O(1)**.\n* `inRange(lo, hi)`: two bound searches O(log n) each, then walk the m entries: **O(log n + m)**.\n\nWorst case for the hash operations is O(n) each, so the O(1) entries are averages. Space: O(n) for both. If the ids are small integers < N a plain array of size N would make `priceOf` O(1) worst case.",
+      "rubric": [
+        "Two structures (hash by id + ordered set by price) and why one is not enough",
+        "Costs: priceOf O(1) average; add/remove/change O(log n); cheapest O(1)",
+        "inRange O(log n + m) with lower_bound/upper_bound",
+        "Explains the synchronisation on change (erase old pair, insert new) and where the old price comes from",
+        "Average vs worst qualifier for hash operations"
+      ]
+    },
+    {
+      "id": "analysis-036",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "counting-sort",
+        "hashing",
+        "sorting",
+        "slides"
+      ],
+      "points": 8,
+      "prompt": "(Light topic: counting sort.) n integers have keys in the range [0, K).\n\n(a) Give the complexity of counting sort and say exactly when it beats a comparison sort. Give one case where it is a bad idea.\n(b) The slides describe a 'hash variation' that removes the need to know the range: count occurrences in an `unordered_map`, copy the (value, count) pairs into an array, then sort the pairs by value. Analyze it in n and u (the number of distinct values). Why is it no longer linear?",
+      "answer": "**(a)** Counting sort: allocate K counters and zero them O(K); one pass counting each key O(n); one pass over the K counters to output (or build prefix sums) O(K); one pass placing the elements O(n): **O(n + K)** time, O(n + K) space. It beats a comparison sort (Omega(n log n)) when K = o(n log n), e.g. K = O(n): then it is **O(n)**. It is a bad idea when K is large compared with n: for K = n^2 it takes O(n^2) time and memory, worse than O(n log n); and it is unusable when the keys are not small integers (strings, large or negative numbers without remapping). It is the same limitation as direct address tables. (It does not use comparisons, so the Omega(n log n) lower bound does not apply to it.)\n\n**(b)** Counting in the hash: n updates, O(1) average each: O(n) average. Copying the u pairs into an array: O(u). Sorting the u pairs by value with a comparison sort: **O(u log u)**. Writing out the answer with repeats: O(n). Total **O(n + u log u)** average. It handles any range but it is no longer linear because the u distinct values still have to be sorted by comparisons (the hash is unordered); when u is small (many repeats) it is nearly linear, when u is about n it is O(n log n) like any comparison sort.",
+      "rubric": [
+        "(a) counting sort O(n + K) with the passes explained",
+        "(a) beats comparison sorts when K = O(n) (or o(n log n)); bad when K >> n log n or non-integer keys",
+        "(b) hash counting O(n) average + sort of u pairs O(u log u) = O(n + u log u)",
+        "(b) explains why it is not linear: the hash gives no order, the distinct values still need sorting"
+      ]
+    },
+    {
+      "id": "analysis-037",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "design",
+        "sorting",
+        "hashing",
+        "three-sum",
+        "two-pointers"
+      ],
+      "points": 10,
+      "prompt": "Given an array of n integers and a target x, decide whether some **three different positions** i < j < l satisfy a[i] + a[j] + a[l] = x. Give (a) the naive solution; (b) a solution with sorting and two pointers; (c) a solution with hashing. Fully analyze each and compare.",
+      "answer": "**(a) Naive.** Three nested loops over all triples: n(n-1)(n-2)/6 triples, O(1) each: **O(n^3)**, O(1) space.\n\n**(b) Sort + two pointers.** Sort the array: O(n log n). For each position i (n choices), look for a pair among the elements to its right with sum x - a[i] using two pointers (lo = i+1, hi = n-1; move lo up if the sum is too small, hi down if too large; each step discards one index, so at most n steps): O(n) per i. Total O(n log n) + n x O(n) = **O(n^2) worst case**; O(1) extra space if the sort is in place. The sort is absorbed by the quadratic loop.\n\n**(c) Hashing.** For each pair (i, j) with i < j we need a third element a[l] = x - a[i] - a[j] located at a position different from i and j. One approach: fix i; run the hash two-sum on the elements after i: `unordered_set` of seen values, for each j > i test `seen.count(x - a[i] - a[j])` then insert a[j]: O(n) average per i, **O(n^2) average** total, O(n^2 * n) = O(n^3) worst case, O(n) extra space.\n\n**Comparison.** Both (b) and (c) are quadratic. The sorted version gives a worst-case guarantee O(n^2) and uses no extra space; the hash version is O(n^2) only on average and uses O(n) space. Neither improves on the n^2 asymptotically; the naive method is n^3. (Hashing by itself does not remove the pair loop: we still enumerate Theta(n^2) pairs.)",
+      "rubric": [
+        "(a) naive O(n^3) from the number of triples",
+        "(b) sort O(n log n) + n two-pointer scans of O(n) each = O(n^2) worst case, O(1) space",
+        "(c) hash: fix i, run hash two-sum on the rest: O(n^2) average, O(n^3) worst, O(n) space",
+        "Compares: sort gives a guarantee and no space; hash average only; both quadratic",
+        "Handles distinct positions (j > i, check before insert)"
+      ]
+    },
+    {
+      "id": "analysis-038",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "hw5",
+      "tags": [
+        "hw5",
+        "unordered_map",
+        "sliding-window",
+        "contains-duplicate-ii"
+      ],
+      "points": 8,
+      "prompt": "**HW5 Part 3a (Contains Duplicate II).** Given an integer array `nums` and an integer k, return true if there are two distinct indices i and j with nums[i] == nums[j] and |i - j| <= k.\n\n```cpp\nbool containsNearbyDuplicate(vector<int>& nums, int k) {\n    unordered_map<int,int> seen;           // maps value to position\n    for (int i = 0; i < (int)nums.size(); ++i) {\n        if (seen.find(nums[i]) != seen.end() && (i - seen[nums[i]]) <= k)\n            return true;\n        seen[nums[i]] = i;\n    }\n    return false;\n}\n```\n(a) Analyze this solution (average and worst case), counting every hash operation.\n(b) Give a second solution that keeps a **window of the last k elements** in an `unordered_set`. Analyze it.\n(c) Compare both with the brute force and with a solution that uses an ordered `set` window.",
+      "answer": "**(a)** The loop runs n times. Per iteration: `find` (O(1) average), the comparison `end()` O(1); if the key exists, `seen[nums[i]]` (O(1) average) and the subtraction; then `seen[nums[i]] = i` (O(1) average). Three hash operations at most: O(1) average per iteration, **O(n) average**; worst case each hash operation is O(size) = O(n), so **O(n^2)** worst case. Space O(u), u = distinct values (at most n).\n\n**(b) Window set.** Keep `unordered_set<int> win` with the values of the last k positions. For i = 0..n-1: if `win.count(nums[i])` return true; `win.insert(nums[i])`; if `win.size() > k` erase `nums[i-k]`. Each step has at most one find, one insert and one erase: O(1) average, so **O(n) average**, O(n^2) worst; space **O(min(n, k))** - smaller than the map, which keeps every distinct value.\n\n**(c)** Brute force: for each i compare with the next k elements: **O(nk)** (O(n^2) if k ~ n), O(1) space. An ordered `set` window works too but each operation is O(log k): **O(n log k)**, worst-case guaranteed; there is no benefit from ordering, so the hash version is preferred unless a worst-case guarantee is required.",
+      "rubric": [
+        "(a) counts find/[]/assignment as O(1) average each; total O(n) average, O(n^2) worst",
+        "(b) window set with insert/erase of the leaving element; O(n) average; O(k) space",
+        "(c) brute force O(nk); set window O(n log k)",
+        "States average vs worst for hashing and space cost"
+      ]
+    },
+    {
+      "id": "analysis-039",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "introsort",
+        "sorting",
+        "insertion-sort",
+        "slides"
+      ],
+      "points": 6,
+      "prompt": "Analyze **introsort** (what `std::sort` typically uses): quicksort until the recursion depth exceeds about 2 log n, then heapsort on the remaining ranges; ranges smaller than a constant c are left for a final insertion sort.\n\n(a) Why is the total O(n log n) in the worst case?\n(b) Why is the insertion-sort part only O(n), even though insertion sort is quadratic?",
+      "answer": "**(a)** *Quicksort part:* one level of recursion partitions disjoint ranges whose sizes sum to at most n, so a level costs O(n) (partition is linear). Stopping at depth about 2 log n limits this part to O(n) x O(log n) = **O(n log n)**, regardless of how bad the pivots are. *Heapsort part:* if the depth limit is hit, the ranges still unsorted are disjoint with sizes s_1, s_2, ... summing to at most n; heapsort of a range of size s costs O(s log s) <= O(s log n), so the total is at most O(n log n). If the depth limit is never hit, only the quicksort part (plus insertion sort) runs. Total in every case: O(n log n) + O(n log n) = **O(n log n) worst case**, instead of quicksort's O(n^2).\n\n**(b)** Ranges of size at most c (a constant) are finished with insertion sort. A range of size s <= c costs at most O(s^2) <= O(c s). The ranges are disjoint and their sizes sum to n, so the total is at most O(c) x (sum of s) = O(cn) = **O(n)**, because c is a constant. (Slide example with c = 20: in the worst case n = 1000 gives 50 ranges of 20 elements, each about 20^2/2 operations; n = 1,000,000 gives 50,000 such ranges: the number of ranges grows with n/c but the cost per range is a constant, so the total is linear in n.) Insertion sort is also fast in practice on tiny ranges because it has no recursion or setup overhead.",
+      "rubric": [
+        "(a) per-level partition cost O(n) times depth limit 2 log n = O(n log n)",
+        "(a) heapsort fallback is O(n log n) on disjoint ranges; total O(n log n) worst case",
+        "(b) a range of size s <= c costs O(s^2) <= O(cs); sizes sum to n => O(cn) = O(n) for constant c",
+        "(b) mentions c is a constant"
+      ]
+    },
+    {
+      "id": "analysis-040",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "design",
+        "vector",
+        "sorting",
+        "merge",
+        "multi-variable",
+        "hw1-style"
+      ],
+      "points": 10,
+      "prompt": "A sorted `vector` holds m records. A batch of k new records (unsorted) must be added so that the vector is sorted afterwards. Give four ways to do it with their complexity in m and k, and say which is best when (i) k = 1, (ii) k = sqrt(m), (iii) k = m.\n\n(1) For each new record, binary-search the position and `insert` it into the vector.\n(2) Append all k and sort the whole vector.\n(3) Sort the k new records, then merge the two sorted sequences.\n(4) Move everything into a `set`, insert the k records, and copy back.",
+      "answer": "**(1) Insert one by one.** Each record: binary search O(log m) (vector, random access) + `insert` O(m) (shift the tail; the vector has up to m + k elements): O(m + k) per record, total **O(k(m + k))**.\n**(2) Append and sort.** Append O(k) amortized; `sort` of m + k elements: **O((m + k) log(m + k))**.\n**(3) Sort the batch and merge.** Sort k records: O(k log k). Merge with the m existing ones in one pass (the merge of mergesort; into a second vector or in place with a buffer): O(m + k). Total **O(k log k + m + k) = O(k log k + m)**. Extra space O(m + k) for the merge buffer.\n**(4) Via a set.** Building the set from the sorted vector O(m) (ascending insertion with hints) or O(m log m), k inserts O(k log(m + k)), copy back O(m + k): about **O(m + k log(m + k))** with a well-implemented build; it is O(m log m + k log(m+k)) with plain inserts. Extra space O(m + k) in tree nodes.\n\n**Best:** (i) k = 1: (1) is O(m) (one shift), (3) is O(m), (2) is O(m log m), (4) O(m): so (1) or (3) - O(m). (ii) k = sqrt(m): (1) O(m sqrt(m)); (2) O(m log m); (3) O(sqrt(m) log m + m) = **O(m)**; so (3). (iii) k = m: (1) O(m^2); (2) O(m log m); (3) O(m log m) (sorting the batch dominates); (4) O(m log m): (2), (3) and (4) tie at O(m log m). Method (3) is the best overall: it exploits that the existing data are already sorted.",
+      "rubric": [
+        "(1) O(k(m+k)): binary search O(log m) + shift O(m) per record",
+        "(2) O((m+k) log(m+k)); (3) O(k log k + m + k) with the merge O(m+k) justified",
+        "(4) set-based cost with the log(m+k) (size grows to m+k)",
+        "Identifies the best method for k=1, k=sqrt(m), k=m",
+        "Keeps both variables m and k throughout"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,760 @@
+{
+  "topic": "coding",
+  "title": "STL coding questions (hash, heap, ordered containers) with complexity",
+  "questions": [
+    {
+      "id": "coding-001",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "unordered_set",
+        "contains-duplicate",
+        "leetcode-hashing"
+      ],
+      "points": 8,
+      "prompt": "**Contains Duplicate (Leetcode Hashing Questions slide, \"very basic hash table\").** Return `true` if some value appears at least twice in `nums`, `false` if all values are distinct. Use a hash-based STL container.\n\n```cpp\nbool containsDuplicate(const vector<int>& nums) {\n    // write code here\n}\n```\n\nAlso give the time and space complexity of your solution. Justify it the way we do in class: name the cost of every container operation you use (say average vs worst case for the hash-based ones), and combine them with the loop structure.",
+      "answer": "```cpp\nbool containsDuplicate(const vector<int>& nums) {\n    unordered_set<int> seen;\n    for (int x : nums) {\n        if (!seen.insert(x).second)   // insert returns pair<iterator,bool>; .second == false means x was already there\n            return true;\n    }\n    return false;\n}\n```\n\n`unordered_set::insert(x)` returns a `pair<iterator,bool>`; the `bool` is `false` when `x` was already in the set, so one call both tests and inserts. (Equivalent: `if (seen.count(x)) return true; seen.insert(x);`, two hash lookups instead of one.)\n\n**Complexity.**\n- The loop runs at most n times (n = `nums.size()`).\n- Each `insert` on an `unordered_set<int>` is **O(1) average** (compute `hash(x)`, look in one bucket; the occasional rehash is amortized O(1) per insert) and **O(n) worst case** (every key lands in the same bucket). `.second` is O(1).\n- n iterations x O(1) = **O(n) average, O(n^2) worst case**. Extra space: **O(n)** (the set can hold all n distinct values).\n\n**Alternatives (and why this one):** sorting first and comparing neighbors is O(n log n) time with O(1) extra space if you may reorder the input; an ordered `set<int>` is O(n log n) worst case (each insert O(log n)) with O(n) space. The hash set trades space for the best average time.",
+      "rubric": [
+        "Declares an unordered_set<int> (hash-based, as required) and loops once over nums",
+        "Detects a repeat via find/count or the .second of insert() BEFORE or while inserting; returns true on repeat, false at the end",
+        "Correct, compilable C++ (insert returns pair<iterator,bool>, no use of operator[] on a set)",
+        "Time: O(n) average because each insert/lookup is O(1) average; also states the O(n^2) worst case for hashing",
+        "Space: O(n) for the set",
+        "Justifies by naming per-operation costs rather than just stating the total"
+      ]
+    },
+    {
+      "id": "coding-002",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "hw5",
+      "tags": [
+        "unordered_map",
+        "contains-duplicate-ii",
+        "last-position",
+        "hw5",
+        "leetcode-hashing"
+      ],
+      "points": 9,
+      "prompt": "**Contains Duplicate II (HW5 Part 3a).** Given `nums` and an integer `k`, return `true` if there are two *distinct indices* `i != j` with `nums[i] == nums[j]` and `|i - j| <= k`; otherwise `false`. Use a hash-based STL container.\n\n```cpp\nbool containsNearbyDuplicate(vector<int>& nums, int k) {\n    // write code here\n}\n```\n\nHint from the HW: read the `unordered_map::operator[]` documentation. Which of its behaviors would be a bug if you used it only to *check* whether a key is present?\n\nAlso give the time and space complexity of your solution. Justify it the way we do in class: name the cost of every container operation you use (say average vs worst case for the hash-based ones), and combine them with the loop structure.",
+      "answer": "**Idea (hash map tracking the last position):** map each value to the index of its most recent occurrence. When we meet `nums[i]` again, the closest earlier equal value is exactly the stored one; if even that one is more than `k` away, every older occurrence is farther still, so overwriting with the newer index loses nothing.\n\n```cpp\nbool containsNearbyDuplicate(vector<int>& nums, int k) {\n    unordered_map<int, int> lastPos;                 // value -> index of its most recent occurrence\n    for (int i = 0; i < (int)nums.size(); ++i) {\n        auto it = lastPos.find(nums[i]);             // find does NOT create an entry (unlike operator[])\n        if (it != lastPos.end() && i - it->second <= k)\n            return true;\n        lastPos[nums[i]] = i;                        // insert or overwrite with the newer position\n    }\n    return false;\n}\n```\n\n**Why not just `seen[nums[i]]` to test membership?** `operator[]` *creates* an element with a default value (0 for an int) when the key is missing. Using it to look something up silently inserts `nums[i] -> 0`, which makes the map grow and, here, would make a later \"was it seen?\" test wrong (0 looks like a real index). `find` (or `count`) never inserts. The official HW5 solution does `seen.find(...) != seen.end() && (i - seen[nums[i]]) <= k`, which is fine because the `[]` is only evaluated once `find` has proved the key exists; the version above just avoids the second hash lookup.\n\n**Complexity.** n = `nums.size()`. The loop runs n times; per iteration: `find` O(1) average (O(n) worst), integer arithmetic O(1), `operator[]` assignment O(1) average (O(n) worst; includes amortized rehashing). So **O(n) average, O(n^2) worst case**; space **O(n)** distinct values in the map.",
+      "rubric": [
+        "Uses unordered_map<int,int> from value to the last index where it was seen",
+        "Checks i - lastIndex <= k only when the key is present (find/count first), returns true immediately",
+        "Always updates the stored index to the current i (newest position), after the check",
+        "Explains the operator[] trap: it inserts a default element, so it must not be used just to test membership",
+        "Time O(n) average / O(n^2) worst, each hash operation O(1) average, justified per call",
+        "Space O(n)"
+      ]
+    },
+    {
+      "id": "coding-003",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "hw5",
+      "tags": [
+        "unordered_map",
+        "substr",
+        "repeated-dna",
+        "hw5",
+        "operator[]"
+      ],
+      "points": 10,
+      "prompt": "**Repeated DNA Sequences (HW5 Part 3b).** A DNA string `s` uses only the letters `A`, `C`, `G`, `T`. Return every 10-letter substring that occurs **more than once** in `s`, each reported once, in any order. Use an `unordered_map` to count how many times each length-10 sequence is seen, and `string::substr(pos, len)` to extract each sequence. A plain `for (size_t i ...)` loop is fine (no iterator needed).\n\n```cpp\nvector<string> findRepeatedDnaSequences(const string& s) {\n    // write code here\n}\n```\n\nHint (HW5): `myMap[x]++` works even when `x` is not yet a key. Why?\n\nAlso give the time and space complexity of your solution. Justify it the way we do in class: name the cost of every container operation you use (say average vs worst case for the hash-based ones), and combine them with the loop structure.",
+      "answer": "```cpp\nvector<string> findRepeatedDnaSequences(const string& s) {\n    unordered_map<string, int> count;                // 10-letter sequence -> times seen so far\n    vector<string> answer;\n    for (size_t i = 0; i + 10 <= s.size(); ++i) {\n        string seq = s.substr(i, 10);                // O(10) = O(1)\n        if (++count[seq] == 2)                       // operator[] creates 0 on first sight; becomes 2 exactly once\n            answer.push_back(seq);                   // report each repeated sequence only once\n    }\n    return answer;\n}\n```\n\n**Why `count[seq]` works for counting.** `operator[]` returns a reference to the value for the key, first *creating* the element with a value-initialized `int` (= 0) if the key is absent. So `++count[seq]` turns \"absent\" into 1 and \"present with c\" into c+1, in one expression. The pre-increment returns the *new* value, so `== 2` is true exactly when the sequence is seen the second time: it is pushed once, never twice, and no second pass over the map is needed. (The HW5 baseline does `sequence[s.substr(i,10)]++` for all i and then loops over the map pushing every key whose count is > 1; the version above is the \"refactored for better runtime\" one.)\n\nLoop bound: the last valid start index is `s.size() - 10`, so `i + 10 <= s.size()` (written with `i + 10` on the left so the unsigned `size_t` never underflows when `s` is shorter than 10).\n\n**Complexity** (n = `s.size()`).\n- There are n - 9 = O(n) starting positions.\n- Per position: `substr(i,10)` copies 10 characters, an \"expensive\" but constant O(1); hashing a 10-character string is O(10) = O(1); `operator[]` is O(1) average (O(size) worst case); `++`, the comparison and `push_back` (amortized) are O(1).\n- Total **O(n) average**, O(n^2) worst case if every key collided. Space: O(n) distinct 10-letter keys (each of constant size).",
+      "rubric": [
+        "Declares unordered_map<string,int> and iterates over every start index i with i + 10 <= s.size() (correct bound, no off-by-one, no underflow)",
+        "Uses substr(i, 10) to extract each sequence and counts with ++map[seq] (or map[seq]++)",
+        "Returns each repeated sequence exactly once (push when count reaches 2, or second pass for count > 1)",
+        "Explains why operator[] counting works (creates a 0 entry, then increments)",
+        "Complexity O(n): O(n) positions x O(1) per position (substr of fixed length 10 and hash of a 10-char string are constant)",
+        "Mentions worst case / average distinction for the hash operations"
+      ]
+    },
+    {
+      "id": "coding-004",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "hw5",
+      "tags": [
+        "unordered_map",
+        "map",
+        "repeated-dna",
+        "hw5",
+        "complexity",
+        "hash-vs-tree"
+      ],
+      "points": 8,
+      "prompt": "**HW5 Part 3c.** For the Repeated DNA Sequences solution (count every 10-letter substring in a map, then report those seen more than once), what is the complexity using an `unordered_map<string,int>`? What if you had used an ordinary (ordered) `map<string,int>` instead? Give a complete complexity analysis of each. Let n be the length of the input string.",
+      "answer": "Code is identical except for the container:\n\n```cpp\nvector<string> findRepeatedDnaSequencesOrdered(const string& s) {\n    map<string, int> count;                          // identical code, ordered map: every access is O(log n) comparisons\n    vector<string> answer;\n    for (size_t i = 0; i + 10 <= s.size(); ++i) {\n        string seq = s.substr(i, 10);\n        if (++count[seq] == 2)\n            answer.push_back(seq);\n    }\n    return answer;\n}\n```\n\n**Unordered map (hash) version.**\n- There are n - 9 = O(n) substrings of length 10.\n- Taking a length-10 substring is O(10) = O(1): an \"expensive\" O(1), but still constant, independent of n.\n- Looking the substring up and incrementing it costs one hash computation over 10 characters (another expensive O(1)) plus an access to one bucket: O(1) **average** (O(n) worst case if all keys collide, but a decent hash does not).\n- So each substring costs O(1) and there are O(n) of them: **O(n) average**. If we instead make a second pass over the map to collect counts > 1, iterating a hash container is O(n) as long as the table keeps a reasonable load factor, so the total stays **O(n)**.\n\n**Ordered map version.** `map` is a balanced BST (red-black tree in practice). `operator[]` must search the tree: O(log m) *comparisons*, where m <= n - 9 is the number of distinct keys, so O(log n). Each comparison is between two 10-character strings, which is O(10) = O(1). Still, O(n) substrings x O(log n) per access = **O(n log n)** (worst case, deterministic). A pass over the map in order is O(n).\n\n**Comparison:** O(n) average (hash) vs O(n log n) worst case (tree). The tree version is slower asymptotically but has a guaranteed bound and returns the keys in sorted order for free; the hash version is faster on average but its O(n) is an average-case claim.",
+      "rubric": [
+        "Unordered_map: O(n) substrings, each substring/hash/lookup/increment is O(1) average, total O(n) average",
+        "Explains that substr and hashing of a fixed length-10 string are constant (not O(n))",
+        "Mentions the final iteration over the hash is O(n) given a reasonable load factor, so total stays O(n)",
+        "Ordered map: each access is a tree search O(log n) (string comparisons of length 10 are O(1)), total O(n log n)",
+        "States average vs worst case distinction (hash worst case O(n^2); map's O(n log n) is worst case)",
+        "Clear final comparison"
+      ]
+    },
+    {
+      "id": "coding-005",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "hw4",
+      "tags": [
+        "set",
+        "lower_bound",
+        "contains-duplicate-iii",
+        "sliding-window",
+        "ordered",
+        "leetcode-hashing"
+      ],
+      "points": 14,
+      "prompt": "**Contains Duplicate III (Leetcode Hashing Questions slide: \"ordered set problem\"; HW4 solution).** Given `nums`, `indexDiff` and `valueDiff`, return `true` if there exist indices `i != j` with `|i - j| <= indexDiff` **and** `|nums[i] - nums[j]| <= valueDiff`; otherwise `false`. Assume `indexDiff >= 1`, `valueDiff >= 0`.\n\nUse an ordered `std::set` that always contains only the values in the last `indexDiff` positions (a fixed-size sliding window). Use the *member* function `lower_bound`.\n\n```cpp\nbool containsNearbyAlmostDuplicate(vector<int>& nums, int indexDiff, int valueDiff) {\n    // write code here\n}\n```\n\nThen (a) give the time complexity in terms of n = `nums.size()` and k = `indexDiff`, and (b) explain why an `unordered_set` could not replace the `set`.",
+      "answer": "```cpp\nbool containsNearbyAlmostDuplicate(vector<int>& nums, int indexDiff, int valueDiff) {\n    set<long long> window;                           // the values at the last indexDiff positions\n    for (int i = 0; i < (int)nums.size(); ++i) {\n        long long x = nums[i];                       // long long so x - valueDiff / x + valueDiff cannot overflow\n        auto lb = window.lower_bound(x - valueDiff); // smallest value in the window that is >= x - valueDiff\n        if (lb != window.end() && *lb <= x + valueDiff)\n            return true;                             // that value lies in [x - valueDiff, x + valueDiff]\n        window.insert(x);\n        if (i >= indexDiff)                          // keep a fixed-size sliding window\n            window.erase((long long)nums[i - indexDiff]);\n    }\n    return false;\n}\n```\n\n**How it works.** For each new value x we need *any* earlier value (within the window) in the interval [x - valueDiff, x + valueDiff]. `window.lower_bound(x - valueDiff)` returns the smallest window element that is >= x - valueDiff. If that element exists and is also <= x + valueDiff, it is inside the interval; if it is > x + valueDiff, then every larger element is too, and every smaller one is < x - valueDiff, so no element of the window is in the interval. After the test we insert x and, once i >= indexDiff, erase the value that is now `indexDiff` positions old, so the window always holds exactly the last `indexDiff` values for the next iteration. (If a duplicate value were in the window we would already have returned true, because |x - x| = 0 <= valueDiff, so `erase(value)` can never remove a copy that a later element still needs.) `long long` is used so `x - valueDiff` and `x + valueDiff` cannot overflow `int`.\n\n**(a) Complexity: O(n log k).** The loop runs n times. The set never holds more than k = `indexDiff` elements, so each tree operation costs O(log k):\n- `lower_bound` (member of `set`): O(log k), as stated in the STL documentation;\n- `end()`, the comparisons and the Boolean logic: O(1);\n- `insert`: O(log k);\n- `erase(key)`: O(log k).\nA constant number of O(log k) and O(1) operations in sequence is O(log k); n iterations give **O(n log k)** time, worst case (balanced BST, no hashing involved). Space: O(k).\n\n**(b) Why not `unordered_set`?** A hash container cannot answer \"smallest element >= v\" (successor/range queries): the elements are not ordered and there is no `lower_bound`. Scanning the whole window for an element in the interval would cost O(k) per step, O(nk) total. Ordered containers (balanced BSTs) support lower_bound in O(log k).",
+      "rubric": [
+        "Maintains a set (ordered) of the last indexDiff values and updates it each iteration (insert new, erase the value leaving the window)",
+        "Uses the member set::lower_bound(x - valueDiff) and checks the returned element is != end() and <= x + valueDiff",
+        "Window management is correct (erase nums[i - indexDiff] when i >= indexDiff, after the check/insert)",
+        "Avoids integer overflow (long long) or otherwise handles x +/- valueDiff correctly",
+        "Complexity O(n log k): n iterations x O(log k) for lower_bound, insert, erase (set size <= k), with per-call justification",
+        "Explains why a hash set cannot support the successor / range query"
+      ]
+    },
+    {
+      "id": "coding-006",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "unordered_map",
+        "two-sum",
+        "complement",
+        "leetcode-hashing"
+      ],
+      "points": 8,
+      "prompt": "**Two Sum (Leetcode Hashing Questions slide).** Given `nums` and `target`, return the indices `{i, j}` (with `i < j`) of two *different* elements whose values add to `target`. Assume exactly one such pair exists. It must be faster than trying all pairs.\n\n```cpp\nvector<int> twoSum(const vector<int>& nums, int target) {\n    // write code here\n}\n```\n\nAlso give the time and space complexity of your solution. Justify it the way we do in class: name the cost of every container operation you use (say average vs worst case for the hash-based ones), and combine them with the loop structure.",
+      "answer": "```cpp\nvector<int> twoSum(const vector<int>& nums, int target) {\n    unordered_map<int, int> indexOf;                 // value -> index of an EARLIER element with that value\n    for (int i = 0; i < (int)nums.size(); ++i) {\n        auto it = indexOf.find(target - nums[i]);    // is the complement already seen?\n        if (it != indexOf.end())\n            return {it->second, i};\n        indexOf[nums[i]] = i;                        // store after the lookup so an element is never paired with itself\n    }\n    return {};                                       // no pair (problem statement guarantees one exists)\n}\n```\n\n**Idea:** for each element we ask \"have I already seen the value that would complete the pair?\" - one hash lookup of `target - nums[i]`. Storing `nums[i]` *after* the lookup guarantees we never pair an element with itself (so `target = 6`, `nums = {3, 2, 4}` correctly gives `{1, 2}`, not `{0, 0}`), and for repeated values (`{3, 3}`, target 6) the earlier copy is already in the map when the second 3 is processed. If a value occurs twice only the later index is stored, which is fine because a pair is found at the moment the second member is processed.\n\n**Complexity.** Loop: n iterations (n = `nums.size()`). Per iteration: `find` O(1) average, subtraction O(1), `operator[]` assignment O(1) average. Total **O(n) average** (O(n^2) worst case if all keys collide); space **O(n)**. Brute force over all pairs is O(n^2); sorting + two pointers is O(n log n) but loses the original indices unless you also store them.",
+      "rubric": [
+        "Uses unordered_map<int,int> from value to index",
+        "For each element looks up target - nums[i] (find/count) BEFORE inserting nums[i]",
+        "Returns the stored index and the current index when found; correct return of an empty/default result otherwise",
+        "Does not pair an element with itself and handles duplicate values",
+        "Time O(n) average (n x O(1) average lookup/insert), worst case O(n^2) noted",
+        "Space O(n)"
+      ]
+    },
+    {
+      "id": "coding-007",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "unordered_map",
+        "valid-anagram",
+        "counting",
+        "leetcode-hashing"
+      ],
+      "points": 8,
+      "prompt": "**Valid Anagram (Leetcode Hashing Questions slide: \"basic hash map to count occurrences\").** Return `true` if `t` is a rearrangement of the letters of `s` (same letters with the same multiplicities).\n\n```cpp\nbool isAnagram(const string& s, const string& t) {\n    // write code here\n}\n```\n\nAlso give the time and space complexity of your solution. Justify it the way we do in class: name the cost of every container operation you use (say average vs worst case for the hash-based ones), and combine them with the loop structure. Then compare with the approach \"sort both strings and compare them\".",
+      "answer": "```cpp\nbool isAnagram(const string& s, const string& t) {\n    if (s.size() != t.size()) return false;          // different lengths can never be anagrams\n    unordered_map<char, int> count;\n    for (char c : s) ++count[c];                     // count[c]++ creates 0 then increments\n    for (char c : t) {\n        auto it = count.find(c);\n        if (it == count.end() || it->second == 0)    // t has a letter s doesn't have (or has too many of it)\n            return false;\n        --it->second;\n    }\n    return true;                                     // equal lengths + no count went negative => all counts are 0\n}\n```\n\n**Why the final `return true` is justified:** the sizes are equal, every character of `t` found an unused copy in `s` (no count ever went below 0), and `t` used exactly `|t| = |s|` copies in total - so every count of `s` was used up and all counts are 0.\n\n**Complexity.** Let n = `s.size()` = `t.size()` (we return early if they differ, O(1)). The first loop does n `operator[]` increments, each O(1) average; the second loop does n `find` + decrement, each O(1) average. Total **O(n) average** (O(n^2) worst case for adversarial hashing, though the key type `char` has at most 256 distinct values, so in practice the map has O(1) entries). Space: O(sigma) where sigma is the alphabet size (<= 256, or 26 for lowercase letters), i.e. O(1) for a fixed alphabet - never more than O(n).\n\n**Sorting approach:** `sort(s)` and `sort(t)` are O(n log n) each, then comparing is O(n): **O(n log n)** time, O(1) extra space if sorting copies in place. The counting approach is faster (O(n)) at the price of the count map.",
+      "rubric": [
+        "Early exit for different lengths (or equivalent final all-zero check)",
+        "Counts the characters of s in an unordered_map<char,int> (or array of 26) using ++count[c]",
+        "Decrements for each character of t and fails if a character is missing or its count would go negative",
+        "Time O(n) average with per-loop justification of the O(1) hash operations",
+        "Space O(alphabet size) = O(1) for a fixed alphabet (at most O(n))",
+        "Compares correctly with the sorting approach O(n log n)"
+      ]
+    },
+    {
+      "id": "coding-008",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "slides",
+      "tags": [
+        "unordered_map",
+        "sliding-window",
+        "last-position",
+        "longest-substring",
+        "leetcode-hashing"
+      ],
+      "points": 12,
+      "prompt": "**Longest Substring Without Repeating Characters (Leetcode Hashing Questions slide: \"best one is a hash map tracking the last position of each character\").** Return the length of the longest substring of `s` in which no character occurs twice. Example: `\"abcabcbb\"` -> 3 (`\"abc\"`), `\"pwwkew\"` -> 3 (`\"wke\"`), `\"abba\"` -> 2.\n\n```cpp\nint lengthOfLongestSubstring(const string& s) {\n    // write code here\n}\n```\n\n(a) Write the one-pass solution that maps each character to the index of its last occurrence. (b) Give its complexity. (c) What is the complexity of the \"obvious\" solution that, for each start index, extends the substring until a repeat, and why is it worse?",
+      "answer": "**(a)**\n\n```cpp\nint lengthOfLongestSubstring(const string& s) {\n    unordered_map<char, int> last;                   // char -> index of its most recent occurrence\n    int best = 0;\n    int start = 0;                                   // current window is s[start..i]\n    for (int i = 0; i < (int)s.size(); ++i) {\n        auto it = last.find(s[i]);\n        if (it != last.end() && it->second >= start) // repeat INSIDE the window (occurrences before start don't count)\n            start = it->second + 1;                  // jump the left edge just past the previous occurrence\n        last[s[i]] = i;\n        best = max(best, i - start + 1);\n    }\n    return best;\n}\n```\n\nThe window is `s[start..i]` and always has all-distinct characters. When `s[i]` was last seen at index p *inside* the window (p >= start), the new window must start at p + 1. The test `it->second >= start` is essential: a character last seen *before* `start` is no longer in the window and must not move `start` backwards. Trace on `\"abba\"`: i=0 'a' -> start 0, best 1; i=1 'b' -> best 2; i=2 'b' seen at 1 >= 0 -> start = 2, best stays 2; i=3 'a' seen at 0 but 0 < start = 2, so *no* jump (without the `>= start` test, start would go back to 1 and give a wrong length 3).\n\n**(b) Complexity: O(n) average** (n = `s.size()`). One pass, i from 0 to n-1, i.e. n iterations. Each iteration does one `find` (O(1) average), one `operator[]` assignment (O(1) average), and O(1) arithmetic with `max`. The left edge `start` never moves left, but we never loop over it - it only jumps - so there is no inner loop. Total n x O(1) = O(n) average (O(n^2) worst case with a terrible hash, though the key type `char` has at most 256 values). Space: O(min(n, sigma)) = O(1) for a fixed alphabet.\n\n**(c) Brute force.** For each of n start indices i, extend j while `s[j]` is not in a set of the current characters (set operations O(1) average):\n\n```cpp\nint lengthOfLongestSubstringBrute(const string& s) {\n    int best = 0;\n    for (int i = 0; i < (int)s.size(); ++i) {\n        unordered_set<char> seen;\n        for (int j = i; j < (int)s.size() && seen.insert(s[j]).second; ++j)\n            best = max(best, j - i + 1);\n    }\n    return best;\n}\n```\n\nThe inner loop can run up to the length of the run (up to min(n - i, sigma) steps because a repeat is forced after sigma+1 characters), so the cost is O(n x min(n, sigma)): O(n^2) for large alphabets, O(n x sigma) for a fixed alphabet. It re-examines characters it has already seen; the last-position map lets the left edge jump directly past the previous occurrence, so every character is processed once.",
+      "rubric": [
+        "Keeps a map char -> last index and a left edge `start` of the current window, single pass",
+        "On a repeat moves start to lastIndex + 1 ONLY if lastIndex >= start (does not move start backwards)",
+        "Updates last[s[i]] = i for every character and updates the best length = i - start + 1",
+        "Compilable C++ using find (or count) so the map is not polluted by operator[] on lookup",
+        "Complexity O(n): n iterations of O(1) average hash operations, no inner loop",
+        "Brute force analyzed as O(n^2) (or O(n x sigma)) with the reason (re-scans overlapping substrings)"
+      ]
+    },
+    {
+      "id": "coding-009",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "unordered_set",
+        "linked-list",
+        "intersection",
+        "pointers",
+        "leetcode-hashing"
+      ],
+      "points": 10,
+      "prompt": "**Intersection of Two Linked Lists (Leetcode Hashing Questions slide: \"just hash table but slightly more complicated\").** Two singly linked lists may share a common tail (after the first shared node, they are the *same* nodes in memory). Return a pointer to the first shared node, or `nullptr` if they do not intersect. Do not modify the lists.\n\n```cpp\nstruct ListNode {\n    int val;\n    ListNode *next;\n    ListNode(int x) : val(x), next(nullptr) {}\n};\n\nListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {\n    // write code here\n}\n```\n\n(a) Solve it with a hash-based container. (b) Analyze time and space. (c) Why would storing node *values* instead of node *addresses* be wrong? (d) Name a solution that uses O(1) extra space and give its complexity.",
+      "answer": "**(a)**\n\n```cpp\nListNode *getIntersectionNode(ListNode *headA, ListNode *headB) {\n    unordered_set<ListNode*> seen;                   // store node ADDRESSES, not values\n    for (ListNode *p = headA; p != nullptr; p = p->next)\n        seen.insert(p);\n    for (ListNode *p = headB; p != nullptr; p = p->next)\n        if (seen.count(p))                           // first node of B that is also in A\n            return p;\n    return nullptr;\n}\n```\n\n**(c)** Two different nodes can hold the same `val` without being the same node; intersection means \"same node object\", i.e. the same address. Hashing values would report a false match (e.g. A = 1->2->3, B = 9->2->7 share a value 2 but no node). `std::hash<T*>` exists, so `unordered_set<ListNode*>` is legal.\n\n**(b) Complexity.** Let m = length of A and n = length of B. The first loop does m iterations of `insert` (O(1) average each): O(m). The second loop does at most n iterations of `count` (O(1) average each) with O(1) pointer advance: O(n). Total **O(m + n) average** (O(m^2 + mn) worst case with all-colliding hashing); extra space **O(m)** for the set (store the shorter list to make it O(min(m, n))).\n\n**(d) O(1)-space version (two pointers):**\n\n```cpp\nListNode *getIntersectionNodeTwoPointers(ListNode *headA, ListNode *headB) {\n    ListNode *a = headA, *b = headB;\n    while (a != b) {                                 // each pointer walks lenA + lenB nodes in total\n        a = (a != nullptr) ? a->next : headB;\n        b = (b != nullptr) ? b->next : headA;\n    }\n    return a;                                        // the intersection node, or nullptr if there is none\n}\n```\n\nEach pointer walks its own list and then switches to the head of the other, so both walk exactly m + n nodes in total; they therefore reach the first shared node at the same step (the tails after it have equal length), or both become `nullptr` simultaneously if there is none. Time **O(m + n)** worst case (deterministic, no hashing), space **O(1)**.",
+      "rubric": [
+        "Uses unordered_set<ListNode*> storing node pointers (addresses) from one list",
+        "Walks the other list and returns the first node found in the set; returns nullptr otherwise",
+        "Correct, compilable pointer code (loops end at nullptr, no value comparison)",
+        "Time O(m + n) average and O(m) space, justified per operation",
+        "Explains why values are the wrong key (same value does not mean same node)",
+        "Gives an O(1)-space alternative (two-pointer / length difference) with O(m + n) time"
+      ]
+    },
+    {
+      "id": "coding-013",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "unordered_map",
+        "counting",
+        "two-pass",
+        "first-unique"
+      ],
+      "points": 8,
+      "prompt": "**First non-repeating element.** Return the **index** of the first element of `nums` whose value occurs exactly once in the whole vector, or `-1` if there is none. Example: `{4, 5, 4, 6, 5, 7, 6}` -> 5 (the value 7).\n\n```cpp\nint firstUnique(const vector<int>& nums) {\n    // write code here\n}\n```\n\nAlso give the time and space complexity of your solution. Justify it the way we do in class: name the cost of every container operation you use (say average vs worst case for the hash-based ones), and combine them with the loop structure. Why can't you just iterate over the hash map to find the answer?",
+      "answer": "```cpp\nint firstUnique(const vector<int>& nums) {\n    unordered_map<int, int> count;\n    for (int x : nums) ++count[x];                   // pass 1: count every value\n    for (int i = 0; i < (int)nums.size(); ++i)       // pass 2: scan IN ORIGINAL ORDER (hash order is arbitrary)\n        if (count.at(nums[i]) == 1)                  // at() = lookup that never creates an entry\n            return i;\n    return -1;\n}\n```\n\n**Two passes.** Pass 1 counts every value. Pass 2 walks the *original vector* in order and returns the first index whose value has count 1. We cannot find the answer by iterating over the `unordered_map`: a hash container has no meaningful order (iteration order depends on the hash function and table size, not on insertion order), so we could not tell which unique value came first. `count.at(x)` is a lookup that throws instead of creating an entry; here every value is guaranteed to be present, so `count[nums[i]]` would also work, but `at` states the intent and never modifies the map.\n\n**Complexity** (n = `nums.size()`). Pass 1: n x `operator[]` O(1) average = O(n). Pass 2: at most n x (`at` O(1) average + comparison O(1)) = O(n). Consecutive steps add: O(n) + O(n) = **O(n) average** (O(n^2) worst case with a degenerate hash). Space: **O(n)** for the counts (O(d) with d distinct values).",
+      "rubric": [
+        "Counts occurrences with unordered_map<int,int> (++count[x])",
+        "Second pass iterates over the original vector in index order (not over the map) and returns the first with count 1",
+        "Returns -1 if none exists",
+        "Explains why iteration order of a hash container cannot be used",
+        "Complexity O(n) average: two consecutive O(n) passes of O(1)-average operations; space O(n)"
+      ]
+    },
+    {
+      "id": "coding-014",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "unordered_map",
+        "group-by",
+        "anagrams",
+        "sort",
+        "string-keys"
+      ],
+      "points": 10,
+      "prompt": "**Group by key.** Given a vector of lowercase words, group together the words that are anagrams of each other and return the groups (the order of groups, and of words inside a group, does not matter). Example: `{\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"}` -> `{{\"eat\",\"tea\",\"ate\"},{\"tan\",\"nat\"},{\"bat\"}}`.\n\nUse an `unordered_map` whose key is a canonical form of the word.\n\n```cpp\nvector<vector<string>> groupAnagrams(const vector<string>& words) {\n    // write code here\n}\n```\n\nGive the complexity in terms of n = number of words and L = length of the longest word.",
+      "answer": "```cpp\nvector<vector<string>> groupAnagrams(const vector<string>& words) {\n    unordered_map<string, vector<string>> groups;    // sorted letters -> all words with those letters\n    for (const string& w : words) {\n        string key = w;\n        sort(key.begin(), key.end());                // O(L log L)\n        groups[key].push_back(w);                    // hash key O(L); [] creates an empty vector the first time\n    }\n    vector<vector<string>> result;\n    result.reserve(groups.size());\n    for (auto& kv : groups)\n        result.push_back(move(kv.second));           // O(1) per group (moves the vector)\n    return result;\n}\n```\n\n**Idea.** Two words are anagrams exactly when their letters sorted are equal, so the sorted word is a canonical key: `groups[\"aet\"]` collects `eat`, `tea`, `ate`. `groups[key]` creates an empty vector the first time the key is seen (the same `operator[]` behavior as with counts), so the `push_back` works immediately.\n\n**Complexity.**\n- For each of the n words: copying and sorting the key is O(L log L) (comparison sort of at most L characters); hashing the key string is O(L); `operator[]` lookup is O(1) average **bucket accesses** but each key comparison costs up to O(L), so O(L) per lookup in total; `push_back(w)` is amortized O(1) vector steps plus an O(L) string copy.\n- Per word: O(L log L) + O(L) + O(L) = O(L log L). For n words: **O(n L log L) average** (the hash worst case adds a factor: O(n) collisions each costing O(L)).\n- The final loop visits each group once and moves its vector in O(1): O(g) <= O(n). Space: **O(n L)** for the keys and the stored words.\n\n(If the alphabet is small and fixed you can build the key by counting letters, O(L) per word and O(n L) total, instead of sorting.)",
+      "rubric": [
+        "Builds a canonical key for each word (sorted letters, or letter-count signature)",
+        "Uses unordered_map<string, vector<string>> and groups[key].push_back(word)",
+        "Collects the map's values into the result vector of vectors",
+        "Complexity includes the sort cost per word: O(L log L), total O(n L log L), with justification of hash/lookup cost on strings of length L",
+        "Notes that string keys make hashing/comparison O(L), not O(1)"
+      ]
+    },
+    {
+      "id": "coding-015",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "priority_queue",
+        "min-heap",
+        "unordered_map",
+        "top-k",
+        "k-most-frequent",
+        "n-log-k"
+      ],
+      "points": 12,
+      "prompt": "**K most frequent elements.** Given `nums` and `k` (1 <= k <= number of distinct values), return the `k` values that occur most often, **most frequent first** (ties may be broken arbitrarily). Required: time better than sorting all the distinct values, i.e. O(n log k), using a hash map and a heap of size `k`.\n\n```cpp\nvector<int> topKFrequent(const vector<int>& nums, int k) {\n    // write code here\n}\n```\n\nGive the complexity in terms of n = `nums.size()`, m = number of distinct values, and k. Why does the heap have to be a **min**-heap even though we want the *most* frequent values?",
+      "answer": "```cpp\nvector<int> topKFrequent(const vector<int>& nums, int k) {\n    unordered_map<int, int> count;\n    for (int x : nums) ++count[x];                           // O(n) average\n    typedef pair<int, int> P;                                // (count, value)\n    priority_queue<P, vector<P>, greater<P>> heap;           // MIN-heap on count: top = least frequent of the k kept\n    for (const auto& kv : count) {                           // m = number of distinct values\n        heap.push(P(kv.second, kv.first));                   // O(log k)\n        if ((int)heap.size() > k) heap.pop();                // O(log k): evict the least frequent\n    }\n    vector<int> result;\n    while (!heap.empty()) {\n        result.push_back(heap.top().second);\n        heap.pop();\n    }\n    reverse(result.begin(), result.end());                   // most frequent first\n    return result;\n}\n```\n\n**Why a min-heap.** The heap holds the k best candidates so far; each new candidate has to be compared with the *weakest* of them. In a min-heap on the count, `top()` is the least frequent of the k kept, so after pushing a (k+1)th candidate we `pop()` the minimum, which is exactly the one we want to discard. A max-heap would put the *best* element on top and we could not evict the worst cheaply. Pairs compare by `first` (the count) first, which is what we want; `greater<P>` turns the default max-heap into a min-heap.\n\n**Complexity.**\n- Counting: n x `operator[]` O(1) average = **O(n)**.\n- Heap phase: iterate over the m entries of the map (O(m), iterating a hash is linear in its size); for each, `push` is O(log k) and, when the size exceeds k, `pop` is O(log k) (the heap never holds more than k + 1 elements). **O(m log k)**.\n- Output: k x (`top` O(1) + `pop` O(log k) + `push_back` amortized O(1)) = O(k log k); `reverse` is O(k).\n- Total **O(n + m log k + k log k) = O(n + m log k)** (since k <= m); and since m <= n this is at most **O(n log k)**. Space: O(m) for the map + O(k) for the heap.\n\n**Comparison:** sorting the m (value, count) pairs would be O(n + m log m); bucketing the values by count gives O(n); quickselect on the counts is O(n) average. The heap is the one that works on a stream of counts and uses only O(k) extra memory beyond the map.",
+      "rubric": [
+        "Counts occurrences with unordered_map<int,int> in O(n)",
+        "Declares a MIN-heap of (count, value) pairs: priority_queue<pair<int,int>, vector<pair<int,int>>, greater<pair<int,int>>>",
+        "Pushes each map entry and pops when size exceeds k, so the heap never holds more than k+1 entries",
+        "Extracts the answer from the heap and orders it most-frequent-first (reverse)",
+        "Complexity O(n + m log k) <= O(n log k): per-operation justification (push/pop O(log k), hash iteration O(m))",
+        "Explains why min-heap (evict the weakest) and mentions an alternative"
+      ]
+    },
+    {
+      "id": "coding-016",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "priority_queue",
+        "merge-k-lists",
+        "linked-list",
+        "comparator",
+        "min-heap"
+      ],
+      "points": 14,
+      "prompt": "**Merge k sorted lists with a heap.** `lists` contains k singly linked lists, each sorted in ascending order (some may be empty/`nullptr`). Return the head of a single sorted list containing all the nodes (relink the existing nodes; do not allocate new ones). Use a `priority_queue` of `ListNode*`; you must supply the comparator so that the node with the **smallest** `val` is on top.\n\n```cpp\nstruct ListNode {\n    int val;\n    ListNode *next;\n    ListNode(int x) : val(x), next(nullptr) {}\n};\n\nListNode *mergeKLists(vector<ListNode*>& lists) {\n    // write code here\n}\n```\n\nLet N be the total number of nodes. Give the complexity and compare it with (i) merging the lists into a result one after another and (ii) concatenating everything and calling `sort`.",
+      "answer": "```cpp\nListNode *mergeKLists(vector<ListNode*>& lists) {\n    auto cmp = [](ListNode *a, ListNode *b) { return a->val > b->val; };   // greater-than => MIN-heap on val\n    priority_queue<ListNode*, vector<ListNode*>, decltype(cmp)> heap(cmp);\n    for (ListNode *head : lists)\n        if (head != nullptr) heap.push(head);                // one candidate per list\n    ListNode dummy(0);\n    ListNode *tail = &dummy;\n    while (!heap.empty()) {\n        ListNode *node = heap.top();                         // smallest front node among all lists\n        heap.pop();\n        tail->next = node;\n        tail = node;\n        if (node->next != nullptr) heap.push(node->next);    // its list's next node becomes a candidate\n    }\n    return dummy.next;\n}\n```\n\n**Idea.** At any time the next node of the output is the smallest of the *current front nodes* of the k lists. The heap holds at most one node per list (at most k nodes), `top()` gives the global minimum, and when we take a node we push its successor from the same list. The comparator `a->val > b->val` is the \"less\" relation of a **min**-heap: `priority_queue` keeps the element that is *largest according to the comparator* on top, so reversing the comparison puts the smallest `val` on top (the same reason `greater<int>` produces a min-heap). The dummy head node avoids a special case for the first node.\n\n**Complexity.**\n- Initial pushes: at most k pushes onto a heap of at most k elements: O(k log k).\n- Main loop: every one of the N nodes is pushed once and popped once. The heap has at most k elements, so `push` and `pop` are each O(log k); `top`, `empty`, pointer assignments are O(1). That is N x O(log k).\n- Total **O(N log k)** (plus O(k) to scan the vector of heads; the k log k term is dominated when N >= k, which holds when no list is empty). Extra space **O(k)** for the heap (nodes are relinked in place).\n\n**Comparison.** (i) Merging lists one after another into a growing result: merging the i-th list into a result of size up to N costs O(N) each, so **O(N k)** worst case. (ii) Concatenate + `sort`: **O(N log N)**, which ignores the sortedness and is larger than O(N log k) whenever k < N. Divide and conquer (merge lists in pairs, like mergesort) also achieves O(N log k) with O(1) extra space.",
+      "rubric": [
+        "Declares priority_queue<ListNode*, vector<ListNode*>, Compare> with a comparator giving a MIN-heap on val (a->val > b->val); passes the comparator object to the constructor if it is a lambda",
+        "Pushes the non-null heads initially; loop pops the smallest, appends it to the output, pushes its next if non-null",
+        "Relinks existing nodes using a dummy head; returns dummy.next; handles all-empty input",
+        "Complexity O(N log k): N pushes and N pops on a heap of size <= k",
+        "Space O(k) for the heap",
+        "Compares correctly with sequential merging O(Nk) and sort-all O(N log N)"
+      ]
+    },
+    {
+      "id": "coding-017",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "priority_queue",
+        "two-heaps",
+        "median",
+        "design",
+        "greater"
+      ],
+      "points": 14,
+      "prompt": "**Running median.** Design a class that supports `addNum(int)` and `findMedian()` on a growing stream. `findMedian()` returns the median of all numbers added so far (the middle value if the count is odd, the mean of the two middle values if even; it is only called after at least one `addNum`). Use **two priority queues**. Both operations should be as fast as possible.\n\n```cpp\nclass MedianFinder {\n    // write code here\npublic:\n    void addNum(int num) {\n        // write code here\n    }\n    double findMedian() const {\n        // write code here\n    }\n};\n```\n\nGive the complexity of each method. Why is keeping a sorted `vector` and inserting each number worse?",
+      "answer": "```cpp\nclass MedianFinder {\n    priority_queue<int> lo;                                  // MAX-heap: the smaller half (top = its largest)\n    priority_queue<int, vector<int>, greater<int>> hi;       // MIN-heap: the larger half (top = its smallest)\npublic:\n    void addNum(int num) {\n        if (lo.empty() || num <= lo.top()) lo.push(num);\n        else hi.push(num);\n        if (lo.size() > hi.size() + 1) {                     // rebalance: sizes must satisfy |lo| - |hi| in {0, 1}\n            hi.push(lo.top());\n            lo.pop();\n        } else if (hi.size() > lo.size()) {\n            lo.push(hi.top());\n            hi.pop();\n        }\n    }\n    double findMedian() const {                              // precondition: at least one number added\n        if (lo.size() > hi.size()) return lo.top();\n        return (lo.top() + (double)hi.top()) / 2.0;\n    }\n};\n```\n\n**Invariant.** `lo` is a max-heap holding the smaller half of the numbers and `hi` is a min-heap holding the larger half, with every element of `lo` <= every element of `hi`, and `lo.size()` equal to `hi.size()` or exactly one larger. Then the median is `lo.top()` (odd count) or the mean of `lo.top()` and `hi.top()` (even count). `addNum` first puts the new number on the correct side, then moves **one** element across if the sizes broke the invariant (an element moved from `lo` to `hi` is the largest of the smaller half, so it is <= everything already in `hi`; symmetrically for `hi` to `lo`).\n\n**Complexity.**\n- `addNum`: `top()`/`empty()`/`size()` O(1); at most one `push` into a heap of at most n elements: O(log n); and at most one `top`/`pop`/`push` rebalancing step: O(log n) + O(log n). A constant number of O(log n) operations: **O(log n) per addNum**; n additions cost O(n log n).\n- `findMedian`: only `top()` and `size()` calls: **O(1)**.\n- Space: O(n).\n\n**Why not a sorted vector?** `lower_bound` finds the position in O(log n) but `vector::insert` in the middle shifts the following elements: O(n) per insertion, O(n^2) for n numbers. A `multiset` plus a median iterator is also O(log n) per add, but needs careful iterator maintenance; the two-heap design is simpler.",
+      "rubric": [
+        "Max-heap (priority_queue<int>) for the lower half and min-heap (greater<int>) for the upper half",
+        "Inserts into the correct half based on the current top, then rebalances so sizes differ by at most one (lo may be one larger)",
+        "findMedian handles odd count (top of larger heap) and even count (average of tops, using double division)",
+        "addNum O(log n): constant number of push/pop on heaps of size <= n; findMedian O(1)",
+        "Explains why a sorted vector is O(n) per insertion (shifting)"
+      ]
+    },
+    {
+      "id": "coding-018",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "unordered_set",
+        "sliding-window",
+        "erase",
+        "duplicate-distance"
+      ],
+      "points": 8,
+      "prompt": "**Detect duplicates within distance d (sliding-window set).** Write a function that returns `true` iff there exist indices `i < j` with `j - i <= d` and `a[i] == a[j]`. Unlike the \"last position\" map solution, use only an `unordered_set<int>` that stores *values* (no indices): keep exactly the last `d` values in it.\n\n```cpp\nbool hasDuplicateWithin(const vector<int>& a, int d) {\n    // write code here\n}\n```\n\nState the time and space complexity. What is the space advantage over the map solution, and when is it a real advantage?",
+      "answer": "```cpp\nbool hasDuplicateWithin(const vector<int>& a, int d) {\n    unordered_set<int> window;                       // before iteration i: the values at indices i-d .. i-1\n    for (int i = 0; i < (int)a.size(); ++i) {\n        if (window.count(a[i])) return true;\n        window.insert(a[i]);\n        if (i >= d)\n            window.erase(a[i - d]);                  // a[i-d] is now too far from index i+1\n    }\n    return false;\n}\n```\n\n**Window invariant.** Before iteration i the set contains `a[i-d .. i-1]` (at most d values). If `a[i]` is in the set, an equal value occurred at distance <= d: return `true`. Otherwise we insert `a[i]`, and once i >= d we erase `a[i-d]`, because that position is more than d away from the next index i + 1. Since we return as soon as the window would contain a duplicate, the window never contains two equal values, so `erase(value)` never deletes a copy that is still needed. For d = 0 the window is always empty and the answer is `false` (correct: distance 0 would need i = j).\n\n**Complexity.** The loop runs n times (n = `a.size()`); each iteration does a `count` (O(1) average), an `insert` (O(1) average) and an `erase(key)` (O(1) average): **O(n) average** (O(nd) worst case if every operation degenerates to O(size) = O(d)). Space: **O(min(n, d))** because the set never holds more than d elements.\n\n**Advantage over the map solution:** the map version stores every distinct value of the input, O(n) space; the window set stores only the last d, so when d << n (e.g. d = 3 on millions of values) memory is much smaller. If d >= n the two use the same O(n).",
+      "rubric": [
+        "Uses unordered_set<int>; checks membership before inserting, returns true on a hit",
+        "Erases a[i - d] (when i >= d) so the set holds only the last d values",
+        "Correct for edge cases (d = 0 returns false; short vectors)",
+        "Time O(n) average: n iterations x O(1)-average count/insert/erase; worst case noted",
+        "Space O(min(n, d)) and the comparison with the O(n)-space map solution"
+      ]
+    },
+    {
+      "id": "coding-019",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "unordered_map",
+        "pairs",
+        "counting",
+        "difference",
+        "long-long"
+      ],
+      "points": 10,
+      "prompt": "**Count pairs with a given difference.** Count the pairs of positions `i < j` with `|a[i] - a[j]| == k`, where `k >= 0`. Values may repeat (each position counts separately), so e.g. `a = {1, 5, 3, 4, 2}`, `k = 2` gives 3 pairs (1,3), (5,3), (4,2). The count can exceed `int`, return `long long`. It should run in O(n) average time.\n\n```cpp\nlong long countPairsWithDiff(const vector<int>& a, int k) {\n    // write code here\n}\n```\n\nBe careful with `k == 0`. Explain why.",
+      "answer": "```cpp\nlong long countPairsWithDiff(const vector<int>& a, int k) {\n    unordered_map<long long, int> count;             // value -> how many EARLIER elements have it\n    long long pairs = 0;\n    for (int x : a) {\n        auto it = count.find((long long)x - k);      // earlier element equal to x - k\n        if (it != count.end()) pairs += it->second;\n        if (k != 0) {                                // for k == 0, x - k and x + k are the same value: count it once\n            it = count.find((long long)x + k);       // earlier element equal to x + k\n            if (it != count.end()) pairs += it->second;\n        }\n        ++count[x];                                  // insert x only AFTER looking, so i < j is respected\n    }\n    return pairs;\n}\n```\n\n**Idea.** Process the elements left to right and keep `count[v]` = number of earlier elements equal to `v`. For the current x, the earlier partners are the elements equal to `x - k` and to `x + k`; add both counts. Inserting x *after* looking enforces `i < j`, so each unordered pair is counted exactly once (when its later member is processed).\n\n**k == 0.** Then `x - k` and `x + k` are the same value, and adding both would count every pair twice; the `if (k != 0)` guard counts it once. (For `k > 0` the two values are different, so no pair is double counted.) `long long` keys and the cast `(long long)x - k` avoid overflow for values near `INT_MAX`/`INT_MIN`.\n\n**Complexity.** n iterations; per iteration at most two `find` calls (O(1) average each), O(1) additions, and one `operator[]` increment (O(1) average): **O(n) average**, O(n^2) worst case with a degenerate hash; space O(n). The brute force examines all n(n-1)/2 pairs, O(n^2); sorting and sweeping with two pointers is O(n log n).",
+      "rubric": [
+        "Counts earlier elements in an unordered_map (value -> multiplicity) and looks up x - k and x + k",
+        "Inserts/increments x only after the lookups so that i < j holds",
+        "Handles k == 0 without double counting",
+        "Returns long long / avoids overflow",
+        "Time O(n) average with per-operation justification; compares with the O(n^2) and O(n log n) alternatives"
+      ]
+    },
+    {
+      "id": "coding-020",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "unordered_set",
+        "missing-numbers",
+        "vector<bool>",
+        "direct-addressing"
+      ],
+      "points": 8,
+      "prompt": "**Find the missing numbers.** `nums` has `n` elements, each between 1 and `n` inclusive (duplicates possible). Return, in increasing order, every integer in `[1, n]` that does **not** appear in `nums`. Example: `{4, 3, 2, 7, 8, 2, 3, 1}` -> `{5, 6}`.\n\n```cpp\nvector<int> findMissing(const vector<int>& nums) {\n    // write code here\n}\n```\n\n(a) Solve it with an `unordered_set`. (b) Give the complexity. (c) Give a solution with a *better worst-case bound* and say why it is possible here.",
+      "answer": "**(a)**\n\n```cpp\nvector<int> findMissing(const vector<int>& nums) {\n    int n = (int)nums.size();\n    unordered_set<int> present(nums.begin(), nums.end());    // range constructor: n inserts, O(n) average\n    vector<int> missing;\n    for (int v = 1; v <= n; ++v)\n        if (present.count(v) == 0)\n            missing.push_back(v);                            // appended in increasing order\n    return missing;\n}\n```\n\n**(b) Complexity.** The range constructor does n inserts, each O(1) average: O(n) average. The loop runs n times, each `count` is O(1) average and each `push_back` amortized O(1): O(n). Total **O(n) average** (O(n^2) worst case with a degenerate hash); space O(n).\n\n**(c) Better worst case: direct addressing.** The values are known to lie in `[1, n]`, so a hash function is unnecessary - the value itself is a perfect index:\n\n```cpp\nvector<int> findMissingNoHash(const vector<int>& nums) {\n    int n = (int)nums.size();\n    vector<bool> present(n + 1, false);              // direct addressing: value v lives at index v\n    for (int x : nums) present[x] = true;\n    vector<int> missing;\n    for (int v = 1; v <= n; ++v)\n        if (!present[v]) missing.push_back(v);\n    return missing;\n}\n```\n\nInitializing the `vector<bool>` is O(n), the first loop is n x O(1), the second loop is n x O(1) with amortized O(1) `push_back`: **O(n) in the worst case** (deterministic, no collisions possible), space O(n) bits. This is the same idea as a hash table with `hash(x) = x` and no collisions; it is only possible because the key universe is small and dense.",
+      "rubric": [
+        "Builds an unordered_set from nums (range constructor or insert loop)",
+        "Loops v = 1..n, reports v when count(v) == 0, producing increasing order",
+        "Complexity O(n) average for the hash solution with per-step justification",
+        "Gives a direct-address (vector<bool>/array) solution with deterministic O(n) time",
+        "Explains why direct addressing works (small dense key universe)"
+      ]
+    },
+    {
+      "id": "coding-021",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "unordered_map",
+        "sliding-window",
+        "distinct-count",
+        "erase",
+        "window"
+      ],
+      "points": 10,
+      "prompt": "**Number of distinct values in every window.** For each window of `k` consecutive elements of `a` (1 <= k, windows that start at positions 0, 1, ..., n-k), report how many *distinct* values the window contains. Example: `a = {1, 2, 1, 3, 4, 2, 3}`, `k = 4` -> `{3, 4, 4, 3}`. Required: O(n) average time (not O(nk)).\n\n```cpp\nvector<int> distinctInWindows(const vector<int>& a, int k) {\n    // write code here\n}\n```\n\nHint: maintain a map value -> count of occurrences inside the window. What must you do when a count reaches zero, and why?",
+      "answer": "```cpp\nvector<int> distinctInWindows(const vector<int>& a, int k) {   // assumes k >= 1\n    vector<int> result;\n    unordered_map<int, int> count;                   // value -> occurrences inside the current window\n    for (int i = 0; i < (int)a.size(); ++i) {\n        ++count[a[i]];                               // a[i] enters the window\n        if (i >= k) {                                // a[i-k] leaves the window\n            auto it = count.find(a[i - k]);\n            if (--it->second == 0)\n                count.erase(it);                     // erase by iterator: O(1), no second lookup\n        }\n        if (i >= k - 1)\n            result.push_back((int)count.size());     // number of distinct values = number of keys\n    }\n    return result;\n}\n```\n\n**Idea.** The window slides one step at a time: one element enters, one leaves. A map `value -> occurrences inside the window` is updated in O(1) average per step, and the number of distinct values is the number of keys, `count.size()` (O(1)). When a value's count drops to 0 we must **erase** the key; otherwise `size()` would still count it as present. Order inside the loop matters little as long as the window is `a[i-k+1 .. i]` when we read the size: add `a[i]`, remove `a[i-k]`, and start reporting from i = k - 1 (the first full window). Example check: windows of `{1,2,1,3,4,2,3}`: `{1,2,1,3}` -> 3, `{2,1,3,4}` -> 4, `{1,3,4,2}` -> 4, `{3,4,2,3}` -> 3.\n\n**Complexity.** n iterations. Per iteration: one `operator[]` increment (O(1) average), one `find` for the departing element (O(1) average), a decrement and an `erase(iterator)` (O(1)), `size()` (O(1)) and an amortized O(1) `push_back`. **O(n) average** (O(nk) worst case if every map operation costs O(size) = O(k)). Space **O(k)**: the map never holds more than k keys. Recounting each window from scratch would cost O(k) per window, O(nk) in total.",
+      "rubric": [
+        "Maintains unordered_map<int,int> of counts for the current window; adds a[i] and removes a[i-k]",
+        "Erases a key whose count reaches 0 (so size() is the number of distinct values)",
+        "Starts reporting at the first full window (i >= k-1) and gives the right number of results",
+        "Time O(n) average: O(1) average per hash operation, no per-window rescan",
+        "Space O(k); compares with the O(nk) recount"
+      ]
+    },
+    {
+      "id": "coding-022",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "unordered_set",
+        "longest-consecutive",
+        "amortized",
+        "hash"
+      ],
+      "points": 12,
+      "prompt": "**Longest consecutive run.** Given an unsorted vector `nums`, return the length of the longest set of values that are consecutive integers (e.g. `{100, 4, 200, 1, 3, 2}` -> 4, from 1, 2, 3, 4). The order in `nums` does not matter and duplicates are possible. Required: **O(n) average time** - sorting (O(n log n)) is not allowed.\n\n```cpp\nint longestConsecutive(const vector<int>& nums) {\n    // write code here\n}\n```\n\nArgue carefully why your nested loops are O(n) in total and not O(n^2).",
+      "answer": "```cpp\nint longestConsecutive(const vector<int>& nums) {\n    unordered_set<int> s(nums.begin(), nums.end());          // O(n) average; also removes duplicates\n    int best = 0;\n    for (int x : s) {\n        if (s.count(x - 1)) continue;                        // x - 1 exists, so x is NOT the start of a run\n        int y = x;\n        while (s.count(y + 1)) ++y;                          // walk the run starting at x\n        best = max(best, y - x + 1);\n    }\n    return best;\n}\n```\n\n**Idea.** Put all values into a hash set. A value `x` is the **start of a run** exactly when `x - 1` is not in the set. Only for starts do we walk upward with `count(y + 1)` until the run ends. Values that are not starts are skipped in O(1).\n\n**Complexity (why the nested loops are O(n), not O(n^2)).**\n- Building the set: n inserts x O(1) average = O(n).\n- The outer loop visits each of the d <= n distinct values once; each does one `count(x - 1)`: O(d) = O(n).\n- The inner `while` only starts at run starts. Each run is walked exactly once, from its start to its end, and different runs are disjoint, so across the whole algorithm every distinct value is touched by the inner loop **at most once** (as a member of its own run). The total number of inner steps is therefore at most d, not \"number of starts x run length\" in the naive sense of n x n. Each inner step is one `count`, O(1) average.\n- Total: O(n) + O(n) + O(n) = **O(n) average** (O(n^2) worst case with a degenerate hash), space O(n).\n\nWithout the `if (s.count(x - 1)) continue;` test, every element of a run would walk the rest of the run, which is O(n^2) for one long run.",
+      "rubric": [
+        "Puts values into an unordered_set (dedupes) in O(n) average",
+        "Only starts counting at values x whose predecessor x - 1 is absent",
+        "Counts upward with a loop of count(y + 1) and keeps the maximum run length",
+        "Amortized argument: each element belongs to exactly one run and is walked once, so total inner work O(n)",
+        "States O(n) average / O(n^2) worst for hashing and O(n) space; does not use sort"
+      ]
+    },
+    {
+      "id": "coding-023",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "textbook-6.4",
+      "tags": [
+        "priority_queue",
+        "make_heap",
+        "selection",
+        "k-smallest",
+        "buildHeap",
+        "6A",
+        "6B"
+      ],
+      "points": 12,
+      "prompt": "**The selection problem with heaps (Textbook 6.4 / HW6 context).** Return the `k` smallest elements of `a` in ascending order (`0 <= k`; if `k > a.size()` return all of them). Write **two** versions:\n\n(A) build a heap of **all** n elements in O(n) and call `pop` k times;\n(B) scan `a` once, keeping a heap that never holds more than `k` elements.\n\n```cpp\nvector<int> kSmallestBuildHeap(const vector<int>& a, int k) {\n    // write code here\n}\nvector<int> kSmallestHeapK(const vector<int>& a, int k) {\n    // write code here\n}\n```\n\nGive the complexity of each in terms of n and k. Which is better when k is tiny? When k is close to n? Which one works on a stream / needs only O(k) memory?",
+      "answer": "**(A) buildHeap + k deleteMins.**\n\n```cpp\nvector<int> kSmallestBuildHeap(const vector<int>& a, int k) {      // textbook 6A: buildHeap + k deleteMins\n    priority_queue<int, vector<int>, greater<int>> heap(a.begin(), a.end());   // range constructor = make_heap: O(n)\n    vector<int> out;\n    for (int i = 0; i < k && !heap.empty(); ++i) {\n        out.push_back(heap.top());\n        heap.pop();                                          // O(log n) each\n    }\n    return out;\n}\n```\n\nConstructing a `priority_queue` from an iterator range copies the n elements into the vector and calls `make_heap`, which is the textbook buildHeap: **O(n)**. Each `pop()` is a deleteMin, O(log n), and `top()` is O(1): k x O(log n). Total **O(n + k log n)**, space O(n).\n\n**(B) heap of size k.**\n\n```cpp\nvector<int> kSmallestHeapK(const vector<int>& a, int k) {          // textbook 6B: heap of size k\n    priority_queue<int> heap;                                // MAX-heap holding the k smallest seen so far\n    for (int x : a) {\n        if ((int)heap.size() < k)\n            heap.push(x);                                    // O(log k)\n        else if (!heap.empty() && x < heap.top()) {          // x beats the largest of the k kept\n            heap.pop();                                      // O(log k)\n            heap.push(x);                                    // O(log k)\n        }\n    }\n    vector<int> out;\n    while (!heap.empty()) {\n        out.push_back(heap.top());\n        heap.pop();\n    }\n    reverse(out.begin(), out.end());                         // ascending\n    return out;\n}\n```\n\nThe heap is a **max**-heap holding the k smallest seen so far, so its `top()` is the largest of them - the one to evict when a smaller element arrives (a min-heap would be the wrong way round). Each of the n elements costs O(1) for the comparison with `top()` and, if it enters, a `pop` plus a `push`, each O(log k): **O(n log k)** worst case. Reading the heap out costs O(k log k) (k pops), which is dominated by n log k. Space **O(k)**; it never needs to see the elements twice, so it works on a stream.\n\n**Comparison.** (A) is O(n + k log n), (B) is O(n log k). For k = O(n / log n) (A) is linear: e.g. k = sqrt(n) gives O(n) for (A) but O(n log n) for (B). For constant k both are O(n). For k = Theta(n) both are O(n log n). The decisive difference is memory and streaming: (A) must store all n elements (O(n) space) and see them all before the first answer, (B) needs only O(k) space and works on a stream - which is why the \"kth largest in a stream\" problem uses (B). Sorting everything is O(n log n); `nth_element` (quickselect) is O(n) on average.\n",
+      "rubric": [
+        "Version A: heap from the whole range (range constructor/make_heap), min-heap via greater<int>, k pops, guards k > n",
+        "Version B: MAX-heap of size at most k; evicts the top when a smaller element arrives",
+        "A: O(n) build + k x O(log n) = O(n + k log n); justified by buildHeap being O(n) and pop O(log n)",
+        "B: O(n log k) time, O(k) space; each push/pop O(log k)",
+        "Correct comparison / when to prefer each (streams, memory, small k)"
+      ]
+    },
+    {
+      "id": "coding-024",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "unordered_map",
+        "prefix-sum",
+        "subarray",
+        "long-long"
+      ],
+      "points": 12,
+      "prompt": "**Subarrays with a given sum.** Count the contiguous, non-empty subarrays of `nums` whose elements add up to `k`. Values may be negative, so a sliding window does not work. Example: `{1, 2, 3}`, `k = 3` -> 2 (`{1,2}` and `{3}`); `{1, -1, 0}`, `k = 0` -> 3. Required: O(n) average.\n\n```cpp\nint subarraySum(const vector<int>& nums, int k) {\n    // write code here\n}\n```",
+      "answer": "```cpp\nint subarraySum(const vector<int>& nums, int k) {\n    unordered_map<long long, int> seen;              // prefix sum value -> number of prefixes with that sum\n    seen[0] = 1;                                     // the empty prefix\n    long long sum = 0;\n    int count = 0;\n    for (int x : nums) {\n        sum += x;                                    // sum = nums[0] + ... + nums[i]\n        auto it = seen.find(sum - k);                // a subarray ending at i sums to k iff some earlier prefix = sum - k\n        if (it != seen.end()) count += it->second;\n        ++seen[sum];\n    }\n    return count;\n}\n```\n\n**Idea.** Let `P[i]` be the sum of the first i elements. The subarray `nums[a..b]` sums to `P[b+1] - P[a]`. It equals `k` exactly when `P[a] = P[b+1] - k`. While scanning, `sum` is the current prefix `P[b+1]`; `seen[v]` counts how many earlier prefixes (including the empty prefix, `P[0] = 0`) have value `v`, so `seen[sum - k]` is the number of subarrays ending at the current element with sum `k`. The initial `seen[0] = 1` accounts for subarrays that start at index 0. We look up *before* inserting the current prefix so a subarray is never empty. Negative numbers are fine because nothing assumes the prefix sums are monotone. `long long` avoids overflow of the running sum.\n\n**Complexity.** n iterations; each does one `find` (O(1) average), an addition, and one `operator[]` increment (O(1) average): **O(n) average**, O(n^2) worst case; space **O(n)**. Brute force over all start/end pairs with a running sum is O(n^2).",
+      "rubric": [
+        "Uses prefix sums and an unordered_map from prefix value to its number of occurrences",
+        "Initializes the map with {0 : 1} for the empty prefix",
+        "For each element updates the running sum, adds seen[sum - k] (via find, not creating junk), then increments seen[sum]",
+        "Handles negative values (no sliding window assumption); long long sum",
+        "O(n) average time, O(n) space, each hash operation justified"
+      ]
+    },
+    {
+      "id": "coding-025",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "unordered_set",
+        "intersection",
+        "erase-return-value"
+      ],
+      "points": 8,
+      "prompt": "**Intersection of two arrays.** Return the values that appear in **both** `a` and `b`, each reported exactly once, in any order. Use `unordered_set`.\n\n```cpp\nvector<int> intersectDistinct(const vector<int>& a, const vector<int>& b) {\n    // write code here\n}\n```\n\nGive the complexity in terms of m = `a.size()` and n = `b.size()`. How would the complexity change with `std::set` instead?",
+      "answer": "```cpp\nvector<int> intersectDistinct(const vector<int>& a, const vector<int>& b) {\n    unordered_set<int> inA(a.begin(), a.end());      // O(|a|) average\n    vector<int> result;\n    for (int x : b)\n        if (inA.erase(x) > 0)                        // erase(key) returns how many were removed (0 or 1) => each value reported once\n            result.push_back(x);\n    return result;\n}\n```\n\nPutting `a` in a set removes its duplicates. For each element of `b` we call `erase(x)`, which removes the key if present and returns the number of elements removed (0 or 1): a hit both tests membership and guarantees that a repeated value in `b` is not reported a second time (it is gone from the set).\n\n**Complexity.** Building the set: m inserts x O(1) average = O(m). Loop: n iterations x (`erase(key)` O(1) average + amortized O(1) `push_back`) = O(n). Total **O(m + n) average** (O(mn) worst case if all hash values collide), space O(m) (choose the smaller input for the set to get O(min(m, n))).\n\n**With `std::set`** the same code is correct but every insert/erase costs O(log m) worst case: building is O(m log m), the loop O(n log m): **O(m log m + n log m) = O((m + n) log m)**, deterministic. (Sorting both and merging is O(m log m + n log n).)",
+      "rubric": [
+        "Stores one input in an unordered_set",
+        "For each element of the other input, tests membership and removes it (or records seen) so values are reported once",
+        "Compilable code (e.g. erase(key) returns size_type)",
+        "Time O(m + n) average, space O(m), with per-operation justification",
+        "Gives the O((m + n) log m) bound for the ordered set version"
+      ]
+    },
+    {
+      "id": "coding-026",
+      "type": "coding",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "set",
+        "lower_bound",
+        "upper_bound",
+        "range-search",
+        "iterators"
+      ],
+      "points": 8,
+      "prompt": "**Range search in an ordered container (Leetcode Hashing Questions slide).** Given a `set<int>` and two bounds `lo`, `hi`, return all elements `x` with `lo <= x <= hi` in increasing order, using `lower_bound` and `upper_bound` and a simple loop from one iterator to the other.\n\n```cpp\nvector<int> inRange(const set<int>& s, int lo, int hi) {\n    // write code here\n}\n```\n\n(a) Complexity in terms of n = `s.size()` and m = number of elements returned. (b) What goes wrong if `lo > hi` and you have no guard? (c) Why can't an `unordered_set` do this efficiently?",
+      "answer": "```cpp\nvector<int> inRange(const set<int>& s, int lo, int hi) {\n    vector<int> out;\n    if (lo > hi) return out;                         // without this guard the loop below can run past end()\n    auto first = s.lower_bound(lo);                  // first element >= lo   : O(log n)\n    auto last = s.upper_bound(hi);                   // first element >  hi   : O(log n)\n    for (auto it = first; it != last; ++it)          // m steps, each O(1) amortized\n        out.push_back(*it);\n    return out;\n}\n```\n\n`lower_bound(lo)` returns an iterator to the first element **not less than** `lo` (i.e. >= lo); `upper_bound(hi)` returns an iterator to the first element **greater than** `hi` (i.e. > hi). So the half-open iterator range `[first, last)` contains exactly the elements in the closed interval `[lo, hi]`.\n\n**(a) Complexity: O(log n + m).** `lower_bound` and `upper_bound` are member functions of `set`, each a tree search: O(log n). The loop makes m steps; `++it` on a set iterator is O(1) amortized (a full in-order traversal of m elements takes O(m) steps in total), and `push_back` is amortized O(1). Total O(log n) + O(log n) + O(m) = **O(log n + m)**. Do not use `std::lower_bound(s.begin(), s.end(), lo)` here: for non-random-access iterators it must advance one node at a time, which costs O(n).\n\n**(b) `lo > hi`.** Then `first` can be *after* `last` in the sorted order (e.g. `lo = 50`, `hi = 10`: `first` points at the first element >= 50, `last` at the first element > 10), so the loop `it != last` never meets `last`, walks past `end()` and has undefined behavior. The guard `if (lo > hi) return {}` avoids it.\n\n**(c) Hash container.** An `unordered_set` has no order, so no `lower_bound`/`upper_bound` and no range iteration; you would have to scan all n elements: O(n) per query. Ordered containers (balanced BSTs) support range queries; hashing only supports exact-match lookup.",
+      "rubric": [
+        "Uses s.lower_bound(lo) and s.upper_bound(hi) (the MEMBER functions) and loops first != last",
+        "Correct bounds semantics (>= lo, > hi), result in increasing order",
+        "Complexity O(log n + m) with per-part justification",
+        "Identifies the lo > hi hazard and guards against it",
+        "Explains why unordered containers cannot do range queries efficiently (or why std::lower_bound on a set is O(n))"
+      ]
+    },
+    {
+      "id": "coding-027",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "set",
+        "lower_bound",
+        "prev",
+        "closest",
+        "predecessor-successor"
+      ],
+      "points": 10,
+      "prompt": "**Closest value.** `s` is a non-empty `std::set<int>`. Return the element of `s` closest to `x` (if two are equally close, return the smaller). It must run in O(log n) time. Use `lower_bound` (and `std::prev`).\n\n```cpp\nint closest(const set<int>& s, int x) {\n    // write code here\n}\n```\n\nExplain what `lower_bound(x)` returns in each of the three situations (before the first element, between elements, past the last), and why the time is O(log n). Would the same code work for a `map<int,string>`?",
+      "answer": "```cpp\nint closest(const set<int>& s, int x) {            // s must be non-empty; ties go to the smaller value\n    auto it = s.lower_bound(x);                      // first element >= x\n    if (it == s.end()) return *prev(it);             // every element is < x: the largest one is closest\n    if (it == s.begin()) return *it;                 // every element is >= x: the smallest one is closest\n    auto before = prev(it);                          // largest element < x\n    return (x - *before <= *it - x) ? *before : *it;\n}\n```\n\n**Cases.** `it = s.lower_bound(x)` is the first element >= x (the successor-or-equal).\n- `it == s.end()`: every element is < x, so the closest is the largest element, `*prev(it)` (the last element; the set is non-empty).\n- `it == s.begin()`: every element is >= x, so the closest is the smallest, `*it`.\n- Otherwise: `*it >= x` is the nearest candidate on the right and `*prev(it) < x` the nearest candidate on the left; compare the two distances (`<=` gives the tie to the smaller value).\n\n**Complexity.** `lower_bound` is a member function: a descent of a balanced BST, O(log n). `prev(it)` is one bidirectional step, O(1); the comparisons and arithmetic are O(1). Total **O(log n)**, space O(1). (Calling the algorithm `std::lower_bound(s.begin(), s.end(), x)` would be O(n) because the iterators of a set cannot jump.) A hash set cannot do this: closest-value queries need order, otherwise O(n) per query.\n\n**For `map<int,string>`:** yes, with `it->first` instead of `*it` (map iterators point to `pair<const int, string>`); `lower_bound` is again a member function with the same O(log n) cost. `map::operator[]` must be avoided on a `const` map and creates entries when used for lookup.",
+      "rubric": [
+        "Calls the member s.lower_bound(x) to find the first element >= x",
+        "Handles it == end() (use the last element) and it == begin() (use *it) without dereferencing end() or moving before begin()",
+        "Compares the distances of *prev(it) and *it and breaks ties toward the smaller",
+        "O(log n): lower_bound member O(log n), everything else O(1); mentions std::lower_bound on a set would be O(n)",
+        "Map variant uses it->first"
+      ]
+    },
+    {
+      "id": "coding-028",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "list",
+        "unordered_map",
+        "iterator",
+        "splice",
+        "lru-cache",
+        "design"
+      ],
+      "points": 15,
+      "prompt": "**LRU cache with `list` + `unordered_map`.** Design `LRUCache` with a fixed `capacity >= 1`:\n- `int get(int key)`: return the value for `key`, or `-1` if absent; a hit makes the key the *most recently used*.\n- `void put(int key, int value)`: insert or update `key`; the key becomes most recently used. If inserting a new key would exceed the capacity, first evict the *least recently used* key.\n\nBoth operations must run in **O(1) average** time. Use a `std::list` and an `std::unordered_map`.\n\n```cpp\nclass LRUCache {\n    // write code here\npublic:\n    LRUCache(int capacity);\n    int get(int key);\n    void put(int key, int value);\n};\n```\n\nExplain the role of each container, why neither alone is enough, and why the iterators stored in the map stay valid.",
+      "answer": "```cpp\nclass LRUCache {\n    int cap;\n    list<pair<int, int>> items;                                  // (key, value); front = most recently used\n    unordered_map<int, list<pair<int, int>>::iterator> where;    // key -> its node in items\npublic:\n    LRUCache(int capacity) : cap(capacity) {}                    // assumes capacity >= 1\n    int get(int key) {\n        auto it = where.find(key);\n        if (it == where.end()) return -1;\n        items.splice(items.begin(), items, it->second);          // move that node to the front: O(1), iterators stay valid\n        return it->second->second;\n    }\n    void put(int key, int value) {\n        auto it = where.find(key);\n        if (it != where.end()) {                                 // key exists: update and refresh\n            it->second->second = value;\n            items.splice(items.begin(), items, it->second);\n            return;\n        }\n        if ((int)items.size() == cap) {                          // full: evict the least recently used (back)\n            where.erase(items.back().first);\n            items.pop_back();\n        }\n        items.push_front(make_pair(key, value));\n        where[key] = items.begin();\n    }\n};\n```\n\n**Roles.**\n- The **list** keeps the keys ordered by recency: front = most recently used, back = least recently used. A doubly linked list can move or remove a node, given an iterator to it, in O(1) (no shifting like a vector).\n- The **unordered_map** maps each key to the *iterator* of its node in the list, so we can find the node in O(1) average instead of scanning the list in O(n).\n- A list alone makes `get` O(n) (search); a map alone cannot tell which key is least recently used (no usable order, iterating a hash is not in order of use).\n\n**Why the iterators stay valid.** Inserting into or erasing from a `std::list` invalidates only iterators to the erased element; all other iterators and references stay valid. `splice` moves an existing node into a new position without copying or reallocating it, and iterators to the moved element remain valid (they now refer to the same element at its new place). A `vector` would not offer this (insertion/erase shifts elements and can reallocate, invalidating iterators).\n\n**Complexity.**\n- `get`: `find` O(1) average; `splice` of one node O(1); reading the value O(1). **O(1) average.**\n- `put`: `find` O(1) average; update + `splice` O(1); or `size()` O(1) (C++11), `back()`/`pop_back()` O(1), `erase(key)` from the map O(1) average, `push_front` O(1), `operator[]` insert O(1) average. **O(1) average** (the rare rehash is amortized O(1)); worst case O(n) per operation only with degenerate hashing. Space: O(capacity).",
+      "rubric": [
+        "List of (key, value) pairs ordered by recency plus unordered_map<int, list<pair<int,int>>::iterator>",
+        "get: find; on a hit splice (or erase + push_front) the node to the front and return the value; -1 if absent",
+        "put: updates an existing key and refreshes it; otherwise evicts the back node (erasing its key from the map too) when full, then push_front and records the iterator",
+        "Explains why list + hash are both needed and why list iterators remain valid after splice/insert/erase",
+        "O(1) average per operation with per-call justification (find O(1) avg, splice/push_front/pop_back O(1))"
+      ]
+    },
+    {
+      "id": "coding-029",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "debugging",
+        "operator[]",
+        "pop",
+        "iterator-invalidation",
+        "pair-hash",
+        "lower_bound",
+        "traps"
+      ],
+      "points": 12,
+      "prompt": "**Find and fix the STL bugs.** Each of the six fragments below has one bug (a compile error, undefined behavior, a wrong result, or a hidden performance problem). For each: say what is wrong, say *why* (cite the documented behavior), and write the corrected code.\n\n```text\n// (a) Intended: report whether \"pear\" is in stock WITHOUT changing the map.\nunordered_map<string,int> stock;\nstock[\"apple\"] = 3;\nif (stock[\"pear\"] > 0) cout << \"have pear\\n\";\ncout << stock.size() << endl;          // prints 2, expected 1\n\n// (b) Intended: remove and use the smallest element.\npriority_queue<int, vector<int>, greater<int> > pq;\npq.push(5); pq.push(2);\nint smallest = pq.pop();\n\n// (c) Intended: a MIN-heap of ints.\npriority_queue<int> minHeap;\nminHeap.push(5); minHeap.push(2);\ncout << minHeap.top();                 // prints 5, expected 2\n\n// (d) Intended: delete every key whose count is 1.\nunordered_map<int,int> m;\nfor (auto it = m.begin(); it != m.end(); ++it)\n    if (it->second == 1) m.erase(it);\n\n// (e) Intended: count visits per grid cell.\nunordered_map<pair<int,int>, int> visits;\nvisits[make_pair(1, 2)]++;\n\n// (f) Intended: first element >= x of a std::set<int> s, in O(log n).\nauto it = std::lower_bound(s.begin(), s.end(), x);\n```",
+      "answer": "**(a) `operator[]` used for lookup.** `operator[]` returns a reference to the mapped value and **creates** a new element with a default value (0) when the key is absent (cplusplus.com `unordered_map::operator[]`; HW5 hint). So `stock[\"pear\"]` inserted `pear -> 0`, and the size is 2. Use `find` (or `count`):\n\n```cpp\nbool inStock(const unordered_map<string,int>& stock, const string& item) {\n    auto it = stock.find(item);                 // never inserts; O(1) average\n    return it != stock.end() && it->second > 0;\n}\n```\n(A `const` map cannot even use `[]`, which is a useful compile-time reminder.)\n\n**(b) `pop()` returns `void`.** `priority_queue::pop` removes the top but returns nothing (so it can be exception safe); `top()` returns a const reference. Read first, then pop:\n\n```cpp\nint takeSmallest(priority_queue<int, vector<int>, greater<int> >& pq) {\n    int smallest = pq.top();    // O(1)\n    pq.pop();                   // O(log n)\n    return smallest;\n}\n```\n\n**(c) Default priority_queue is a MAX-heap** (`less<int>` compares, so the \"largest\" is on top). A min-heap needs the three-argument form with `greater`:\n\n```cpp\npriority_queue<int, vector<int>, greater<int> > minHeap;   // top() is the smallest\n```\n\n**(d) Using an erased iterator.** `m.erase(it)` invalidates `it` (only iterators to erased elements are invalidated), and then `++it` is undefined behavior. `erase(iterator)` returns the iterator to the next element; advance only in the else branch:\n\n```cpp\nvoid removeSingles(unordered_map<int,int>& m) {\n    for (auto it = m.begin(); it != m.end(); ) {\n        if (it->second == 1) it = m.erase(it);   // C++11: returns the next iterator\n        else ++it;\n    }\n}\n```\n(Related trap: **inserting** into an `unordered_map` while iterating can trigger a rehash, which invalidates *all* iterators, though not references or pointers to elements. Never insert during iteration; collect keys first.)\n\n**(e) No `std::hash` for `pair`.** `unordered_map<pair<int,int>,int>` does not compile because the standard provides no hash for `pair`. Either supply a hash functor, encode the pair into one integer key, or use an ordered `map<pair<int,int>,int>` (pair has `operator<`, O(log n) per access):\n\n```cpp\nstruct PairHash {\n    size_t operator()(const pair<int,int>& p) const {\n        return hash<long long>()(((long long)p.first << 32) ^ (unsigned int)p.second);\n    }\n};\nunordered_map<pair<int,int>, int, PairHash> visits;\n```\n\n**(f) `std::lower_bound` on a `set`.** It compiles, and does only O(log n) *comparisons*, but a set's iterators are bidirectional, so the algorithm has to advance them one step at a time: **O(n)** total (cplusplus.com: on non-random-access iterators the iterator advance is linear). Use the member function, which walks the tree in O(log n):\n\n```cpp\nint firstAtLeast(const set<int>& s, int x) {   // assumes such an element exists\n    return *s.lower_bound(x);                  // member of std::set: O(log n)\n}\n```",
+      "rubric": [
+        "(a) identifies that operator[] inserts a default element; fixes with find/count",
+        "(b) pop() returns void; reads top() then pops",
+        "(c) default priority_queue is a max-heap; fixes with vector<int>, greater<int>",
+        "(d) erase invalidates the iterator; uses it = m.erase(it) / else ++it; mentions rehash invalidation on insert",
+        "(e) no std::hash<pair>; supplies a hash, encodes the pair, or uses ordered map",
+        "(f) std::lower_bound on a set is linear for bidirectional iterators; uses the member set::lower_bound"
+      ]
+    },
+    {
+      "id": "coding-030",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "complexity",
+        "stl",
+        "table",
+        "cumulative"
+      ],
+      "points": 6,
+      "prompt": "**Per-operation complexity of STL calls.** Give the time complexity of each operation. For hash containers give the average case **and** the worst case. n is the number of elements in the container.\n\n1. `unordered_map::find(key)`\n2. `unordered_map::operator[](key)` when the key is absent\n3. Iterating over all n elements of an `unordered_set`\n4. `map::find(key)` and `set::insert(x)`\n5. `set::lower_bound(x)` (member function)\n6. `std::lower_bound(s.begin(), s.end(), x)` where `s` is a `std::set`\n7. `priority_queue::top()`\n8. `priority_queue::push(x)` and `priority_queue::pop()`\n9. `make_heap(v.begin(), v.end())` on a vector of n elements\n10. `vector::push_back(x)` and `vector::insert(v.begin(), x)`\n11. `list::insert(pos, x)` / `list::erase(pos)` given an iterator `pos`\n12. `std::sort` on a vector of n elements",
+      "answer": "| # | Operation | Complexity | Reason |\n|---|---|---|---|\n| 1 | `unordered_map::find` | **O(1) average, O(n) worst** | hash the key, search one bucket; all keys in one bucket gives the worst case |\n| 2 | `operator[]`, key absent | **O(1) average, O(n) worst** (plus amortized rehash) | find the bucket, create a default-valued element; may trigger a rehash |\n| 3 | iterate all of an `unordered_set` | **O(n)** (with a reasonable load factor) | visits each element once |\n| 4 | `map::find`, `set::insert` | **O(log n)** worst case | balanced BST (red-black tree) |\n| 5 | `set::lower_bound` (member) | **O(log n)** | one tree descent |\n| 6 | `std::lower_bound` on a `set` | **O(n)** | only O(log n) comparisons, but advancing bidirectional iterators takes linear time |\n| 7 | `priority_queue::top` | **O(1)** | root of the heap is `front()` of the vector |\n| 8 | `priority_queue::push` / `pop` | **O(log n)** each | percolate up / percolate down in a binary heap |\n| 9 | `make_heap` | **O(n)** | buildHeap (up to about 3n comparisons) |\n| 10 | `push_back` / `insert` at the front | **amortized O(1)** / **O(n)** | occasional reallocation; inserting at the front shifts every element |\n| 11 | `list::insert`/`erase` with an iterator | **O(1)** | relink pointers of a doubly linked list |\n| 12 | `std::sort` | **O(n log n)** | introsort (quicksort + heapsort fallback), worst case O(n log n) |",
+      "rubric": [
+        "Hash operations (1, 2) given as O(1) average AND O(n) worst case",
+        "Ordered container operations and member lower_bound given as O(log n); std::lower_bound on a set recognized as O(n)",
+        "priority_queue: top O(1), push/pop O(log n); make_heap O(n)",
+        "vector push_back amortized O(1), insert at the front O(n); list insert/erase O(1)",
+        "sort O(n log n); iteration over a hash container O(n)"
+      ]
+    },
+    {
+      "id": "coding-031",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "design",
+        "top-k",
+        "heap",
+        "quickselect",
+        "sorting",
+        "n-log-k",
+        "complexity"
+      ],
+      "points": 12,
+      "prompt": "**Design and analysis: the k largest of n numbers.** You must report the `k` largest of `n` distinct integers (`1 <= k <= n`). Analyze each of these four designs and give a tight time bound in terms of n and k, with the cost of every step justified, plus the extra space:\n\n1. Sort the whole array (`std::sort`) and take the last `k`.\n2. Build a max-heap of all n elements (`make_heap`) and call `pop_heap` k times.\n3. Keep a **min**-heap of size `k` while scanning the array once.\n4. `std::nth_element` (quickselect) to place the k largest at the front.\n\nThen say which one you would use if (i) `k = 10` and `n = 10^8` values arrive as a stream that does not fit in memory, (ii) `k = n/2`, (iii) the data fits in memory, `k` is small, and you need the best worst-case guarantee.",
+      "answer": "**1. Sort.** `sort` is O(n log n) in the worst case (introsort); reading the last k is O(k). Total **O(n log n)**, extra space O(1) (in place) - it does far more work than needed because it orders everything.\n\n**2. Build a max-heap and pop k times.** `make_heap` is **O(n)** (buildHeap: the sum of node heights is O(n)). Each `pop_heap` is O(log n) (percolate down in a heap of size <= n); k of them cost k x O(log n). Total **O(n + k log n)**, space O(1) if done in place on the vector. For k <= n / log n this is O(n).\n\n**3. Min-heap of size k.** Each of the n elements is compared with the root in O(1); if it is larger, `pop` + `push` cost O(log k) + O(log k) on a heap of size <= k. Worst case (increasing input) every element enters: **O(n log k)**. Extracting the k results is O(k log k) <= O(n log k). Space **O(k)**, one pass.\n\n**4. nth_element.** Quickselect: **O(n) on average** (cplusplus.com: linear on average), but O(n^2) worst case for the textbook pivot rules (real libraries use introselect, which falls back to a heap-based selection and so cannot exceed O(n log n)). The k largest end up in the front (unordered); sorting just those costs another O(k log k). Space O(1).\n\n**Choices.**\n- (i) **Design 3**: one pass, O(k) = 10 elements of memory, works on a stream; the cost per element is a comparison with the root (and only rarely a log k = log 10 push/pop). Designs 1, 2 and 4 need all n values in memory.\n- (ii) k = n/2: design 1 O(n log n); design 2 O(n + (n/2) log n) = O(n log n); design 3 O(n log(n/2)) = O(n log n); design 4 O(n) average. **Quickselect (4)** is asymptotically best (plus an O(k log k) = O(n log n) sort only if the output must be ordered).\n- (iii) Small k, memory is fine, and a worst-case guarantee is required: **design 2** has a deterministic O(n + k log n), which is O(n) for small k, with no bad-pivot risk. Design 3 is O(n log k) worst case which is also near-linear for small k but not tight with O(n); design 4 is O(n) only on average (O(n^2) worst for the textbook version).",
+      "rubric": [
+        "Sort: O(n log n); heap-all: O(n + k log n) with buildHeap O(n) justified; size-k heap: O(n log k) with O(k) space",
+        "Quickselect/nth_element: O(n) average, O(n^2) worst for the textbook version (states average vs worst)",
+        "Correct choice for the stream case (size-k min-heap) with reasoning about memory",
+        "Correct analysis for k = n/2 (everything O(n log n) except quickselect O(n) average)",
+        "Correct choice for small k with worst-case guarantee (buildHeap + k deleteMax, O(n + k log n))",
+        "Per-step justification of each bound rather than bare answers"
+      ]
+    },
+    {
+      "id": "coding-032",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "priority_queue",
+        "comparator",
+        "lambda",
+        "unordered_map",
+        "top-k",
+        "tie-break",
+        "strings"
+      ],
+      "points": 14,
+      "prompt": "**Top k frequent words with tie-breaking.** Given `words` and `k`, return the `k` most frequent words, ordered from highest frequency to lowest; words with the **same frequency** must be ordered alphabetically (smaller string first). You may assume `k <=` the number of distinct words. Use an `unordered_map` for counts and a **size-k heap with a custom comparator** (do not sort all distinct words).\n\n```cpp\nvector<string> topKFrequentWords(const vector<string>& words, int k) {\n    // write code here\n}\n```\n\nLet n = `words.size()`, m = number of distinct words, and L = the maximum word length. Give the complexity. Explain precisely which element the comparator must put on top of the heap and why.",
+      "answer": "```cpp\nvector<string> topKFrequentWords(const vector<string>& words, int k) {\n    unordered_map<string, int> count;\n    for (const string& w : words) ++count[w];\n    typedef pair<string, int> P;\n    // comp(a, b) == true means \"a has HIGHER priority to stay than b\" (a is better): more frequent, or equal and alphabetically smaller.\n    // priority_queue's top() is the element that is \"largest\" under comp, i.e. the WORST kept word: exactly the one to evict.\n    auto better = [](const P& a, const P& b) {\n        if (a.second != b.second) return a.second > b.second;\n        return a.first < b.first;\n    };\n    priority_queue<P, vector<P>, decltype(better)> heap(better);\n    for (const auto& kv : count) {\n        heap.push(P(kv.first, kv.second));\n        if ((int)heap.size() > k) heap.pop();                    // drops the worst of the k+1\n    }\n    vector<string> result(heap.size());\n    for (int i = (int)result.size() - 1; i >= 0; --i) {          // pops come out worst-first: fill from the back\n        result[i] = heap.top().first;\n        heap.pop();\n    }\n    return result;\n}\n```\n\n**The comparator.** `priority_queue<T, Container, Compare>` keeps on top the element that is *greatest according to `Compare`* (`Compare(a, b)` returning `true` means \"a comes before b / a is smaller in priority\"; with the default `less<T>` the biggest element ends on top). To evict the weakest word in O(log k) we need the **worst** word on top. Define `better(a, b)` = \"a is a better answer than b\": higher count, or equal count and the alphabetically smaller word. Passing `better` as `Compare` makes the *best* the \"smallest\" and the **worst** word (lowest count, and among equals the alphabetically larger) the \"greatest\", i.e. the top. So after each `push`, `pop` removes the worst of the k + 1 candidates. When the loop ends the heap holds the k best, and popping them returns worst first, so we fill the result from the back. (This is the same reason `greater<int>` makes a min-heap: the comparator's notion of \"less\" is what the heap treats as lower priority.)\n\n**Complexity.**\n- Counting: n words, each `operator[]` hashes a string of length <= L: O(L) average, so **O(nL)** average.\n- Heap phase: m pushes and at most m pops on a heap of size <= k + 1: m x O(log k) heap steps, each step compares two pairs, and comparing two strings is O(L): **O(m L log k)**.\n- Output: k pops x O(L log k) = O(k L log k) <= O(m L log k).\n- Total **O(nL + m L log k)** average (hash worst case adds more). Space O(mL) for the map + O(kL) for the heap. If strings are treated as constant size (as in the HW5 sequences), this is O(n + m log k).",
+      "rubric": [
+        "Counts with unordered_map<string,int>",
+        "Custom comparator (lambda or functor) with correct arguments to priority_queue (type via decltype, comparator object passed to the constructor)",
+        "Comparator logic: lower frequency (and larger string on ties) is the element kept on top for eviction; tie rule alphabetical",
+        "Pushes each entry and pops when size > k; extracts results in the right order (reverse of pop order)",
+        "Complexity includes counting O(nL) and heap phase O(m L log k) (string comparison cost) or the constant-length simplification stated explicitly",
+        "Explains what the comparator must place on top and why"
+      ]
+    },
+    {
+      "id": "coding-033",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "priority_queue",
+        "min-heap",
+        "k-sorted",
+        "sorting",
+        "n-log-k",
+        "in-place"
+      ],
+      "points": 12,
+      "prompt": "**Sorting a nearly sorted array.** Every element of `a` is at most `k` positions away from the position it will have in the fully sorted array (a \"k-sorted\" array; `k = 0` means already sorted). Sort `a` in ascending order in **O(n log k)** time using a heap that holds at most `k + 1` elements. Write the result back into `a`.\n\n```cpp\nvoid sortKSorted(vector<int>& a, int k) {\n    // write code here\n}\n```\n\nJustify correctness (why the smallest of the heap is always the next sorted element) and give the complexity. Compare with `std::sort`.",
+      "answer": "```cpp\nvoid sortKSorted(vector<int>& a, int k) {\n    priority_queue<int, vector<int>, greater<int>> heap;     // MIN-heap holding at most k+1 elements\n    size_t out = 0;                                          // next position of a to overwrite\n    for (size_t i = 0; i < a.size(); ++i) {\n        heap.push(a[i]);                                     // a[i] has been read, so a[out] (out <= i) is free\n        if (heap.size() > (size_t)k) {\n            a[out++] = heap.top();                           // smallest of the window is the next sorted element\n            heap.pop();\n        }\n    }\n    while (!heap.empty()) {                                  // flush the last <= k elements\n        a[out++] = heap.top();\n        heap.pop();\n    }\n}\n```\n\n**Why it is correct.** The element that belongs at sorted position p is at most k positions from p in `a`, i.e. it lies among `a[0 .. p + k]`. When we have read `a[0 .. p + k]` and removed the p smallest elements (positions 0 .. p-1), the heap holds `k + 1` elements of the unprocessed window, and the smallest of them is the (p)th smallest overall: any element after index p + k is at least as large as the true p-th smallest because it belongs at position >= p + 1. So `top()` is the next sorted element. After the scan ends, the heap contains the last <= k elements, which we flush in order. Writing is safe in place: when we write `a[out]` we have already read `a[0 .. i]` and `out <= i`, so no unread element is overwritten.\n\n**Complexity.** The heap never holds more than k + 1 elements, so each `push` and `pop` is O(log k). Each of the n elements is pushed once and popped once: n x (O(log k) + O(log k)) = **O(n log k)** time (the final flush is included in those n pops), extra space **O(k)**. For `k = 0` it is O(n) (pushes and pops of a 1-element heap). `std::sort` ignores the structure and costs O(n log n); the heap version is asymptotically better whenever k = o(n), e.g. O(n) for constant k, and it can also process the data as a stream with O(k) memory.",
+      "rubric": [
+        "Min-heap (greater<int>) holding at most k+1 elements",
+        "Pushes each element; once the heap has more than k elements, pops the minimum into the output position",
+        "Flushes the remaining heap contents at the end; in-place writing never overwrites unread elements",
+        "Correctness argument: the next sorted element is within the next k+1 unread elements",
+        "O(n log k) time (n pushes, n pops on a heap of size <= k+1), O(k) space; compares with sort O(n log n)"
+      ]
+    },
+    {
+      "id": "coding-034",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "vector",
+        "push_heap",
+        "pop_heap",
+        "make_heap",
+        "greater",
+        "heap-algorithms",
+        "priority-queue-by-hand"
+      ],
+      "points": 10,
+      "prompt": "**A min-heap on a plain `vector` with the `<algorithm>` heap functions.** Implement the class `MinHeap` below using a `std::vector<int>` and the functions `make_heap`, `push_heap`, `pop_heap`. It must be a **min**-heap (`top()` is the smallest). The constructor from a vector must be O(n).\n\n```cpp\nclass MinHeap {\n    // write code here\npublic:\n    MinHeap();\n    explicit MinHeap(const vector<int>& init);   // O(n)\n    bool empty() const;\n    size_t size() const;\n    int top() const;                              // O(1)\n    void push(int x);                             // O(log n)\n    void pop();                                   // O(log n)\n};\n```\n\n(a) Why must the comparator `greater<int>()` be passed to **every** heap function? (b) What does `pop_heap` do, exactly, and why do you also need `pop_back`? (c) Give the complexity of each member.",
+      "answer": "```cpp\nclass MinHeap {\n    vector<int> v;                                   // the heap lives in a plain vector\npublic:\n    bool empty() const { return v.empty(); }\n    size_t size() const { return v.size(); }\n    int top() const { return v.front(); }            // O(1): the root is v[0]\n    void push(int x) {                               // O(log n)\n        v.push_back(x);                              // amortized O(1)\n        push_heap(v.begin(), v.end(), greater<int>());   // percolate the new last element up\n    }\n    void pop() {                                     // O(log n)\n        pop_heap(v.begin(), v.end(), greater<int>());    // moves the root to v.back(), re-heapifies the rest\n        v.pop_back();                                // O(1): discard the old root\n    }\n    explicit MinHeap(const vector<int>& init) : v(init) {\n        make_heap(v.begin(), v.end(), greater<int>());   // buildHeap: O(n)\n    }\n    MinHeap() {}\n};\n```\n\n**(a)** The heap functions maintain the invariant \"no element is *less than* its children\" under the comparator you give; by default `operator<` (a max-heap). A heap built with `greater<int>()` is ordered for `>`; calling `push_heap` or `pop_heap` with the default comparator afterward would look for a max-heap, treat the min-heap as broken, and corrupt it (undefined results: the functions require the range to be a heap *with respect to the same comparator*). The comparator must therefore be identical in `make_heap`, `push_heap`, `pop_heap` (and `sort_heap`, `is_heap`).\n\n**(b)** `pop_heap(first, last, comp)` swaps the root `*first` with the last element `*(last-1)` and then restores the heap property on the shortened range `[first, last-1)` by percolating the moved element down. It does **not** shrink the container: the old root is now sitting at `v.back()`, outside the heap range, and `v.pop_back()` is what actually removes it (O(1)). Likewise `push_heap(first, last)` expects the new element to be already in the last slot (`push_back` first) and percolates it up.\n\n**(c) Complexities.** `top`: `v.front()`, **O(1)**. `push`: amortized O(1) for `push_back` + O(log n) for `push_heap` (percolate up) = **O(log n)**. `pop`: `pop_heap` O(log n) (percolate down; cplusplus.com: up to about 2 log n comparisons) + `pop_back` O(1) = **O(log n)**. Constructor from a vector: copy O(n) + `make_heap` O(n) = **O(n)** (buildHeap), instead of O(n log n) for n pushes. `empty`, `size`: O(1).",
+      "rubric": [
+        "Vector member and member functions calling push_back/push_heap, pop_heap/pop_back, make_heap with greater<int>()",
+        "Uses the SAME comparator in every heap call; top() reads v.front()",
+        "pop() = pop_heap then pop_back (explains pop_heap only moves the root to the back)",
+        "Constructor builds in O(n) with make_heap",
+        "Complexities: top O(1), push O(log n), pop O(log n), build O(n), with justification"
+      ]
+    },
+    {
+      "id": "coding-035",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "unordered_set",
+        "set",
+        "hash-vs-tree",
+        "design",
+        "spell-check",
+        "sorted-output"
+      ],
+      "points": 10,
+      "prompt": "**Design: spell checker.** You are given a `dictionary` of D valid words and a `document` of n words (words repeat). Return the **distinct misspelled words** (words of the document not in the dictionary), each once, **sorted alphabetically**. Choose the containers yourself so the total time is as small as possible, and justify the choice of each.\n\n```cpp\nvector<string> misspelled(const vector<string>& dictionary, const vector<string>& document) {\n    // write code here\n}\n```\n\nLet m be the number of distinct misspelled words. Give the time complexity (treat string comparison and hashing as O(1) first; then say what changes if words have length up to L).",
+      "answer": "```cpp\nvector<string> misspelled(const vector<string>& dictionary, const vector<string>& document) {\n    unordered_set<string> dict(dictionary.begin(), dictionary.end());   // D inserts: O(D) average\n    set<string> bad;                                         // distinct misspellings, kept sorted\n    for (const string& w : document)                         // n lookups: O(n) average\n        if (dict.count(w) == 0)\n            bad.insert(w);                                   // O(log m) each\n    return vector<string>(bad.begin(), bad.end());           // already in sorted order: O(m)\n}\n```\n\n**Container choices.**\n- **Dictionary: `unordered_set<string>`.** We only ask \"is this word present?\" many times; a hash set answers it in O(1) average and its order is irrelevant.\n- **Result: `set<string>`.** We need the distinct misspellings *in sorted order*. A `set` removes duplicates on insert and iterates in sorted order, so no separate sort is needed. (Alternative: collect them in an `unordered_set` and `sort` a vector at the end - same bound O(m log m).)\n\n**Complexity (strings as O(1)).**\n- Build the dictionary: D inserts x O(1) average = **O(D)**.\n- Scan the document: n lookups x O(1) average = **O(n)**.\n- Each misspelled occurrence calls `bad.insert`, O(log m) in a set of at most m elements; there are at most n of them: **O(n log m)** worst case if every word of the document is misspelled (n occurrences), and in general O(n_bad log m). Copying out `bad` into the vector: O(m).\n- Total **O(D + n + n log m)**, i.e. O(D + n log m) because m <= n, average case (the hash part is average case; the set part is worst case).\n\nWith words of length up to L: hashing and each equality check cost O(L), each tree comparison costs O(L): O(DL + nL + n L log m) = **O(DL + nL log m)**.\n\n**Why not put everything in `set<string>`?** The dictionary lookups would cost O(log D) each: O(n log D) instead of O(n) - the hash set is faster for pure membership.",
+      "rubric": [
+        "Dictionary stored in an unordered_set<string> (membership only)",
+        "Misspellings collected in an ordered set<string> (distinct and sorted) or an unordered set + final sort, with justification",
+        "Loop over the document; each word looked up once; misspelled ones inserted",
+        "Total complexity broken down by phase: O(D) + O(n) + O(n log m) (average for the hash part)",
+        "Explains the effect of word length L on hashing/comparison cost"
+      ]
+    }
+  ]
+}

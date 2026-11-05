@@ -1,0 +1,506 @@
+{
+  "topic": "heaps",
+  "title": "Binary Heaps and Priority Queues (Ch 6.1-6.4)",
+  "questions": [
+    {
+      "id": "heaps-015",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "insert",
+        "percolate-up",
+        "index-0"
+      ],
+      "points": 10,
+      "prompt": "Insert 6, then 3, into the min-heap `4,9,7,15,12,10,11,20,18` (array from index 1; textbook implementation). Show index 0 (it holds the value being moved) and the hole `_` after each step. Give the final heap.",
+      "answer": "Hole at index `currentSize + 1`, copy of the new key in index 0, slide strictly larger parents down.\n\n```\n[0]=6 | 4 9 7 15 12 10 11 20 18 _            # insert 6: hole created at index 10; 6 stored in index 0\n[0]=6 | 4 9 7 15 _ 10 11 20 18 12            # 6 < parent 12 (index 5) -> slide 12 down to index 10; hole moves to 5\n[0]=6 | 4 _ 7 15 9 10 11 20 18 12            # 6 < parent 9 (index 2) -> slide 9 down to index 5; hole moves to 2\n[0]=- | 4 6 7 15 9 10 11 20 18 12            # place 6 in index 2 (parent 4 is not larger)\n[0]=3 | 4 6 7 15 9 10 11 20 18 12 _          # insert 3: hole created at index 11; 3 stored in index 0\n[0]=3 | 4 6 7 15 _ 10 11 20 18 12 9          # 3 < parent 9 (index 5) -> slide 9 down to index 11; hole moves to 5\n[0]=3 | 4 _ 7 15 6 10 11 20 18 12 9          # 3 < parent 6 (index 2) -> slide 6 down to index 5; hole moves to 2\n[0]=3 | _ 4 7 15 6 10 11 20 18 12 9          # 3 < parent 4 (index 1) -> slide 4 down to index 2; hole moves to 1\n[0]=- | 3 4 7 15 6 10 11 20 18 12 9          # place 3 in index 1 (hole is the root)\n```\n\n**Final heap:** `3,4,7,15,6,10,11,20,18,12,9`. Each key rises only while it is strictly smaller than the parent of its hole; the last line of each insertion shows where it stops.",
+      "rubric": [
+        "First insert: hole at index 10, 6 stored in index 0, slides 12 then 9 down, stops below 4",
+        "Second insert: hole at index 11 with its own percolation using the updated array",
+        "Index 0 shown with the key being inserted; hole shown",
+        "Final heap is 3,4,7,15,6,10,11,20,18,12,9"
+      ]
+    },
+    {
+      "id": "heaps-016",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "insert",
+        "ties",
+        "percolate-up"
+      ],
+      "points": 6,
+      "prompt": "Insert 12 and then 5 into the min-heap `5,12,8,14,13,9,10` (textbook implementation). Note that both keys are already in the heap. Show the array with index 0 after each step. Where does each new key end up relative to its equal key, and why?",
+      "answer": "```\n[0]=12 | 5 12 8 14 13 9 10 _                 # insert 12: hole created at index 8; 12 stored in index 0\n[0]=12 | 5 12 8 _ 13 9 10 14                 # 12 < parent 14 (index 4) -> slide 14 down to index 8; hole moves to 4\n[0]=- | 5 12 8 12 13 9 10 14                 # place 12 in index 4 (parent 12 is not larger)\n[0]=5 | 5 12 8 12 13 9 10 14 _               # insert 5: hole created at index 9; 5 stored in index 0\n[0]=5 | 5 12 8 _ 13 9 10 14 12               # 5 < parent 12 (index 4) -> slide 12 down to index 9; hole moves to 4\n[0]=5 | 5 _ 8 12 13 9 10 14 12               # 5 < parent 12 (index 2) -> slide 12 down to index 4; hole moves to 2\n[0]=- | 5 5 8 12 13 9 10 14 12               # place 5 in index 2 (parent 5 is not larger)\n```\n\n**Final heap:** `5,5,8,12,13,9,10,14,12`.\nThe loop condition is the **strict** `x < array[hole/2]`. Inserting 12: the hole is index 8; parent index 4 holds 14, 12 < 14, so 14 slides down; the next parent (index 2) is 12, and 12 < 12 is **false**, so the new 12 stops *below* the old 12. Inserting 5: its parent chain reaches the root 5; 5 < 5 is false, so the new 5 becomes a child of the root (it does not replace it). Equal keys stop the percolation.",
+      "rubric": [
+        "Uses strict < so an equal parent stops the percolate up",
+        "New 12 ends directly under the old 12 (index 4), after sliding 14 down",
+        "New 5 stops below the root 5 (child position) rather than taking the root",
+        "Final heap is 5,5,8,12,13,9,10,14,12"
+      ]
+    },
+    {
+      "id": "heaps-017",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "deleteMin",
+        "percolate-down",
+        "index-0"
+      ],
+      "points": 10,
+      "prompt": "Perform two `deleteMin` operations on the min-heap `3,8,5,12,9,6,7,15,14,10` (array from index 1). Show index 0 (it holds the value being moved) and the hole `_` after each step. Give the two removed elements and the final heap.",
+      "answer": "Removed: **3, then 5**.\n\n```\n[0]=10 | _ 8 5 12 9 6 7 15 14                # deleteMin: remove 3 from the root (hole at 1); last element 10 goes to index 0; size 9\n[0]=10 | 5 8 _ 12 9 6 7 15 14                # smaller child 5 (index 3) beats 10 -> slide it up to index 1; hole moves to 3\n[0]=10 | 5 8 6 12 9 _ 7 15 14                # smaller child 6 (index 6) beats 10 -> slide it up to index 3; hole moves to 6\n[0]=- | 5 8 6 12 9 10 7 15 14                # place 10 in index 6\n[0]=14 | _ 8 6 12 9 10 7 15                  # deleteMin: remove 5 from the root (hole at 1); last element 14 goes to index 0; size 8\n[0]=14 | 6 8 _ 12 9 10 7 15                  # smaller child 6 (index 3) beats 14 -> slide it up to index 1; hole moves to 3\n[0]=14 | 6 8 7 12 9 10 _ 15                  # smaller child 7 (index 7) beats 14 -> slide it up to index 3; hole moves to 7\n[0]=- | 6 8 7 12 9 10 14 15                  # place 14 in index 7\n```\n\n**Final heap:** `6,8,7,12,9,10,14,15`. At each level the smaller child moves up; the moved value (from index 0) is placed when the smaller child is not smaller than it.",
+      "rubric": [
+        "Each deleteMin moves the last element of the (shrinking) heap into index 0 and the root hole",
+        "Smaller child slides up at each level; stops when the smaller child is not < the moved value",
+        "Removed elements are 3 and 5",
+        "The second deleteMin starts from the heap produced by the first (size 8 -> 7 elements)",
+        "Final heap is 6,8,7,12,9,10,14,15"
+      ]
+    },
+    {
+      "id": "heaps-018",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "deleteMin",
+        "one-child",
+        "traps"
+      ],
+      "points": 8,
+      "prompt": "Perform one `deleteMin` on the 11-element min-heap `5,8,17,13,10,35,26,36,15,31,21`, showing index 0 after each step. Then explain which line of the textbook `percolateDown` is needed here (what is special about the final level reached?), and how many comparisons the percolation used.",
+      "answer": "```\n[0]=21 | _ 8 17 13 10 35 26 36 15 31         # deleteMin: remove 5 from the root (hole at 1); last element 21 goes to index 0; size 10\n[0]=21 | 8 _ 17 13 10 35 26 36 15 31         # smaller child 8 (index 2) beats 21 -> slide it up to index 1; hole moves to 2\n[0]=21 | 8 10 17 13 _ 35 26 36 15 31         # smaller child 10 (index 5) beats 21 -> slide it up to index 2; hole moves to 5\n[0]=21 | 8 10 17 13 _ 35 26 36 15 31         # best child 31 (index 10) does not beat 21 -> stop\n[0]=- | 8 10 17 13 21 35 26 36 15 31         # place 21 in index 5\n```\n\n**Final heap:** `8,10,17,13,21,35,26,36,15,31`.\nAfter the removal the heap has **10** elements (even size), so node 5 has only a **left child** (index 10 = currentSize). The hole reaches index 5 (children: index 10 only). The test `child != currentSize` in `if( child != currentSize && array[ child + 1 ] < array[ child ] )` stops the code from reading `array[11]`, which is no longer part of the heap. Here the only child is 31, and 31 < 21 is false, so 21 stays at index 5.\nComparisons: level 1 (children 8, 17): 2 comparisons; level 2 (children 13, 10): 2; level 3 (single child 31): 1 comparison with 21 (no sibling comparison). Total 5.",
+      "rubric": [
+        "Moves 21 (last element) to index 0, shrinks to 10 elements, percolates: 8 then 10 slide up",
+        "At the hole in index 5, identifies that it has only one child (index 10)",
+        "Names `child != currentSize` (the one-child check) as the needed test",
+        "Final heap is 8,10,17,13,21,35,26,36,15,31; counts the comparisons (5)"
+      ]
+    },
+    {
+      "id": "heaps-019",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "buildHeap",
+        "min-heap"
+      ],
+      "points": 10,
+      "prompt": "Use the linear-time buildHeap to turn the array `17,4,13,8,21,2,15,6,10,19,3` (indices 1-11) into a **min**-heap. Which indices does `percolateDown` start and end at? Show the array after each `percolateDown` call and give the final heap.",
+      "answer": "N = 11, so the loop runs `percolateDown(i)` for i = N/2 = 5 down to 1 (indices 6-11 are leaves).\n\n```\n[0]=- | 17 4 13 8 21 2 15 6 10 19 3          # start (size 11); percolateDown from i = 5 down to 1\n[0]=- | 17 4 13 8 3 2 15 6 10 19 21          # after percolateDown(5) (value 21)\n[0]=- | 17 4 13 6 3 2 15 8 10 19 21          # after percolateDown(4) (value 8)\n[0]=- | 17 4 2 6 3 13 15 8 10 19 21          # after percolateDown(3) (value 13)\n[0]=- | 17 3 2 6 4 13 15 8 10 19 21          # after percolateDown(2) (value 4)\n[0]=- | 2 3 13 6 4 17 15 8 10 19 21          # after percolateDown(1) (value 17)\n```\n\n**Final heap:** `2,3,13,6,4,17,15,8,10,19,21`.",
+      "rubric": [
+        "Starts at i = floor(11/2) = 5 and goes down to 1",
+        "Each percolateDown uses the smaller child and stops when the moved value is not larger",
+        "Intermediate arrays after each of the five calls are correct",
+        "Final heap is 2,3,13,6,4,17,15,8,10,19,21"
+      ]
+    },
+    {
+      "id": "heaps-020",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "buildHeap",
+        "max-heap"
+      ],
+      "points": 10,
+      "prompt": "Use the linear-time buildHeap (textbook layout, index 1 first) to turn `12,3,19,7,15,1,9,22,5,11` into a **max**-heap. Show the array after each `percolateDown` call and give the final heap. State the number of `percolateDown` calls.",
+      "answer": "N = 10, so `percolateDown(i)` for i = 5, 4, 3, 2, 1 (**5 calls**). In a max-heap the **larger** child moves up while it is larger than the moved value.\n\n```\n[0]=- | 12 3 19 7 15 1 9 22 5 11             # start (size 10); percolateDown from i = 5 down to 1\n[0]=- | 12 3 19 7 15 1 9 22 5 11             # after percolateDown(5) (value 15)\n[0]=- | 12 3 19 22 15 1 9 7 5 11             # after percolateDown(4) (value 7)\n[0]=- | 12 3 19 22 15 1 9 7 5 11             # after percolateDown(3) (value 19)\n[0]=- | 12 22 19 7 15 1 9 3 5 11             # after percolateDown(2) (value 3)\n[0]=- | 22 15 19 7 12 1 9 3 5 11             # after percolateDown(1) (value 12)\n```\n\n**Final heap:** `22,15,19,7,12,1,9,3,5,11`.",
+      "rubric": [
+        "5 calls, for i = 5 down to 1",
+        "Reverses all comparisons: larger child moves up, stop when the larger child is not bigger than the value",
+        "Intermediate arrays are correct",
+        "Final max-heap is 22,15,19,7,12,1,9,3,5,11"
+      ]
+    },
+    {
+      "id": "heaps-021",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "decreaseKey",
+        "percolate-up"
+      ],
+      "points": 8,
+      "prompt": "In the min-heap `3,8,5,12,9,6,7,15,14,10` (index 1 first), perform `decreaseKey(9, 12)`: the element at **index 9** is decreased by 12. Show the array after each step (use index 0 for the moved value) and the final heap. What is the cost of the operation, and what must be known in advance?",
+      "answer": "Index 9 holds 14; 14 - 12 = 2. Then percolate **up** from index 9 with the hole technique:\n\n```\n[0]=- | 3 8 5 12 9 6 7 15 2 10               # decreaseKey(9, 12): index 9 becomes 2\n[0]=2 | 3 8 5 _ 9 6 7 15 12 10               # slide parent 12 down to index 9\n[0]=2 | 3 _ 5 8 9 6 7 15 12 10               # slide parent 8 down to index 4\n[0]=2 | _ 3 5 8 9 6 7 15 12 10               # slide parent 3 down to index 2\n[0]=- | 2 3 5 8 9 6 7 15 12 10               # place 2 in index 1\n```\n\n**Final heap:** `2,3,5,8,9,6,7,15,12,10`. The new key 2 is smaller than everything, so it reaches the root. Cost: O(log N) worst case (one percolate up, at most floor(log2 N) levels). The **position** of the element must be known (a heap cannot search; finding it would be O(N), so a hash table from keys to indices is usually kept alongside).",
+      "rubric": [
+        "Computes the new value (14 - 12 = 2) at index 9",
+        "Percolates up with the hole: slides 12, 8, 3 down and stops at the root",
+        "Final heap is 2,3,5,8,9,6,7,15,12,10",
+        "States O(log N) worst case and that the position must be known"
+      ]
+    },
+    {
+      "id": "heaps-022",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "increaseKey",
+        "percolate-down",
+        "one-child"
+      ],
+      "points": 8,
+      "prompt": "In the min-heap `3,8,5,12,9,6,7,15,14,10` perform `increaseKey(2, 10)`: the element at **index 2** is increased by 10. Show the array after each step with index 0, and the final heap. Why is this a percolate **down**?",
+      "answer": "Index 2 holds 8; 8 + 10 = 18. Percolate **down** from index 2 (children are indices 4 and 5):\n\n```\n[0]=- | 3 18 5 12 9 6 7 15 14 10             # increaseKey(2, 10): index 2 becomes 18\n[0]=18 | 3 _ 5 12 9 6 7 15 14 10             # percolateDown(2): 18 moved to index 0, hole at 2\n[0]=18 | 3 9 5 12 _ 6 7 15 14 10             # smaller child 9 (index 5) beats 18 -> slide it up to index 2; hole moves to 5\n[0]=18 | 3 9 5 12 10 6 7 15 14 _             # smaller child 10 (index 10) beats 18 -> slide it up to index 5; hole moves to 10\n[0]=- | 3 9 5 12 10 6 7 15 14 18             # place 18 in index 10\n```\n\n**Final heap:** `3,9,5,12,10,6,7,15,14,18`.\nA min-heap can only be violated *below* the changed node when its key grows (it may now exceed its children); it is still >= its parent. Cost O(log N). (The last step has a single child: index 10 is the last element, so there is no right child.)",
+      "rubric": [
+        "Applies the +10 change first (8 becomes 18) before fixing the heap",
+        "Percolates down using the smaller child at each level",
+        "Final heap is 3,9,5,12,10,6,7,15,14,18",
+        "Explains: larger key can only violate order with its children, so percolate down; O(log N)"
+      ]
+    },
+    {
+      "id": "heaps-023",
+      "type": "trace",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "remove",
+        "decreaseKey",
+        "deleteMin"
+      ],
+      "points": 10,
+      "prompt": "In the min-heap `3,8,5,12,9,6,7,15,14,10` perform `remove(4)` (the element at index 4) as the textbook defines it. Show the array after each step and the final heap. Explain the two phases and their total cost.",
+      "answer": "The textbook defines `remove(p)` as `decreaseKey(p, infinity)` followed by `deleteMin()`. Index 4 holds 12.\n\n```\n[0]=- | 3 8 5 _ 9 6 7 15 14 10               # remove(4): 12 becomes -infinity (decreaseKey by infinity) and percolates up\n[0]=- | 3 _ 5 8 9 6 7 15 14 10               # slide parent 8 down to index 4\n[0]=- | _ 3 5 8 9 6 7 15 14 10               # slide parent 3 down to index 2\n[0]=- | -inf 3 5 8 9 6 7 15 14 10            # the -infinity value is at the root; now deleteMin removes it\n[0]=10 | 3 _ 5 8 9 6 7 15 14                 # smaller child 3 (index 2) beats 10 -> slide it up to index 1; hole moves to 2\n[0]=10 | 3 8 5 _ 9 6 7 15 14                 # smaller child 8 (index 4) beats 10 -> slide it up to index 2; hole moves to 4\n[0]=10 | 3 8 5 _ 9 6 7 15 14                 # best child 14 (index 9) does not beat 10 -> stop\n[0]=- | 3 8 5 10 9 6 7 15 14                 # place 10 in index 4\n```\n\n**Final heap:** `3,8,5,10,9,6,7,15,14`.\nPhase 1: the key becomes minus infinity and percolates up to the root (each ancestor slides one level down: 8 then 3 in this heap). Phase 2: `deleteMin` removes that root and percolates the last element down. Both are O(log N), so `remove(p)` is **O(log N)** (given the position).",
+      "rubric": [
+        "Phase 1: decreaseKey by infinity, the element percolates to the root (ancestors slide down)",
+        "Phase 2: deleteMin removes the root, last element goes to the root and percolates down",
+        "Final heap is 3,8,5,10,9,6,7,15,14",
+        "Total O(log N) given the index"
+      ]
+    },
+    {
+      "id": "heaps-024",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "heap-property",
+        "is-it-a-heap"
+      ],
+      "points": 6,
+      "prompt": "For each array (indices start at 1, textbook layout), decide whether it is a valid binary heap of the stated kind; if not, give one violated parent/child pair.\n(a) `[2, 5, 3, 9, 6, 4, 8, 10, 12, 7]` min-heap (b) `[1, 3, 2, 7, 8, 4, 5, 9, 6]` min-heap (c) `[6, 6, 6, 8, 6]` min-heap (d) `[9, 7, 8, 3, 6, 5, 7, 2, 1, 4]` max-heap (e) `[4, 2, 6, 5, 7, 8, 9]` min-heap",
+      "answer": "Compare every node i >= 2 with its parent i/2 (a min-heap needs parent <= child; a max-heap needs parent >= child). The structure property is automatic for an array.\n\n- `[2, 5, 3, 9, 6, 4, 8, 10, 12, 7]` as a min-heap: **yes**.\n- `[1, 3, 2, 7, 8, 4, 5, 9, 6]` as a min-heap: **no**. index 9 (6) < its parent index 4 (7).\n- `[6, 6, 6, 8, 6]` as a min-heap: **yes**.\n- `[9, 7, 8, 3, 6, 5, 7, 2, 1, 4]` as a max-heap: **yes**.\n- `[4, 2, 6, 5, 7, 8, 9]` as a min-heap: **no**. index 2 (2) < its parent index 1 (4).\n\nEqual keys are allowed (c). A heap is not required to be sorted.",
+      "rubric": [
+        "Checks each node against its parent index i/2 (not against its sibling or neighbors)",
+        "Answers (a)-(e) correctly",
+        "Gives a valid violating pair for each 'no'",
+        "Notes duplicates are allowed"
+      ]
+    },
+    {
+      "id": "heaps-025",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "original",
+      "tags": [
+        "index-arithmetic",
+        "height",
+        "leaves"
+      ],
+      "points": 6,
+      "prompt": "A binary min-heap with N = 750 elements is stored in the textbook array layout (indices 1..750). Give: (a) the height of the heap, (b) the number of leaves and the index of the last internal node, (c) the parent and the children of index 300, (d) the depth of index 600, (e) how many nodes are at the bottom level, (f) whether index 375 has one or two children.",
+      "answer": "(a) height = floor(log2 750) = **9** (2^9 = 512 <= 750 < 1024).\n(b) Leaves = ceil(750/2) = **375**; the last internal node is floor(750/2) = **375** (leaves are 376..750).\n(c) parent of 300 = 300/2 = **150**; children 2 x 300 = **600** and **601** (both <= 750).\n(d) depth of 600 = floor(log2 600) = **9** (512 <= 600 < 1024); depths 0..8 hold 2^9 - 1 = 511 nodes.\n(e) Bottom level (depth 9) has 750 - 511 = **239** nodes (indices 512..750).\n(f) Index 375: 2 x 375 = 750 = 750 = currentSize, so it has a left child (index 750) but 2 x 375 + 1 = 751 > 750: **only one child** (N is even, so the last internal node has one child).",
+      "rubric": [
+        "Height floor(log2 N) = 9",
+        "Leaves ceil(N/2) = 375 and last internal node 375",
+        "Parent i/2 and children 2i, 2i+1",
+        "Bottom level size N - (2^9 - 1) = 239",
+        "Recognizes the single-child node when N is even"
+      ]
+    },
+    {
+      "id": "heaps-026",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "heap-property",
+        "location",
+        "min-heap"
+      ],
+      "points": 6,
+      "prompt": "A min-heap holds 31 **distinct** keys (a perfect tree of height 4, indices 1-31). For each statement say whether it is always true, possible, or impossible, with a one-line reason. (a) The smallest key is at index 1. (b) The second-smallest key is at index 2 or 3. (c) The largest key is at index 31. (d) The largest key is at one of indices 16-31. (e) The second-largest key is at an internal node (index <= 15). (f) The 3rd-smallest key can be at depth 2 but never at depth 3.",
+      "answer": "(a) **Always true**: heap order puts the minimum at the root.\n(b) **Always true**: all ancestors of a node are smaller than it, and only one key (the minimum, at the root) is smaller than the second smallest, so its only ancestor is the root: it is a child of the root (index 2 or 3).\n(c) **Possible, not guaranteed**: any leaf can hold the maximum (only indices 16-31 can), index 31 is one of the 16 candidates.\n(d) **Always true**: the maximum is at a leaf (a child would have to be >= it); the leaves are indices 16-31 (ceil(31/2) = 16 of them).\n(e) **Impossible**: an internal node in a perfect tree has two children, both larger than it, so at least two keys are larger than any internal key. The second-largest has only one key above it, so it is a leaf.\n(f) **Always true**: the k-th smallest key has all its ancestors smaller, so its depth is at most k - 1: the 3rd smallest is at depth <= 2 (depth 2 is possible, depth 3 would need 3 smaller ancestors).",
+      "rubric": [
+        "(a) and (b): uses 'all ancestors are smaller' to place the smallest keys near the root",
+        "(c) and (d): the maximum lies at one of the 16 leaves, not a specific one",
+        "(e): internal node has two larger children, so the 2nd largest is a leaf",
+        "(f): rank k means depth <= k - 1"
+      ]
+    },
+    {
+      "id": "heaps-027",
+      "type": "proof",
+      "difficulty": 3,
+      "source": "textbook-6.3",
+      "tags": [
+        "buildHeap",
+        "sum-of-heights",
+        "proof",
+        "theorem-6.1"
+      ],
+      "points": 10,
+      "prompt": "Prove Theorem 6.1: for a perfect binary tree of height h (2^(h+1) - 1 nodes), the sum of the heights of all nodes is 2^(h+1) - 1 - (h + 1). Then use it to conclude that `buildHeap` is O(N).",
+      "answer": "A perfect tree of height h has 2^i nodes at depth i, whose height is h - i. So\nS = sum_{i=0..h} 2^i (h - i) = h + 2(h-1) + 4(h-2) + ... + 2^(h-1)(1).\nMultiply by 2: 2S = 2h + 4(h-1) + 8(h-2) + ... + 2^h (1).\nSubtract the first from the second: the terms almost cancel (2h - 2(h-1) = 2, 4(h-1) - 4(h-2) = 4, and so on); the last term of 2S, 2^h, has no partner in S, and the first term of S, h, has no partner in 2S, so 2S - S = -h + 2 + 4 + 8 + ... + 2^(h-1) + 2^h.\nSo S = (2 + 4 + ... + 2^h) - h = (2^(h+1) - 2) - h = **2^(h+1) - 1 - (h + 1)**.\nWith N = 2^(h+1) - 1 this is S = N - (h + 1) = N - log2(N + 1) < N.\n\n**buildHeap:** `percolateDown(i)` moves a value down at most height(i) levels, each level costing O(1) (two comparisons), so the total is at most O(sum of heights). A complete tree of height h is a subtree of the perfect tree of height h (same shape, some bottom nodes missing) and every node's height is no larger, so its sum of heights is at most S < 2^(h+1) <= 2N (because N >= 2^h): O(N). (The book: exactly N - b(N).) Hence **buildHeap is O(N)**, not O(N log N).",
+      "rubric": [
+        "Counts 2^i nodes at height h - i",
+        "Sets up S and 2S and subtracts correctly (or equivalent derivation)",
+        "Obtains S = 2^(h+1) - 1 - (h+1)",
+        "Concludes percolateDown(i) costs <= height(i) so buildHeap total is O(N)"
+      ]
+    },
+    {
+      "id": "heaps-028",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "buildHeap",
+        "insert",
+        "complexity"
+      ],
+      "points": 8,
+      "prompt": "(a) Compare building a heap of N elements by N successive `insert`s with `buildHeap`: give the worst-case and average-case running time of each. (b) Give an input order for which the N successive inserts into a **min**-heap are worst, and one for which they are best, with the totals. (c) Explain in two sentences why the O(N) bound for buildHeap does not follow from \"N/2 calls of O(log N)\".",
+      "answer": "(a) N inserts: each O(log N) worst case, so **O(N log N) worst**; each is O(1) on average (for same-distribution keys), so **O(N) average**. buildHeap: **O(N) worst case** (and average): sum of node heights < N.\n(b) Worst: keys in **decreasing** order into a min-heap: every new key is the new minimum and rises to the root: the i-th insert costs floor(log2 i) levels, total sum floor(log2 i) = Theta(N log N). Best: **increasing** order: each new key is >= its parent, no rise: O(1) each, O(N) total (even in the worst case for that input).\n(c) \"N/2 calls x O(log N)\" is a valid upper bound but not tight: a call at a node of height h costs O(h), not O(log N), and most nodes are near the bottom (N/4 have height 1, N/8 height 2, ...). The sum of heights is N/4 + 2N/8 + 3N/16 + ... = O(N).",
+      "rubric": [
+        "(a) Inserts: O(N log N) worst, O(N) average; buildHeap O(N)",
+        "(b) Decreasing input is worst (each insert reaches the root), increasing input best (no movement)",
+        "(c) Cost of a percolateDown is the node's height, not log N; heights are mostly small",
+        "Mentions the sum of heights / geometric series"
+      ]
+    },
+    {
+      "id": "heaps-029",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "array-implementation",
+        "heap"
+      ],
+      "points": 5,
+      "prompt": "(a) Why is a binary heap normally stored in an array rather than with nodes and pointers? (b) The array gives O(1) access by position. Why is that not considered a useful heap operation? (c) Why is index 0 left empty in the textbook implementation?",
+      "answer": "(a) Because a heap is a **complete** binary tree, it fits in an array with no gaps: parent of i is i/2, children are 2i and 2i+1, so no links are needed. Benefits (slides): fewer memory allocations, better cache efficiency, and **O(1)** to add the new element at the end (the placement step of insert); navigation is just arithmetic. The drawback: you need a capacity estimate (resize by doubling).\n(b) The k-th element of the array is **not** the k-th highest priority (the heap is only partially ordered), and position does not indicate order of insertion either. So reading by position tells you nothing useful; only the root (the highest priority) matters. Finding an arbitrary item still needs a scan, O(N).\n(c) Index 0 is unused so that the child/parent arithmetic is `2i`, `2i+1`, `i/2`, with the root at 1. The textbook uses cell 0 as scratch space: the sentinel copy in `insert` that ends the percolate-up loop, and (in the HW6 trace convention) the value being moved. Other implementations start at 0 with children 2i+1 and 2i+2 (heapsort's layout).",
+      "rubric": [
+        "(a) Complete tree => array with index arithmetic, no links; cache/allocation benefits; O(1) add at the end",
+        "(b) k-th array element is not the k-th priority; position is not insertion order",
+        "(c) Index 0 left empty for the 2i / 2i+1 / i/2 arithmetic and used as scratch (sentinel/tmp)"
+      ]
+    },
+    {
+      "id": "heaps-030",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "priority-queue",
+        "ADT",
+        "heap"
+      ],
+      "points": 5,
+      "prompt": "Explain the difference between a **priority queue** and a **binary heap**. Name two other ways to implement a priority queue and give their `insert` and `deleteMin` costs. What operation is a heap poor at, even though some graph algorithms need it?",
+      "answer": "A **priority queue** is an abstract data type: a collection of elements with priorities that supports `insert` and removal of the highest-priority element (`deleteMin`), nothing about how it is stored. A **binary heap** is a *data structure* (a complete binary tree in an array with heap order) that implements it, just as a list ADT can be a linked list or an array.\nOther implementations: an **unsorted list/vector** (insert O(1), deleteMin O(N)); a **sorted list/array** (insert O(N), deleteMin O(1)); a **balanced BST** such as an AVL tree (both O(log N) worst case, but more constant overhead and more features than needed); heap: insert O(log N) worst / O(1) average, deleteMin O(log N).\nA heap is poor at **changing the priority of an element** (and finding any element, and merging): there is no efficient way to find where an element is without a scan, so decreaseKey/increaseKey/remove need the position to be known.",
+      "rubric": [
+        "Distinguishes ADT (behavior: insert, deleteMin) from the data structure (heap in an array)",
+        "Gives two other implementations with correct costs",
+        "Gives the heap costs",
+        "Names changing priority / searching for an element as the weakness"
+      ]
+    },
+    {
+      "id": "heaps-031",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "textbook-6.4",
+      "tags": [
+        "selection",
+        "6A",
+        "6B",
+        "design"
+      ],
+      "points": 10,
+      "prompt": "You have N = 1,000,000 integers in memory and need the k-th largest. For each of the cases (i) k = 10, (ii) k = N/2 (the median), compare the textbook's algorithm 6A (buildHeap, then k deleteMins on a heap of all N elements) and algorithm 6B (maintain a heap of the k largest seen) in time and extra space, say which you would pick, and mention what quickselect adds. Give the general bounds with justification.",
+      "answer": "**6A** (for the k-th *largest* use a max-heap): buildHeap O(N) + k deleteMax x O(log N) each = **O(N + k log N)**; extra space O(1) if the heap is built in place in the array.\n**6B**: build a **min**-heap on the first k elements, O(k); for each of the remaining N - k elements compare with the root (the smallest of the k kept, O(1)); if larger, deleteMin + insert, O(log k). Total O(k + (N - k) log k) = **O(N log k)**; extra space O(k); works on a stream.\n\n(i) k = 10: 6A is O(N + 10 log N) = O(N); 6B is O(N log 10) = O(N): both linear; 6B uses only 10 cells of extra memory and a single pass, so it is the better pick (also when the data is streamed).\n(ii) k = N/2: 6A = O(N + (N/2) log N) = Theta(N log N); 6B = O((N/2) log(N/2)) = Theta(N log N); both Theta(N log N) (and 6B needs N/2 extra space). **Quickselect** (Ch 7) finds the k-th element in O(N) **average** (O(N^2) worst case), which beats both for the median.\nObservation: when k = O(N / log N) algorithm 6A is O(N) (the buildHeap dominates); for k = N it is heapsort (O(N log N)).",
+      "rubric": [
+        "6A: O(N + k log N) with the reason (buildHeap + k deleteMins)",
+        "6B: O(N log k) with reason: size-k min-heap, O(log k) per replacement; O(k) space",
+        "(i) both O(N) for small k; picks 6B (small memory/streaming) or states 6A is also O(N)",
+        "(ii) both Theta(N log N) at k = N/2; quickselect O(N) average"
+      ]
+    },
+    {
+      "id": "heaps-032",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "original",
+      "tags": [
+        "priority_queue",
+        "median",
+        "design",
+        "cumulative"
+      ],
+      "points": 12,
+      "prompt": "Numbers arrive one at a time in a stream. After each number you must be able to report the **median** of all numbers seen so far. Design a data structure using STL heaps (`priority_queue`) that supports `add(x)` and `median()`, give the class with code, and analyze the cost of `add`, `median`, and of processing a stream of n numbers. Compare with keeping a sorted vector.",
+      "answer": "**Idea:** keep two heaps: `lo`, a **max**-heap holding the smaller half, and `hi`, a **min**-heap holding the larger half, with every element of `lo` <= every element of `hi` and sizes balanced (`lo.size() == hi.size()` or `lo.size() == hi.size() + 1`). The median is then `lo.top()` (odd count) or the average of the two tops (even count).\n\n```cpp\n#include <queue>\n#include <vector>\n#include <functional>\n\nclass MedianFinder {\n    std::priority_queue<int> lo;                                       // max-heap: smaller half\n    std::priority_queue<int, std::vector<int>, std::greater<int>> hi;  // min-heap: larger half\npublic:\n    void add( int x ) {\n        if( lo.empty( ) || x <= lo.top( ) ) lo.push( x );              // O(log n)\n        else                                hi.push( x );              // O(log n)\n        if( lo.size( ) > hi.size( ) + 1 )  { hi.push( lo.top( ) ); lo.pop( ); }   // rebalance: one move, O(log n)\n        else if( hi.size( ) > lo.size( ) ) { lo.push( hi.top( ) ); hi.pop( ); }\n    }\n    double median( ) const {                                           // precondition: at least one element\n        if( lo.size( ) > hi.size( ) ) return lo.top( );                // odd count\n        return ( lo.top( ) + hi.top( ) ) / 2.0;                        // even count\n    }\n};\n```\n**Analysis.** `add`: one push (O(log n)) plus at most one pop and one push for rebalancing (O(log n) each), so **O(log n)** worst case; `median`: two `top()` calls, **O(1)**. For a stream of n numbers: n x O(log n) = **O(n log n)** total time (O(1) per median query), O(n) space.\nA sorted `vector` with binary search finds the spot in O(log n) but insertion shifts elements: O(n) per add, **O(n^2)** for the stream; re-sorting each time is O(n log n) per add. Two heaps win.",
+      "rubric": [
+        "Two heaps: max-heap for the lower half, min-heap for the upper half (balanced sizes)",
+        "add pushes into the correct heap then rebalances; code is complete and compiles in spirit",
+        "median is O(1) from the heap tops (odd/even handled)",
+        "Complexity: add O(log n), n adds O(n log n); compares with sorted vector O(n) per insert / O(n^2)"
+      ]
+    },
+    {
+      "id": "heaps-033",
+      "type": "knowledge",
+      "difficulty": 2,
+      "source": "slides",
+      "tags": [
+        "average-case",
+        "insert",
+        "proof"
+      ],
+      "points": 6,
+      "prompt": "State the average-case cost of heap `insert` and give the two-part argument from lecture. Then give two situations where the argument does **not** apply, and the cost of `deleteMin` in the average case.",
+      "answer": "`insert` is **O(log N) worst case but O(1) on average**. Insert has two steps: (1) put a placeholder for the new element at the end of the array, **O(1)**; (2) percolate up, which in the worst case takes log N steps (a new minimum reaches the root) but moves the element up **a constant number of levels on average**: the new element lands at the bottom level where half the nodes are, and for it to rise j levels it must beat the minimum of a subtree of about 2^(j+1) elements, whose probability falls geometrically (about 2^-(j+1)), so the expected rise is a convergent sum (the book: about 1.6 levels, 2.6 comparisons). This needs the inserted values to come from **the same distribution** as the values already in the heap. Hence N random inserts cost O(N) on average.\nIt does **not** apply (i) when keys arrive in **decreasing order** for a min-heap (each one rises to the root: Theta(log N) each) and (ii) when insertions and deleteMins are **alternated**: deleteMin removes the smallest elements, so the remaining ones are larger than a fresh element on average, and new elements rise far.\n`deleteMin` is O(log N) in the worst case **and** on average: the element moved to the root came from the bottom, so it usually sinks almost all the way back.",
+      "rubric": [
+        "States O(log N) worst, O(1) average",
+        "Two parts: O(1) placement at the end + constant expected percolate-up for same-distribution values",
+        "Names two failing situations (decreasing input; alternating insert/deleteMin)",
+        "deleteMin is O(log N) average too, with the reason"
+      ]
+    },
+    {
+      "id": "heaps-034",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "textbook-6.4",
+      "tags": [
+        "event-simulation",
+        "priority-queue",
+        "application"
+      ],
+      "points": 5,
+      "prompt": "Explain at a high level how a priority queue is used to simulate a bank with k tellers (textbook 6.4.2). What are the events, what is the key of the priority queue, why is it better than advancing a clock tick by tick, and what is the running time for C customers?",
+      "answer": "The two **events** are a customer *arriving* and a customer *departing* (freeing a teller). Pending departures are kept in a **priority queue ordered by event time** (smallest time first); waiting customers are in an ordinary FIFO queue. The simulation repeatedly takes the next event: the earlier of the next arrival in the input and the smallest departure time in the heap, and advances the simulated clock **directly to that time**. An arrival takes a free teller (compute the departure time and insert it) or joins the line; a departure records statistics and, if somebody is waiting, starts the next customer (insert a new departure).\nTicking the clock one unit at a time would cost time proportional to the number of ticks (not part of the input size: multiply all times by 1,000 and it takes 1,000 times longer); jumping to the next event costs time proportional to the number of events.\nWith C customers there are 2C events, and the heap holds at most about k + 1 events, so each event costs O(log(k + 1)): total **O(C log(k + 1))**.",
+      "rubric": [
+        "Events: arrival and departure; PQ keyed by event time (min = soonest)",
+        "Clock jumps to the next event instead of ticking",
+        "Arrival/departure processing described (teller free, queue of waiting customers)",
+        "Running time O(C log(k+1)) with reason (2C events, heap size about k+1)"
+      ]
+    },
+    {
+      "id": "heaps-035",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "priority_queue",
+        "merge",
+        "design",
+        "cumulative"
+      ],
+      "points": 12,
+      "prompt": "You have k sorted `vector<int>`s with N elements in total. Design an algorithm using `priority_queue` that produces one sorted vector, write the function, and analyze its running time and extra space in terms of N and k. (Assume no list is huge relative to the others; state your bound in terms of N and k.)\n\n```cpp\nstd::vector<int> mergeK( const std::vector<std::vector<int>> & lists )\n{\n    // write code here\n}\n```",
+      "answer": "Keep a **min**-heap holding the current front element of every non-empty list, together with which list it came from and its position. Repeatedly pop the smallest, append it to the output, and push the next element of the same list.\n\n```cpp\n#include <queue>\n#include <vector>\n#include <tuple>\n#include <functional>\n\nstd::vector<int> mergeK( const std::vector<std::vector<int>> & lists )\n{\n    using Item = std::tuple<int, int, int>;            // (value, list index, position in that list)\n    std::priority_queue<Item, std::vector<Item>, std::greater<Item>> pq;   // min-heap on value\n    for( int i = 0; i < (int) lists.size( ); ++i )\n        if( !lists[ i ].empty( ) )\n            pq.push( Item( lists[ i ][ 0 ], i, 0 ) );  // at most k pushes\n\n    std::vector<int> out;\n    while( !pq.empty( ) )\n    {\n        Item t = pq.top( ); pq.pop( );                 // O(log k)\n        int v = std::get<0>( t ), i = std::get<1>( t ), j = std::get<2>( t );\n        out.push_back( v );                            // amortized O(1)\n        if( j + 1 < (int) lists[ i ].size( ) )\n            pq.push( Item( lists[ i ][ j + 1 ], i, j + 1 ) );   // O(log k)\n    }\n    return out;\n}\n```\n**Analysis.** The heap never holds more than k items (one per list). Initial pushes: k x O(log k) = O(k log k) (or O(k) with buildHeap). The loop runs N times; each iteration does one pop O(log k), one push O(log k), one push_back amortized O(1): **O(N log k)**. Total **O(N log k + k log k) = O(N log k)** (each non-empty list contributes at least one element, so k <= N). Extra space: **O(k)** for the heap plus the O(N) output. (Compare: concatenating and sorting is O(N log N); merging lists pairwise one after another is O(N k).)",
+      "rubric": [
+        "Min-heap of at most k entries: value plus which list/position",
+        "Loop: pop the smallest, output it, push the successor from the same list",
+        "Correct STL declaration of a min-heap (greater<>) and handles empty lists",
+        "Analysis: N iterations x O(log k) = O(N log k), plus O(k log k) setup; space O(k) + output"
+      ]
+    },
+    {
+      "id": "heaps-036",
+      "type": "knowledge",
+      "difficulty": 1,
+      "source": "slides",
+      "tags": [
+        "priority_queue",
+        "STL",
+        "complexity"
+      ],
+      "points": 4,
+      "prompt": "(a) Declare a `priority_queue` of ints that gives the **smallest** element first. (b) What does `std::priority_queue<int>` do by default? (c) Give the complexity of `push`, `pop`, `top`, and of `std::make_heap`, `std::push_heap`, `std::pop_heap` on a vector of n elements.",
+      "answer": "(a) `priority_queue<int, vector<int>, greater<int>> minHeap;`\n(b) A **max**-heap: `top()` returns the largest element (comparator `less<int>`).\n(c) `push` O(log n), `pop` O(log n), `top` O(1). `make_heap` **O(n)** (it is buildHeap), `push_heap` O(log n) (percolate up the last element), `pop_heap` O(log n) (moves the root to the back and re-heapifies the rest; `sort_heap` is n pops: O(n log n)).",
+      "rubric": [
+        "(a) three-argument form with greater<int>",
+        "(b) max-heap by default",
+        "(c) push/pop O(log n), top O(1)",
+        "(c) make_heap O(n), push_heap/pop_heap O(log n)"
+      ]
+    },
+    {
+      "id": "heaps-037",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "max-heap",
+        "insert",
+        "percolate-up"
+      ],
+      "points": 8,
+      "prompt": "Insert 47 and then 22 into the **max**-heap `50,40,45,30,35,20,25,10,15` (textbook layout, index 1 first). Show index 0 (it holds the value being moved) and the hole `_` after each step. Give the final heap.",
+      "answer": "For a max-heap every comparison is reversed: slide a parent down while the new key is **strictly larger** than it.\n\n```\n[0]=47 | 50 40 45 30 35 20 25 10 15 _        # insert 47: hole created at index 10; 47 stored in index 0\n[0]=47 | 50 40 45 30 _ 20 25 10 15 35        # 47 > parent 35 (index 5) -> slide 35 down to index 10; hole moves to 5\n[0]=47 | 50 _ 45 30 40 20 25 10 15 35        # 47 > parent 40 (index 2) -> slide 40 down to index 5; hole moves to 2\n[0]=- | 50 47 45 30 40 20 25 10 15 35        # place 47 in index 2 (parent 50 is not smaller)\n[0]=22 | 50 47 45 30 40 20 25 10 15 35 _     # insert 22: hole created at index 11; 22 stored in index 0\n[0]=- | 50 47 45 30 40 20 25 10 15 35 22     # place 22 in index 11 (parent 40 is not smaller)\n```\n\n**Final heap:** `50,47,45,30,40,20,25,10,15,35,22`.",
+      "rubric": [
+        "Reverses the comparison: a new key rises while it is larger than its parent",
+        "47 rises past 35 and 40 and stops below 50",
+        "22 stays at the bottom (its parent 40 is larger)",
+        "Final heap is 50,47,45,30,40,20,25,10,15,35,22"
+      ]
+    },
+    {
+      "id": "heaps-038",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "original",
+      "tags": [
+        "max-heap",
+        "deleteMax",
+        "percolate-down"
+      ],
+      "points": 8,
+      "prompt": "Perform two `deleteMax` operations on the max-heap `90,70,80,40,60,50,75,10,30,20` (index 1 first). Show index 0 (it holds the value being moved) and the hole `_` after each step. State the removed elements and the final heap.",
+      "answer": "Removed: **90, then 80**. The last element moves to the root and percolates down; the **larger** child moves up.\n\n```\n[0]=20 | _ 70 80 40 60 50 75 10 30           # deleteMax: remove 90 from the root (hole at 1); last element 20 goes to index 0; size 9\n[0]=20 | 80 70 _ 40 60 50 75 10 30           # larger child 80 (index 3) beats 20 -> slide it up to index 1; hole moves to 3\n[0]=20 | 80 70 75 40 60 50 _ 10 30           # larger child 75 (index 7) beats 20 -> slide it up to index 3; hole moves to 7\n[0]=- | 80 70 75 40 60 50 20 10 30           # place 20 in index 7\n[0]=30 | _ 70 75 40 60 50 20 10              # deleteMax: remove 80 from the root (hole at 1); last element 30 goes to index 0; size 8\n[0]=30 | 75 70 _ 40 60 50 20 10              # larger child 75 (index 3) beats 30 -> slide it up to index 1; hole moves to 3\n[0]=30 | 75 70 50 40 60 _ 20 10              # larger child 50 (index 6) beats 30 -> slide it up to index 3; hole moves to 6\n[0]=- | 75 70 50 40 60 30 20 10              # place 30 in index 6\n```\n\n**Final heap:** `75,70,50,40,60,30,20,10`.",
+      "rubric": [
+        "Last element moved to index 0 / the root hole",
+        "Larger child slides up; stops when the larger child is not bigger than the moved value",
+        "Removed elements 90, 80",
+        "Final heap is 75,70,50,40,60,30,20,10"
+      ]
+    },
+    {
+      "id": "heaps-039",
+      "type": "proof",
+      "difficulty": 2,
+      "source": "textbook-6.3",
+      "tags": [
+        "complete-tree",
+        "height",
+        "proof"
+      ],
+      "points": 6,
+      "prompt": "Prove that a complete binary tree with N nodes has height floor(log2 N), so every heap operation that follows one root-to-leaf path is O(log N). Also prove that the parent of index i is i/2 (integer division) in the array layout.",
+      "answer": "A complete tree of height h has all depths 0..h-1 full, and depth h has between 1 and 2^h nodes. So N >= (2^h - 1) + 1 = 2^h and N <= (2^h - 1) + 2^h = 2^(h+1) - 1 < 2^(h+1). Hence 2^h <= N < 2^(h+1), i.e. **h <= log2 N < h + 1**, so **h = floor(log2 N)** = O(log N). A root-to-leaf path has h + 1 nodes, so percolate up/down do at most h steps.\n\nLayout: depth D occupies indices 2^D .. 2^(D+1) - 1 (induction: depth 0 has index 1; depth D+1 has twice as many nodes as depth D, and consecutive nodes of depth D at indices i, i+1, ... have their children at 2i, 2i+1, 2i+2, 2i+3, ... which are consecutive indices of depth D+1 starting at 2 x 2^D = 2^(D+1)). So node i has left child 2i and right child 2i+1; conversely, a node j is the child of floor(j/2) because j = 2i or 2i + 1 gives floor(j/2) = i.",
+      "rubric": [
+        "Bounds N between 2^h and 2^(h+1) - 1 for height h",
+        "Concludes h = floor(log2 N) = O(log N)",
+        "Explains the index layout by level (2^D..2^(D+1)-1) or children 2i/2i+1",
+        "Derives parent = floor(j/2) from j = 2i or 2i+1"
+      ]
+    }
+  ]
+}
