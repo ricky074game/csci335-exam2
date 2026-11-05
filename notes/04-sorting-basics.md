@@ -53,7 +53,31 @@ final: 8,21,32,34,51,64   9 inversions
 
 The "positions moved" column of the book's Figure 7.1 is 1, 0, 1, 3, 4: total **9 moves = the 9 inversions** of the input. 
 
-> *A worked HW7 answer goes here. It is added to the public version after HW7 is due (Nov 17).*
+<!-- HOLD hw7 -->
+Now the HW7 7.1 input (with duplicates; notice the equal 1s and 5s never jump over each other):
+
+```
+insertion pass p=1: 1 moves left 1 place(s) to index 0
+    [1 3 4 1 5 9 2 6 5]
+insertion pass p=2: 4 moves left 0 place(s) to index 2
+    [1 3 4 1 5 9 2 6 5]
+insertion pass p=3: 1 moves left 2 place(s) to index 1
+    [1 1 3 4 5 9 2 6 5]
+insertion pass p=4: 5 moves left 0 place(s) to index 4
+    [1 1 3 4 5 9 2 6 5]
+insertion pass p=5: 9 moves left 0 place(s) to index 5
+    [1 1 3 4 5 9 2 6 5]
+insertion pass p=6: 2 moves left 4 place(s) to index 2
+    [1 1 2 3 4 5 9 6 5]
+insertion pass p=7: 6 moves left 1 place(s) to index 6
+    [1 1 2 3 4 5 6 9 5]
+insertion pass p=8: 5 moves left 2 place(s) to index 6
+    [1 1 2 3 4 5 5 6 9]
+
+final: 1,1,2,3,4,5,5,6,9   10 inversions
+```
+
+<!-- /HOLD -->
 
 ### 2.2 The code (Figure 7.2) line by line
 
@@ -161,7 +185,29 @@ merge [3, 9, 27, 38, 43] + [1, 5, 10, 82] -> [1, 3, 5, 9, 10, 27, 38, 43, 82]  (
 final: 1,3,5,9,10,27,38,43,82
 ```
 
-> *A worked HW7 answer goes here. It is added to the public version after HW7 is due (Nov 17).*
+<!-- HOLD hw7 -->
+The HW7 7.15 input:
+
+```
+merge [3] + [1] -> [1, 3]  (indices 0..1)
+    [1 3] 4 1 5 9 2 6
+merge [4] + [1] -> [1, 4]  (indices 2..3)
+    1 3 [1 4] 5 9 2 6
+merge [1, 3] + [1, 4] -> [1, 1, 3, 4]  (indices 0..3)
+    [1 1 3 4] 5 9 2 6
+merge [5] + [9] -> [5, 9]  (indices 4..5)
+    1 1 3 4 [5 9] 2 6
+merge [2] + [6] -> [2, 6]  (indices 6..7)
+    1 1 3 4 5 9 [2 6]
+merge [5, 9] + [2, 6] -> [2, 5, 6, 9]  (indices 4..7)
+    1 1 3 4 [2 5 6 9]
+merge [1, 1, 3, 4] + [2, 5, 6, 9] -> [1, 1, 2, 3, 4, 5, 6, 9]  (indices 0..7)
+    [1 1 2 3 4 5 6 9]
+
+final: 1,1,2,3,4,5,6,9
+```
+
+<!-- /HOLD -->
 
 N elements need exactly **N - 1 merges** (every merge reduces the number of runs by one, starting from N runs of size 1).
 

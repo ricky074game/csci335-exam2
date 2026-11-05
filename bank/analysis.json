@@ -140,6 +140,29 @@
       ]
     },
     {
+      "id": "analysis-007",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "hw6",
+      "tags": [
+        "hw6",
+        "priority_queue",
+        "k-th largest",
+        "heap",
+        "stream"
+      ],
+      "points": 10,
+      "prompt": "**HW6 Q3-4.** A class `KthLargest` supports `KthLargest(k, nums)` (constructor with an initial vector of n numbers) and `int add(int val)`, which inserts `val` into the stream and returns the current k-th largest element. It stores `priority_queue<int, vector<int>, greater<int>> pq` (a min-heap) containing the k largest values seen so far.\n\n```cpp\nKthLargest(int k, vector<int>& nums) : k_(k) { for (int x : nums) add(x); }\nint add(int val) {\n    pq.push(val);\n    if ((int)pq.size() > k_) pq.pop();\n    return pq.top();\n}\n```\n(a) What is the cost of `add`, and why is it in terms of k and not of the number of values seen so far?\n(b) What is the cost of the constructor (n initial numbers)?\n(c) (HW6 Q4) How could you make this more efficient if you manipulated the underlying vector directly instead of using the `priority_queue` methods? Does the Big-O change?\n(d) Total cost of the constructor plus m calls to `add`.",
+      "answer": "**(a)** `push` into a heap of size at most k+1: O(log k) (percolate up at most the height of the heap, log(k+1)). `size()` O(1). `pop` O(log k) (percolate down). `top` O(1). Together **O(log k) per `add`**. The heap never holds more than k+1 elements because after each add we pop whenever the size exceeds k, so the logarithm is of k, not of the stream length.\n\n**(b)** The constructor calls `add` n times: n x O(log k) = **O(n log k)**.\n\n**(c)** Work on the vector as a heap: (1) build the heap of the first k values with `buildHeap` (`make_heap`) in O(k) instead of k pushes; (2) for each later value v: if v <= the root (`pq[0]` in a min-heap), do nothing - O(1); otherwise *replace the root with v and do one `percolateDown`* - one pass of O(log k) instead of a push (percolate up) followed by a pop (percolate down). The Big-O is the same, O(log k) per add, but the constant is about half, and values that are too small cost O(1). The constructor becomes O(k + (n-k) log k), still O(n log k) in the worst case (e.g. increasing input).\n\n**(d)** Constructor O(n log k) + m calls x O(log k) = **O((n + m) log k)**. Space O(k).",
+      "rubric": [
+        "(a) add is O(log k) with itemized push/pop/top costs and says why k (the heap size is capped at k+1)",
+        "(b) constructor n x O(log k) = O(n log k)",
+        "(c) replace-root + one percolateDown, and/or buildHeap on the first k; ideas lower the constant",
+        "(c) says the Big-O stays O(log k) per add",
+        "(d) combines to O((n+m) log k)"
+      ]
+    },
+    {
       "id": "analysis-008",
       "type": "analysis",
       "difficulty": 3,

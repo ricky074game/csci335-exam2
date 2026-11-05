@@ -638,9 +638,113 @@ The reasoning, not the array, is what an exam answer needs: *the k largest value
 - Use the **same comparator in every call** (`greater<int>()` for a min-heap), or the heap is corrupted.
 - Insert: `v.push_back(x); push_heap(v.begin(), v.end());`. Remove the root: `pop_heap(v.begin(), v.end()); v.pop_back();`.
 
-> *A worked HW7 answer goes here. It is added to the public version after HW7 is due (Nov 17).*
+<!-- HOLD hw7 -->
+**HW7 C: `myHeapSort` with `make_heap` and `pop_heap`.**
 
-> *A worked HW6 answer goes here. It is added to the public version after HW6 is due (Nov 10).*
+```cpp
+void myHeapSort(std::vector<int>& nums) {
+    std::make_heap(nums.begin(), nums.end());                         // O(n): nums becomes a max-heap
+    for (auto last = nums.end(); last != nums.begin(); --last)
+        std::pop_heap(nums.begin(), last);                            // O(log n): max goes to last-1, heap shrinks by one
+}
+```
+
+`make_heap` builds a max-heap in O(n). Each `pop_heap` on the shrinking range puts the current maximum at `last - 1` and re-heapifies the rest in O(log n); n pops give O(n log n). Total **O(n) + O(n log n) = O(n log n)** in the worst, average and best case; extra space **O(1)** (in place, like the textbook heapsort of 7.5); not stable. (`make_heap` followed by `sort_heap` is the one-line equivalent.)
+
+**A `MinHeap` class on a vector** (this is what the standard adaptor does internally):
+
+```cpp
+class MinHeap {
+    vector<int> v;                                   // the heap lives in a plain vector
+public:
+    bool empty() const { return v.empty(); }
+    size_t size() const { return v.size(); }
+    int top() const { return v.front(); }            // O(1): the root is v[0]
+    void push(int x) {                               // O(log n)
+        v.push_back(x);                              // amortized O(1)
+        push_heap(v.begin(), v.end(), greater<int>());   // percolate the new last element up
+    }
+    void pop() {                                     // O(log n)
+        pop_heap(v.begin(), v.end(), greater<int>());    // moves the root to v.back(), re-heapifies the rest
+        v.pop_back();                                // O(1): discard the old root
+    }
+    explicit MinHeap(const vector<int>& init) : v(init) {
+        make_heap(v.begin(), v.end(), greater<int>());   // buildHeap: O(n)
+    }
+    MinHeap() {}
+};
+```
+
+<!-- /HOLD -->
+
+<!-- HOLD hw6 -->
+### 6.4 Kth Largest Element in a Stream (HW6 Q3) and Q4
+
+```cpp
+class KthLargest {
+    priority_queue<int, vector<int>, greater<int>> minHeap;   // holds the k largest values seen; top() is the kth largest
+    int k;
+public:
+    KthLargest(int k, vector<int>& nums) : k(k) {
+        for (int x : nums) add(x);
+    }
+    int add(int val) {
+        if ((int)minHeap.size() < k)
+            minHeap.push(val);
+        else if (val > minHeap.top()) {              // val beats the current kth largest
+            minHeap.pop();
+            minHeap.push(val);
+        }
+        return minHeap.top();
+    }
+};
+```
+
+- A **min**-heap of exactly k elements: the root is the smallest of the k largest = the kth largest.
+- `add`: while size < k push; otherwise, only if `val > top()` do `pop` then `push`. Return `top()`.
+- **Costs.** The heap has at most k elements: `push` O(log k), `pop` O(log k), `top` O(1). So `add` is **O(log k)**, the constructor (n calls to `add`) is **O(n log k)**, space **O(k)**.
+
+**Q4: more efficient by manipulating the underlying vector directly.** (1) Build the starting heap with `nth_element` + `make_heap` in **O(n)** instead of n pushes at O(log k) each; (2) replace the root in place and **percolate down once** instead of `pop()` (a percolate-down) followed by `push()` (a percolate-up). `add` remains O(log k) asymptotically; the saving is the constant factor and the constructor.
+
+```cpp
+class KthLargest {
+    vector<int> heap;                                // 0-indexed MIN-heap of the k largest values; heap[0] = kth largest
+    int k;
+    void percolateDown(int hole) {                   // textbook-style: move the hole down instead of swapping
+        int n = (int)heap.size();
+        int tmp = heap[hole];
+        int child;
+        for (; 2 * hole + 1 < n; hole = child) {
+            child = 2 * hole + 1;
+            if (child + 1 < n && heap[child + 1] < heap[child])
+                ++child;                             // pick the smaller child
+            if (heap[child] < tmp) heap[hole] = heap[child];
+            else break;
+        }
+        heap[hole] = tmp;
+    }
+public:
+    KthLargest(int k, vector<int>& nums) : k(k) {
+        vector<int> v(nums);
+        if ((int)v.size() > k)                       // quickselect: the k largest end up in v[0..k-1], O(n) average
+            nth_element(v.begin(), v.begin() + k, v.end(), greater<int>());
+        heap.assign(v.begin(), v.begin() + min((int)v.size(), k));
+        make_heap(heap.begin(), heap.end(), greater<int>());   // buildHeap: O(k)
+    }
+    int add(int val) {
+        if ((int)heap.size() < k) {
+            heap.push_back(val);
+            push_heap(heap.begin(), heap.end(), greater<int>());
+        } else if (val > heap[0]) {
+            heap[0] = val;                           // replace the root directly ...
+            percolateDown(0);                        // ... and fix with ONE percolate-down (no pop + push)
+        }
+        return heap[0];
+    }
+};
+```
+
+<!-- /HOLD -->
 
 ### 6.5 More heap patterns
 

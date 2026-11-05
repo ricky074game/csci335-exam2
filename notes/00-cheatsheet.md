@@ -61,7 +61,9 @@ deleteMax O(log n) · insertion-sort pass p O(p).
 - **insert**: hole at index n+1, x in [0]; while x < parent: slide parent down (strict <). Show the array after each slide.
 - **deleteMin**: root out, last element into [0], hole at 1; move the **smaller child** up (ties → **left**) while it
   is < the moving value; drop the value in the hole.
-> *A worked HW6 answer goes here. It is added to the public version after HW6 is due (Nov 10).*
+<!-- HOLD hw6 -->
+  HW6 Q2: `3,6,5,7,12,9,13,11,8` → `5,6,8,7,12,9,13,11`.
+<!-- /HOLD -->
 - **buildHeap**: percolateDown(i) for i = n/2 down to 1. O(n) because Σ heights < n
   (n/4·1 + n/8·2 + n/16·3 + … = n). 6.2b: `10,12,1,14,6,5,8,15,3,9,7,4,11,13,2` → `1,3,2,12,6,4,8,15,14,9,7,5,11,13,10`.
 - decreaseKey → percolate up; increaseKey → percolate down; remove(p) = decreaseKey(p, ∞) + deleteMin.
@@ -84,7 +86,9 @@ deleteMax O(log n) · insertion-sort pass p O(p).
 - Cutoff (HW7 7.19): subarray size ≤ 3 → insertion sort. Textbook 7.7.2 example `8,1,4,9,6,3,5,2,7,0` →
   `2,1,4,5,0,3,6,8,7,9`. Handout: pivot "position 4" = value 9 = **index 3** (1-based position).
 - Pivot choice: first element = **horrible** on sorted input (O(n²)); random = safe but costs; median-of-3 = standard.
-> *A worked HW7 answer goes here. It is added to the public version after HW7 is due (Nov 17).*
+<!-- HOLD hw7 -->
+  Picking the minimum of the 3 by mistake: still correct, but worst-case O(n²) on sorted input (HW7 B).
+<!-- /HOLD -->
 - Equal keys: both stop ⇒ many swaps but balanced splits ⇒ O(n log n) on all-equal input; not stopping ⇒ O(n²).
 - C++ code version (Fig 7.16/7.17): median3 *sorts* the three and hides the pivot at right−1; same idea.
 - **Quickselect** (k 1-based): partition; **k ≤ i → left**; **k = i+1 → pivot is the answer**; else right.

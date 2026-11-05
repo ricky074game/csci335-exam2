@@ -3,6 +3,166 @@
   "title": "Quicksort, Partitioning, Pivot Selection and Quickselect",
   "questions": [
     {
+      "id": "quicksort-001",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "quicksort",
+        "textbook-7.19",
+        "median-of-3",
+        "cutoff",
+        "hoare"
+      ],
+      "points": 12,
+      "prompt": "**(Textbook 7.19, HW7 Part A)** Sort `3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5` using quicksort with **median-of-three** partitioning and a **cutoff of 3** (subarrays of size 3 or smaller are sorted with insertion sort). Use the Hoare partitioning algorithm of textbook 7.7.2: the pivot is the median of `a[left]`, `a[center]`, `a[right]` with `center = (left + right) / 2`; swap the pivot with the last element; `i` starts at `left`, `j` at `right - 1`; **both stop on elements equal to the pivot** (and the elements ARE swapped); when `i` and `j` cross, swap `a[i]` with the pivot. Show each pivot, each swap and the array after every partition.",
+      "answer": "```\nquicksort(0, 10)  depth 0\n    [3 1 4 1 5 9 2 6 5 3 5]\nmedian-of-3: a[0]=3, a[5]=9 (center), a[10]=5 -> pivot 5; it is already the last element\n    [3 1 4 1 5 9 2 6 5 3 5]\ni stops at index 4, j stops at index 9: swap 5 and 3\n    [3 1 4 1 3 9 2 6 5 5 5]\ni stops at index 5, j stops at index 8: swap 9 and 5\n    [3 1 4 1 3 5 2 6 9 5 5]\ni stops at index 7 (6), j at index 6 (2): crossed, no swap\n    [3 1 4 1 3 5 2 6 9 5 5]\nswap a[7] with the pivot: pivot 5 is now at index 7 (left part 0..6, right part 8..10)\n    [3 1 4 1 3 5 2 5 9 5 6]\nquicksort(0, 6)  depth 1\n    [3 1 4 1 3 5 2] 5 9 5 6\nmedian-of-3: a[0]=3, a[3]=1 (center), a[6]=2 -> pivot 2; it is already the last element\n    [3 1 4 1 3 5 2] 5 9 5 6\ni stops at index 0, j stops at index 3: swap 3 and 1\n    [1 1 4 3 3 5 2] 5 9 5 6\ni stops at index 2 (4), j at index 1 (1): crossed, no swap\n    [1 1 4 3 3 5 2] 5 9 5 6\nswap a[2] with the pivot: pivot 2 is now at index 2 (left part 0..1, right part 3..6)\n    [1 1 2 3 3 5 4] 5 9 5 6\nsize 2 <= cutoff 3 at 0..1: insertion pass p=1: 1 moves left 0 place(s) to index 1\n    [1 1] 2 3 3 5 4 5 9 5 6\nquicksort(3, 6)  depth 2\n    1 1 2 [3 3 5 4] 5 9 5 6\nmedian-of-3: a[3]=3, a[4]=3 (center), a[6]=4 -> pivot 3; swap it with the last element a[6]\n    1 1 2 [3 4 5 3] 5 9 5 6\ni stops at index 3 (3), j at index 3 (3): crossed, no swap\n    1 1 2 [3 4 5 3] 5 9 5 6\nswap a[3] with the pivot: pivot 3 is now at index 3 (left part 3..2, right part 4..6)\n    1 1 2 [3 4 5 3] 5 9 5 6\nsize 3 <= cutoff 3 at 4..6: insertion pass p=5: 5 moves left 0 place(s) to index 5\n    1 1 2 3 [4 5 3] 5 9 5 6\nsize 3 <= cutoff 3 at 4..6: insertion pass p=6: 3 moves left 2 place(s) to index 4\n    1 1 2 3 [3 4 5] 5 9 5 6\nsize 3 <= cutoff 3 at 8..10: insertion pass p=9: 5 moves left 1 place(s) to index 8\n    1 1 2 3 3 4 5 5 [5 9 6]\nsize 3 <= cutoff 3 at 8..10: insertion pass p=10: 6 moves left 1 place(s) to index 9\n    1 1 2 3 3 4 5 5 [5 6 9]\n\nfinal: 1,1,2,3,3,4,5,5,5,6,9\n```\n\n**Summary of the partitions (all indices 0-based):**\n\n1. `quicksort(0,10)`: candidates a[0]=3, a[5]=9, a[10]=5 -> pivot **5**, already last. i stops at 4 (a 5, equal to the pivot) and j at 9 (the 3): swap; i stops at 5 (the 9) and j at 8 (a 5, equal to the pivot): swap; i = 7 (the 6) and j = 6 (the 2) have crossed; swap a[7] with the pivot -> pivot lands at index 7, left part 0..6, right part 8..10.\n2. `quicksort(0,6)`: candidates 3, 1, 2 -> pivot **2** -> lands at index 2. Left part 0..1 (size 2) and right part 3..6 (size 4).\n3. `quicksort(3,6)`: candidates 3, 3, 4 -> median is 3 (two equal candidates, so either 3 can be \"the median\"; the sorted result is the same either way) -> pivot lands at index 3, right part 4..6.\n4. Insertion sort on 0..1 (`1 1` stays), on 4..6 (`4 5 3` becomes `3 4 5`) and on 8..10 (`5 9 6` becomes `5 6 9`).\n\n**Result:** `1,1,2,3,3,4,5,5,5,6,9`. Note the equal 5s: i and j both stop on a 5, so the first partition makes two swaps involving a 5 (swapping an element equal to the pivot is required by the HW), which is what keeps the split balanced when there are many duplicates.",
+      "rubric": [
+        "first pivot is 5 (median of 3, 9, 5) and the partition swaps shown are correct",
+        "pivot placed at index 7 with left part 3,1,4,1,3,5,2 and right part 9,5,6",
+        "second partition pivot 2 and third partition handled with the 3,3,4 candidates",
+        "uses insertion sort for the subarrays of size <= 3",
+        "final sorted array 1,1,2,3,3,4,5,5,5,6,9",
+        "both i and j stop on elements equal to the pivot (swaps of equal elements shown)"
+      ]
+    },
+    {
+      "id": "quicksort-002",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "quicksort",
+        "textbook-7.20",
+        "median-of-3",
+        "running-time"
+      ],
+      "points": 10,
+      "prompt": "**(Textbook 7.20, HW7 Part A)** Using the quicksort implementation of this chapter (Fig 7.16/7.17: median-of-three that *sorts* `a[left]`, `a[center]`, `a[right]` and hides the pivot at `right - 1`, then partitions with `i = left`, `j = right - 1`, using insertion sort below the cutoff), determine the running time for (a) sorted input, (b) reverse-ordered input, (c) random input. Justify each, with the recurrence.",
+      "answer": "**All three: O(N log N)** (random input: expected/average O(N log N)).\n\n* **(a) Sorted.** The center element is the median of the first, middle and last elements, so the pivot is the true median. After `median3` (sorted order is unchanged, then the center element and `a[right-1]` are swapped), `i` stops at the center (it now holds the large element that came from `right - 1`) and `j` stops just left of it; they cross without any swap and the final swap puts the pivot back in the center. Both subarrays have size about N/2 (and are again sorted): T(N) = 2T(N/2) + cN = **O(N log N)**.\n* **(b) Reverse-ordered.** The center is again the true median, `median3` sorts the three samples (smallest to `a[left]`, largest to `a[right]`) and the first partition splits the array into two halves of about N/2. The halves are no longer reverse-sorted, but median-of-three keeps choosing pivots near the middle, so the recursion stays O(N log N). (This is the expected HW answer. Machine check of the Fig 7.16/7.17 code on reversed arrays: the total partition work stays between about 1.2 N log2 N and 1.6 N log2 N for N = 2^10 ... 2^20, i.e. it does not grow like N^2.)\n* **(c) Random.** Average case, T(N) = 2*(average of T(i)) + cN solves to **O(N log N)** (the slides' average-case analysis), and the median-of-three makes the bad cases (a very unbalanced split) even less likely.\n\n**Contrast / trap.** If the pivot is simply swapped to the end *without* sorting the three samples and `i`, `j` start at `left`, `right-1` (Textbook Exercise 7.51), a reverse-ordered input can degrade to O(N^2). The exam question says \"the implementation in this chapter\", so answer O(N log N) for all three.",
+      "rubric": [
+        "sorted input: pivot is the median, balanced split, T(N)=2T(N/2)+cN, O(N log N)",
+        "reverse-ordered input: also O(N log N) for the chapter's median-of-three code",
+        "random input: O(N log N) average, citing the average-case recurrence",
+        "each answer is justified with a recurrence or balanced-split argument",
+        "does not claim O(N^2) for any of the three with median-of-three"
+      ]
+    },
+    {
+      "id": "quicksort-003",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "hw7",
+      "tags": [
+        "quicksort",
+        "textbook-7.21",
+        "pivot-selection",
+        "running-time"
+      ],
+      "points": 14,
+      "prompt": "**(Textbook 7.21, HW7 Part A)** Repeat Exercise 7.20 (running time for sorted, reverse-ordered and random input) when the pivot is chosen as (a) the first element, (b) the larger of the first two **distinct** elements, (c) a random element, (d) the average of all elements in the set. Make a table, and for the quadratic cases explain what the partitions look like. For (d), is there a bad input?",
+      "answer": "| Pivot | Sorted | Reverse-ordered | Random |\n|---|---|---|---|\n| (a) first element | **O(N^2)** | **O(N^2)** | O(N log N) average |\n| (b) larger of first two distinct | **O(N^2)** | **O(N^2)** | O(N log N) average |\n| (c) random element | O(N log N) expected | O(N log N) expected | O(N log N) expected |\n| (d) average (mean) of all elements | O(N log N) | O(N log N) | O(N log N) (typical) |\n\n**(a)** Sorted: the first element is the minimum, S1 is empty and S2 has N-1 elements, and this repeats in every call: T(N) = T(N-1) + cN = O(N^2) (it \"takes quadratic time to do essentially nothing at all\"). Reverse: the first element is the maximum, S2 is empty and S1 has N-1 elements: the same recurrence. Engine check on sorted 1..8: the partitions have |S2| = 7, 6, 5, ... (see quicksort-016).\n\n**(b)** Sorted: the larger of the first two distinct elements is a[1], the second smallest: S1 has 1 element, S2 has N-2: T(N) = T(N-2) + cN = O(N^2). Reverse: the first two are the two largest and the larger is the maximum: S1 has N-1 elements: O(N^2). Random: the pivot is essentially a random element, O(N log N) on average. It has \"the same bad properties as merely choosing the first element\".\n\n**(c)** The pivot is independent of the input order, so every input, including sorted and reverse-ordered, has expected time O(N log N); the worst case O(N^2) still exists but has probability that is exponentially small. (Random number generation is costly and does not speed up the average case.)\n\n**(d)** The mean is not necessarily an element of the set, but is used as a value to compare against; computing it costs O(N), the same order as a partition, so the recurrence is unchanged. Sorted/reverse 1..N: the mean (N+1)/2 is the median, giving T(N) = 2T(N/2) + O(N) = O(N log N). Random: the mean is close to the median for typical distributions, expected O(N log N). **But there are bad inputs:** if the values grow geometrically, e.g. 1, N, N^2, ..., N^(N-1), the mean is just above the second largest, so only the maximum is larger than the mean: each partition peels off one element, T(N) = T(N-1) + cN = O(N^2) (with N = 6: the values `1, 6, 36, 216, 1296, 7776` have mean 1555.2, and exactly one value exceeds it).",
+      "rubric": [
+        "sorted and reverse input with the first element as pivot: O(N^2) with the S1/S2 empty explanation",
+        "larger of the first two distinct: O(N^2) for sorted and reverse, O(N log N) random",
+        "random pivot: O(N log N) expected for all three inputs",
+        "mean pivot: O(N log N) on sorted/reverse/random because the mean is near the median",
+        "gives a skewed (e.g. geometric) input where the mean pivot is bad",
+        "random-input answers are 'average case'"
+      ]
+    },
+    {
+      "id": "quicksort-004",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "hw7",
+      "tags": [
+        "quicksort",
+        "textbook-7.22",
+        "equal-keys",
+        "partition"
+      ],
+      "points": 14,
+      "prompt": "**(Textbook 7.22, HW7 Part A)** What is the running time of quicksort when all keys are equal, for each of these partitioning strategies?\n\na. The strategy of this chapter (both `i` and `j` stop when they see a key equal to the pivot).\nb. Neither `i` nor `j` stops on a key equal to the pivot. What fixes must be made in the code to guarantee that quicksort works?\nc. `i` stops at a key equal to the pivot but `j` does not. What fixes are needed and what is the running time?\n\nExplain what the partition looks like in each case.",
+      "answer": "**(a) Both stop: O(N log N).** Every comparison `a[i] < pivot` and `pivot < a[j]` is false, so `i` and `j` stop at once, swap two equal elements, and move one step each. This is wasteful (about N/2 useless swaps) but `i` and `j` meet **in the middle**, so the pivot is swapped into the middle and the two subarrays have size about N/2: T(N) = 2T(N/2) + cN = O(N log N). (Engine: partitioning eight 5s with the 7.7.2 method puts the pivot at index 3.)\n\n**(b) Neither stops: O(N^2).** The loops `while( a[ ++i ] < pivot )` would become `<=` so `i` runs right past all equal keys, and `j` runs left past all equal keys. Fixes needed: **bounds checks** so `i` cannot run past the end of the subarray and `j` cannot run below `left` (the sentinel argument of the book no longer works since the pivot is not a stopping point for `i`), and the pivot is finally swapped into the last position `i` reached. For all-equal keys, `i` runs all the way to the end, so no swaps occur but the pivot ends in the (next to) last position: S1 has N-1 (or N-2) elements, S2 is empty: T(N) = T(N-1) + cN = **O(N^2)**, \"quadratic time to do nothing\", the same effect as the first element as pivot on sorted input.\n\n**(c) i stops, j does not: O(N^2).** `i` stops immediately at the first element, `j` runs left through all the equal keys down to `left` (needs a bound check `j > left`). They cross at once with no swaps and the pivot is swapped to the start of the subarray: S1 is empty (or tiny), S2 has about N-1 elements: T(N) = T(N-1) + cN = **O(N^2)**. In general if only one of the pointers stops, all elements equal to the pivot go into the same side (bias), which is why \"i and j ought to do the same thing\".\n\n**Conclusion.** Of the four possibilities, only \"both stop\" is O(N log N) for the all-equal input. That is why the textbook (and the HW) require swapping elements equal to the pivot.",
+      "rubric": [
+        "(a) O(N log N): i and j stop and swap, meeting in the middle, balanced halves",
+        "(b) O(N^2): pivot ends up at the end, S1 has N-1 elements",
+        "(b) mentions the bounds checks needed so i and j do not run off the array",
+        "(c) O(N^2): equal keys all go to one side, pivot at the start/end",
+        "recurrence T(N)=T(N-1)+cN vs T(N)=2T(N/2)+cN used",
+        "concludes only 'both stop' avoids quadratic time"
+      ]
+    },
+    {
+      "id": "quicksort-005",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "quicksort",
+        "textbook-7.23",
+        "pivot-selection",
+        "worst-case-input"
+      ],
+      "points": 8,
+      "prompt": "**(Textbook 7.23, HW7 Part A)** Suppose the pivot is the element in the middle position of the array (index `(left + right) / 2`). Does this make it unlikely that quicksort will require quadratic time? Argue, and if you disagree give an explicit input of 8 elements that forces quadratic time with this rule (use the 7.7.2 Hoare partition).",
+      "answer": "**No.** The middle element works well for sorted and reverse-sorted input, but the rule is **deterministic**: for every N there are inputs on which the middle element is always the minimum of the current subarray, and an adversary (or an unlucky data pattern) can produce them. Choosing the middle element only moves the bad input from \"sorted\" to some other permutation. Randomising the pivot (or taking the median of three random elements) makes a bad *input* irrelevant, because the bad luck then depends only on the random numbers.\n\n**Example (N = 8): `3, 7, 5, 1, 2, 4, 6, 8`.** Pivot = index 3 (value 1, the minimum): swap it to the end, `i` stops at index 0, `j` slides down to index 0 (everything is larger), they cross, the swap puts 1 at index 0, so S1 is empty and S2 has the other 7 elements, now in the order `7 5 8 2 4 6 3`; in that subarray (indices 1..7) the middle element (index 4) is again its smallest value (2), and so on. Engine trace (`sort quick 3,7,5,1,2,4,6,8 --pivot middle --cutoff 1`) gives partition sizes (size, |S1|, |S2|): (8,0,7), (7,0,6), (6,0,5), (5,0,4), (4,0,3), (3,0,2), (2,0,1), i.e. every partition removes just one element: T(N) = T(N-1) + cN = O(N^2).\n\n(How the input was built: work backwards. Put the smallest value at the middle position; decide which element ends up where after the final swap; repeat for the subarray of size N-1.)",
+      "rubric": [
+        "answers 'no' with the deterministic-rule argument",
+        "gives a concrete 8-element input where the middle element is the minimum each time",
+        "shows/states that each partition has an empty S1 and N-1 elements in S2",
+        "gives the recurrence T(N)=T(N-1)+cN = O(N^2)",
+        "mentions that a random pivot is robust against this"
+      ]
+    },
+    {
+      "id": "quicksort-006",
+      "type": "analysis",
+      "difficulty": 3,
+      "source": "hw7",
+      "tags": [
+        "quicksort",
+        "textbook-7.24",
+        "worst-case-input",
+        "median-of-3",
+        "cutoff"
+      ],
+      "points": 14,
+      "prompt": "**(Textbook 7.24, HW7 Part A)** Construct a permutation of 20 elements that is as bad as possible for quicksort using median-of-three partitioning and a cutoff of 3. Explain why it is bad, give the sizes of the successive partitions, and the total running time as a recurrence. (Check your permutation with the Hoare partition of 7.7.2.)",
+      "answer": "**Idea.** Median-of-three picks the *second smallest* of the three samples. The worst it can do is pick the second smallest element of the whole subarray: then S1 has exactly 1 element and S2 has N-2, so each partition removes only 2 elements: T(N) = T(N-2) + cN = O(N^2). To force this, the three sampled positions `a[left]`, `a[center]`, `a[right]` must contain the **two smallest** values of the current subarray (plus any third value), at every level of the recursion.\n\n**One such permutation of 1..20:**\n\n`2, 12, 4, 19, 6, 14, 8, 18, 10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 20, 16`\n\nCheck with the engine (`sort quick 2,12,4,19,6,14,8,18,10,1,3,5,7,9,11,13,15,17,20,16 --cutoff 3`): the first partition samples a[0]=2, a[9]=1, a[19]=16 -> pivot 2; it removes the pivot and the 1 and leaves 18 elements whose sampled positions again contain their two smallest (3 and 4); and so on.\n\nPartition sizes (Hoare 7.7.2 and also the textbook code of Fig 7.17): **20, 18, 16, 14, 12, 10, 8, 6, 4**, then a subarray of size 2 is insertion sorted (cutoff 3). Nine partitions, total partition work 20+18+...+4 = 108 element visits versus about N log N for a balanced split.\n\n```\nmedian-of-3: a[0]=2, a[9]=1 (center), a[19]=16 -> pivot 2; swap it with the last element a[19]\n    [16 12 4 19 6 14 8 18 10 1 3 5 7 9 11 13 15 17 20 2]\ni stops at index 0, j stops at index 9: swap 16 and 1\n    [1 12 4 19 6 14 8 18 10 16 3 5 7 9 11 13 15 17 20 2]\ni stops at index 1 (12), j at index 0 (1): crossed, no swap\n    [1 12 4 19 6 14 8 18 10 16 3 5 7 9 11 13 15 17 20 2]\nswap a[1] with the pivot: pivot 2 is now at index 1 (left part 0..0, right part 2..19)\n    [1 2 4 19 6 14 8 18 10 16 3 5 7 9 11 13 15 17 20 12]\n\nfinal: 1,2,4,19,6,14,8,18,10,16,3,5,7,9,11,13,15,17,20,12   pivot ends at index 1\n```\n\n**Recurrence:** T(N) = T(N-2) + cN for N > 3, T(N) = O(1) for N <= 3, which telescopes to cN(N+2)/4 = **Theta(N^2)**.\n\n(The generic recipe for any N: build the array from the inside out - at each level choose the two sampled positions, give them the next two smallest unused values, and use the engine to see where the remaining elements end up after the partition.)",
+      "rubric": [
+        "explains that median-of-three picks the second smallest of the samples, so S1 has size 1",
+        "provides a valid permutation of 20 whose partitions have sizes 20, 18, 16, ..., 4",
+        "recurrence T(N)=T(N-2)+cN",
+        "concludes Theta(N^2) and compares with balanced N log N",
+        "mentions the cutoff stops the recursion at size <= 3"
+      ]
+    },
+    {
+      "id": "quicksort-007",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "quicksort",
+        "hw7-B",
+        "median-of-3",
+        "correctness",
+        "efficiency"
+      ],
+      "points": 8,
+      "prompt": "**(HW7 Part B)** If you write quicksort with median-of-3 partitioning and accidentally select the **minimum** of the 3 numbers instead of the median, what would happen in terms of **correctness** and **efficiency**? Discuss sorted input, reverse-ordered input and random input.",
+      "answer": "**Correctness: unaffected.** Quicksort is correct with *any* element as pivot; the pivot only determines how balanced the split is. After the partition every element left of the pivot is <= pivot and every element right is >= pivot, so the recursion sorts correctly. (With the textbook code that hides the pivot at `right - 1` and relies on `a[left] <= pivot <= a[right]` for sentinels, the minimum of the three still satisfies `a[left] <= pivot`, so `j` still has a sentinel; but the bookkeeping must be done carefully. The answer expected in the HW: it still sorts correctly.)\n\n**Efficiency: worse; quadratic on common inputs.** The pivot is the smallest of three samples, which is usually small, so S1 is small and S2 is large.\n* **Sorted input:** samples are `a[left] < a[center] < a[right]`; the minimum is `a[left]`, the smallest element of the subarray, so S1 is empty and S2 has N-1 elements, every time: T(N) = T(N-1) + cN = **O(N^2)** - as bad as using the first element.\n* **Reverse input:** the minimum of the three is `a[right]`, which is the smallest element of the subarray: again S1 is empty: **O(N^2)**.\n* **Random input:** the minimum of 3 random elements has expected rank about N/4, so the expected split is 1/4 : 3/4. T(N) = T(N/4) + T(3N/4) + cN still solves to **O(N log N)** (the recursion depth is log base 4/3 of N), but with a larger constant factor than the median (about 1.4x deeper) - fine on random data but no longer protects against the inputs that median-of-3 was designed for.\n\nSo: it still sorts, but the main benefit of median-of-3 (good behaviour on sorted/reverse input) is lost; worst case remains O(N^2) and now occurs on very natural inputs.",
+      "rubric": [
+        "correctness is preserved (any pivot works)",
+        "sorted input degrades to O(N^2): the pivot is the minimum so S1 is empty",
+        "reverse input also degrades to O(N^2)",
+        "random input still O(N log N) on average but with a worse constant (1/4:3/4 split)",
+        "concludes the loss of median-of-3's protection"
+      ]
+    },
+    {
       "id": "quicksort-008",
       "type": "trace",
       "difficulty": 1,

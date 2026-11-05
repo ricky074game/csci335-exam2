@@ -287,7 +287,64 @@ For N <= about 20 quicksort is slower than insertion sort and, being recursive, 
 
 ---
 
-> *A worked HW7 answer goes here. It is added to the public version after HW7 is due (Nov 17).*
+<!-- HOLD hw7 -->
+## 7. A full trace: HW7 7.19
+
+Sort `3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5` with median-of-3, Hoare partition of 7.7.2 and cutoff 3.
+
+```
+quicksort(0, 10)  depth 0
+    [3 1 4 1 5 9 2 6 5 3 5]
+median-of-3: a[0]=3, a[5]=9 (center), a[10]=5 -> pivot 5; it is already the last element
+    [3 1 4 1 5 9 2 6 5 3 5]
+i stops at index 4, j stops at index 9: swap 5 and 3
+    [3 1 4 1 3 9 2 6 5 5 5]
+i stops at index 5, j stops at index 8: swap 9 and 5
+    [3 1 4 1 3 5 2 6 9 5 5]
+i stops at index 7 (6), j at index 6 (2): crossed, no swap
+    [3 1 4 1 3 5 2 6 9 5 5]
+swap a[7] with the pivot: pivot 5 is now at index 7 (left part 0..6, right part 8..10)
+    [3 1 4 1 3 5 2 5 9 5 6]
+quicksort(0, 6)  depth 1
+    [3 1 4 1 3 5 2] 5 9 5 6
+median-of-3: a[0]=3, a[3]=1 (center), a[6]=2 -> pivot 2; it is already the last element
+    [3 1 4 1 3 5 2] 5 9 5 6
+i stops at index 0, j stops at index 3: swap 3 and 1
+    [1 1 4 3 3 5 2] 5 9 5 6
+i stops at index 2 (4), j at index 1 (1): crossed, no swap
+    [1 1 4 3 3 5 2] 5 9 5 6
+swap a[2] with the pivot: pivot 2 is now at index 2 (left part 0..1, right part 3..6)
+    [1 1 2 3 3 5 4] 5 9 5 6
+size 2 <= cutoff 3 at 0..1: insertion pass p=1: 1 moves left 0 place(s) to index 1
+    [1 1] 2 3 3 5 4 5 9 5 6
+quicksort(3, 6)  depth 2
+    1 1 2 [3 3 5 4] 5 9 5 6
+median-of-3: a[3]=3, a[4]=3 (center), a[6]=4 -> pivot 3; swap it with the last element a[6]
+    1 1 2 [3 4 5 3] 5 9 5 6
+i stops at index 3 (3), j at index 3 (3): crossed, no swap
+    1 1 2 [3 4 5 3] 5 9 5 6
+swap a[3] with the pivot: pivot 3 is now at index 3 (left part 3..2, right part 4..6)
+    1 1 2 [3 4 5 3] 5 9 5 6
+size 3 <= cutoff 3 at 4..6: insertion pass p=5: 5 moves left 0 place(s) to index 5
+    1 1 2 3 [4 5 3] 5 9 5 6
+size 3 <= cutoff 3 at 4..6: insertion pass p=6: 3 moves left 2 place(s) to index 4
+    1 1 2 3 [3 4 5] 5 9 5 6
+size 3 <= cutoff 3 at 8..10: insertion pass p=9: 5 moves left 1 place(s) to index 8
+    1 1 2 3 3 4 5 5 [5 9 6]
+size 3 <= cutoff 3 at 8..10: insertion pass p=10: 6 moves left 1 place(s) to index 9
+    1 1 2 3 3 4 5 5 [5 6 9]
+
+final: 1,1,2,3,3,4,5,5,5,6,9
+```
+
+How to present this on paper: for each call write the range, the three samples and the pivot, then the array after each swap, then the array after the final swap with the pivot, then the two ranges (as the engine lines show). Notes on this specific trace:
+- First call: samples 3 (left), 9 (center, index 5), 5 (right) -> pivot **5**, which is already last. Note that `i` stops on the 5 at index 4 and `j` on a 5 at index 8 - equal keys are swapped (HW7: "do swap elements that are equal to the pivot").
+- Third call `(3,6)`: the samples are 3, 3, 4 - two candidates are equal, so "the median" is a 3 in either case. The book does not say which 3 to use (the engine picks the center); the final sorted array is the same either way, only an intermediate array differs. On an exam question you would avoid or state the convention.
+- Subarrays of size 2 or 3 (indices 0..1, 4..6, 8..10) are insertion sorted. The result is **1 1 2 3 3 4 5 5 5 6 9**.
+
+---
+
+<!-- /HOLD -->
 
 ## 8. Analysis (7.7.5; slides) - learn the telescoping
 
@@ -316,7 +373,90 @@ T(N) = 2T(N/2) + cN - the mergesort recurrence. Divide by N: T(N)/N = T(N/2)/(N/
 
 Remember where the assumption is used: the "equally likely sizes of S1" assumption is valid for a random-like pivot with this partitioning; strategies that don't preserve the randomness of the subarrays cannot use this analysis.
 
-> *A worked HW7 answer goes here. It is added to the public version after HW7 is due (Nov 17).*
+<!-- HOLD hw7 -->
+### 8.4 HW7 7.20-7.24 and B - the answers in one place
+
+**7.20** (the chapter's code, median-of-3 that sorts the samples, cutoff): sorted, reverse-ordered and random input are **all O(N log N)** (sorted: the center is the median, the pointers cross at the center, perfect halves; random: the average-case analysis). (For curiosity: the 7.7.2 swap-the-median-to-the-end version without sorting the samples is *not* safe on reverse-ordered input - Exercise 7.51; the chapter's code is.)
+
+**7.21** pivot rules:
+
+| Pivot | Sorted | Reverse | Random |
+|---|---|---|---|
+| first element | O(N^2) (S1 empty) | O(N^2) (S2 empty) | O(N log N) avg |
+| larger of the first two distinct | O(N^2) (pivot = 2nd smallest) | O(N^2) (pivot = max) | O(N log N) avg |
+| random element | O(N log N) expected | O(N log N) expected | O(N log N) expected |
+| average of all elements (cost O(N) to compute, same order as the partition) | O(N log N) (mean = median) | O(N log N) | O(N log N) typical; bad for geometrically growing values like 1, N, N^2, ... (only the max exceeds the mean) |
+
+Engine on sorted `1..8` with the first element as pivot: every partition has |S1| = 0 and |S2| = 7, 6, 5, ...:
+
+```
+quicksort(0, 7)  depth 0
+    [1 2 3 4 5 6 7 8]
+first element -> pivot 1; swap it with the last element a[7]
+    [8 2 3 4 5 6 7 1]
+i stops at index 0 (8), j at index 0 (8): crossed, no swap
+    [8 2 3 4 5 6 7 1]
+swap a[0] with the pivot: pivot 1 is now at index 0 (left part 0..-1, right part 1..7)
+    [1 2 3 4 5 6 7 8]
+quicksort(1, 7)  depth 1
+    1 [2 3 4 5 6 7 8]
+first element -> pivot 2; swap it with the last element a[7]
+    1 [8 3 4 5 6 7 2]
+i stops at index 1 (8), j at index 1 (8): crossed, no swap
+    1 [8 3 4 5 6 7 2]
+swap a[1] with the pivot: pivot 2 is now at index 1 (left part 1..0, right part 2..7)
+    1 [2 3 4 5 6 7 8]
+```
+
+**7.22 all keys equal:** (a) both stop: O(N log N); (b) neither stops (fix: bounds checks so i, j can't run off the array): O(N^2); (c) only i stops (bounds check for j): O(N^2).
+
+**7.23 pivot = middle element:** does **not** make quadratic time unlikely - it is a deterministic rule, so some input always makes the middle element the minimum. For N = 8: `3 7 5 1 2 4 6 8` (middle index 3 = value 1; after the partition the middle of the remaining 7 is again the smallest...). Engine (pivot middle, no cutoff):
+
+```
+quicksort(0, 7)  depth 0
+    [3 7 5 1 2 4 6 8]
+middle element (index 3) -> pivot 1; swap it with the last element a[7]
+    [3 7 5 8 2 4 6 1]
+i stops at index 0 (3), j at index 0 (3): crossed, no swap
+    [3 7 5 8 2 4 6 1]
+swap a[0] with the pivot: pivot 1 is now at index 0 (left part 0..-1, right part 1..7)
+    [1 7 5 8 2 4 6 3]
+quicksort(1, 7)  depth 1
+    1 [7 5 8 2 4 6 3]
+middle element (index 4) -> pivot 2; swap it with the last element a[7]
+    1 [7 5 8 3 4 6 2]
+i stops at index 1 (7), j at index 1 (7): crossed, no swap
+    1 [7 5 8 3 4 6 2]
+swap a[1] with the pivot: pivot 2 is now at index 1 (left part 1..0, right part 2..7)
+    1 [2 5 8 3 4 6 7]
+```
+
+(The pattern repeats: every partition is 0 : N-1.) Fix: random pivot.
+
+**7.24 a permutation of 20 elements as bad as possible for median-of-3 with cutoff 3.** Median-of-3 returns the *second smallest* of its three samples, so the worst it can do is pick the second smallest of the whole subarray (|S1| = 1, |S2| = N-2): T(N) = T(N-2) + cN = Theta(N^2). To force it, the sampled positions `a[left]`, `a[center]`, `a[right]` must always hold the two smallest remaining values. One such permutation (checked with the engine, bad for both the 7.7.2 steps and the chapter's code):
+
+`2 12 4 19 6 14 8 18 10 1 3 5 7 9 11 13 15 17 20 16`
+
+Partition sizes: **20, 18, 16, 14, 12, 10, 8, 6, 4**, then a size-2 subarray is insertion sorted. First partition (samples a[0] = 2, a[9] = 1, a[19] = 16 -> pivot 2):
+
+```
+median-of-3: a[0]=2, a[9]=1 (center), a[19]=16 -> pivot 2; swap it with the last element a[19]
+    [16 12 4 19 6 14 8 18 10 1 3 5 7 9 11 13 15 17 20 2]
+i stops at index 0, j stops at index 9: swap 16 and 1
+    [1 12 4 19 6 14 8 18 10 16 3 5 7 9 11 13 15 17 20 2]
+i stops at index 1 (12), j at index 0 (1): crossed, no swap
+    [1 12 4 19 6 14 8 18 10 16 3 5 7 9 11 13 15 17 20 2]
+swap a[1] with the pivot: pivot 2 is now at index 1 (left part 0..0, right part 2..19)
+    [1 2 4 19 6 14 8 18 10 16 3 5 7 9 11 13 15 17 20 12]
+
+final: 1,2,4,19,6,14,8,18,10,16,3,5,7,9,11,13,15,17,20,12   pivot ends at index 1
+```
+
+**HW7 Part B - accidentally take the MINIMUM of the three instead of the median.**
+- *Correctness:* unaffected. Quicksort sorts correctly with any pivot; only the balance changes.
+- *Efficiency:* worse. Sorted input: the minimum of `a[left] < a[center] < a[right]` is `a[left]`, the smallest element of the subarray, so S1 is empty every time: **O(N^2)**. Reverse input: the minimum is `a[right]`, again the smallest: **O(N^2)**. Random input: the minimum of three random elements has expected rank about N/4, so the expected split is 1/4 : 3/4, T(N) = T(N/4) + T(3N/4) + cN = **O(N log N)** but with a bigger constant. You lose exactly the protection that median-of-3 was introduced for.
+
+<!-- /HOLD -->
 
 ### 8.5 Summary table
 

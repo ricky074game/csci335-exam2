@@ -58,7 +58,68 @@ How to read it:
 - **deleteMax** (`j = 6`): swap `a[0]` and `a[6]` (97 goes to its final place, array `31 53 59 26 41 58 | 97`), then `percDown(a, 0, 6)` fixes the shrunken heap `a[0..5]`: 59 moves up, then 58, and 31 lands at index 5. Result `59 53 58 26 41 31 | 97` (book Fig 7.9).
 - Each further deleteMax moves the next-largest value just left of the sorted region. After `j = 1` (heap of size 1) the array is sorted; **no deleteMax is needed for the last element**, which is why the loop runs `j = n-1 .. 1` (n - 1 deleteMaxes).
 
-> *A worked HW7 answer goes here. It is added to the public version after HW7 is due (Nov 17).*
+<!-- HOLD hw7 -->
+**A bigger example: HW7 / textbook 7.11** (input 142, 543, 123, 65, 453, 879, 572, 434, 111, 242, 811, 102, n = 12, buildHeap from `i = 12/2 - 1 = 5`; note the heap has a node with a **single child**, index 5 with child 11, whenever n is even):
+
+```
+$ python tools/study.py heap sort 142,543,123,65,453,879,572,434,111,242,811,102
+heapsort 142,543,123,65,453,879,572,434,111,242,811,102  (textbook Fig. 7.10: 0-indexed max-heap)
+
+  142 543 123 65 453 879 572 434 111 242 811 102 # start (n = 12); buildHeap: percDown from i = 5 down to 0 (MAX-heap, 0-indexed)
+  142 543 123 65 453 879 572 434 111 242 811 102 # buildHeap: after percDown(a, 5, 12) (value 879)
+  142 543 123 65 811 879 572 434 111 242 453 102 # buildHeap: after percDown(a, 4, 12) (value 453)
+  142 543 123 434 811 879 572 65 111 242 453 102 # buildHeap: after percDown(a, 3, 12) (value 65)
+  142 543 879 434 811 123 572 65 111 242 453 102 # buildHeap: after percDown(a, 2, 12) (value 123)
+  142 811 879 434 543 123 572 65 111 242 453 102 # buildHeap: after percDown(a, 1, 12) (value 543)
+  879 811 572 434 543 123 142 65 111 242 453 102 # buildHeap: after percDown(a, 0, 12) (value 142)
+  879 811 572 434 543 123 142 65 111 242 453 102 # == heap built ==
+  811 543 572 434 453 123 142 65 111 242 102 879 # deleteMax 879: swap a[0] with a[11], then percDown(a, 0, 11) -> heap = a[0..10], sorted = a[11..11]
+  572 543 142 434 453 123 102 65 111 242 811 879 # deleteMax 811: swap a[0] with a[10], then percDown(a, 0, 10) -> heap = a[0..9], sorted = a[10..11]
+  543 453 142 434 242 123 102 65 111 572 811 879 # deleteMax 572: swap a[0] with a[9], then percDown(a, 0, 9) -> heap = a[0..8], sorted = a[9..11]
+  453 434 142 111 242 123 102 65 543 572 811 879 # deleteMax 543: swap a[0] with a[8], then percDown(a, 0, 8) -> heap = a[0..7], sorted = a[8..11]
+  434 242 142 111 65 123 102 453 543 572 811 879 # deleteMax 453: swap a[0] with a[7], then percDown(a, 0, 7) -> heap = a[0..6], sorted = a[7..11]
+  242 111 142 102 65 123 434 453 543 572 811 879 # deleteMax 434: swap a[0] with a[6], then percDown(a, 0, 6) -> heap = a[0..5], sorted = a[6..11]
+  142 111 123 102 65 242 434 453 543 572 811 879 # deleteMax 242: swap a[0] with a[5], then percDown(a, 0, 5) -> heap = a[0..4], sorted = a[5..11]
+  123 111 65 102 142 242 434 453 543 572 811 879 # deleteMax 142: swap a[0] with a[4], then percDown(a, 0, 4) -> heap = a[0..3], sorted = a[4..11]
+  111 102 65 123 142 242 434 453 543 572 811 879 # deleteMax 123: swap a[0] with a[3], then percDown(a, 0, 3) -> heap = a[0..2], sorted = a[3..11]
+  102 65 111 123 142 242 434 453 543 572 811 879 # deleteMax 111: swap a[0] with a[2], then percDown(a, 0, 2) -> heap = a[0..1], sorted = a[2..11]
+  65 102 111 123 142 242 434 453 543 572 811 879 # deleteMax 102: swap a[0] with a[1], then percDown(a, 0, 1) -> heap = a[0..0], sorted = a[1..11]
+
+sorted: 65,102,111,123,142,242,434,453,543,572,811,879
+```
+
+
+**Check yourself**
+1. Heapsort `9, 4, 7, 1, 8, 2`. Give the array after buildHeap and after each deleteMax. 2. In `[ ... | sorted ]`, when does the sorted part have 3 elements?
+
+<details><summary>Answer</summary>
+
+1. Engine output:
+
+```
+$ python tools/study.py heap sort 9,4,7,1,8,2
+heapsort 9,4,7,1,8,2  (textbook Fig. 7.10: 0-indexed max-heap)
+
+  9 4 7 1 8 2                              # start (n = 6); buildHeap: percDown from i = 2 down to 0 (MAX-heap, 0-indexed)
+  9 4 7 1 8 2                              # buildHeap: after percDown(a, 2, 6) (value 7)
+  9 8 7 1 4 2                              # buildHeap: after percDown(a, 1, 6) (value 4)
+  9 8 7 1 4 2                              # buildHeap: after percDown(a, 0, 6) (value 9)
+  9 8 7 1 4 2                              # == heap built ==
+  8 4 7 1 2 9                              # deleteMax 9: swap a[0] with a[5], then percDown(a, 0, 5) -> heap = a[0..4], sorted = a[5..5]
+  7 4 2 1 8 9                              # deleteMax 8: swap a[0] with a[4], then percDown(a, 0, 4) -> heap = a[0..3], sorted = a[4..5]
+  4 1 2 7 8 9                              # deleteMax 7: swap a[0] with a[3], then percDown(a, 0, 3) -> heap = a[0..2], sorted = a[3..5]
+  2 1 4 7 8 9                              # deleteMax 4: swap a[0] with a[2], then percDown(a, 0, 2) -> heap = a[0..1], sorted = a[2..5]
+  1 2 4 7 8 9                              # deleteMax 2: swap a[0] with a[1], then percDown(a, 0, 1) -> heap = a[0..0], sorted = a[1..5]
+
+sorted: 1,2,4,7,8,9
+```
+
+2. After the third deleteMax (heap of size n - 3).
+</details>
+
+---
+
+<!-- /HOLD -->
 
 ## 2. Do not mix this up with the Chapter 6 heap
 
@@ -191,7 +252,41 @@ First deleteMax: swap `a[0]` and `a[2]`: `2c 1a | 2b`; second: swap `a[0]` and `
 
 ---
 
-> *A worked HW7 answer goes here. It is added to the public version after HW7 is due (Nov 17).*
+<!-- HOLD hw7 -->
+## 5. `myHeapSort` with library functions (HW7 part C)
+
+`make_heap(first, last)` rearranges a range into a **max**-heap (comparator `<` by default), O(n). `pop_heap(first, last)` moves the largest element (the root) to position `last - 1` and re-heapifies the first `last - first - 1` elements, O(log n).
+That is exactly lines 7-13 of Fig 7.10, so:
+
+```cpp
+#include <vector>
+#include <algorithm>
+
+// Takes a reference to a (typically unsorted) vector and sorts that vector using heapsort.
+void myHeapSort( std::vector<int> & nums )
+{
+    std::make_heap( nums.begin( ), nums.end( ) );                // buildHeap: O(n); max-heap
+    for( auto last = nums.end( ); last - nums.begin( ) > 1; --last )
+        std::pop_heap( nums.begin( ), last );                    // deleteMax: largest goes to last-1; O(log n)
+}
+```
+
+- After each `pop_heap(begin, last)` the largest remaining element sits at `last - 1`, and the heap occupies `[begin, last - 1)`; decrementing `last` shrinks the heap by one: same invariant as `[ heap | sorted ]`.
+- The loop stops when only one element is left (it is already the minimum). Calling `std::sort_heap(nums.begin(), nums.end())` after `make_heap` does the same loop for you (the homework wants the explicit `pop_heap` version).
+- Complexity: `make_heap` O(n) + (n - 1) x `pop_heap` O(log n) = **O(n log n)** time, **O(1)** extra space (in place, same array); not stable.
+- Note: the library routines work on the vector with 0-based iterators internally; you never index the heap yourself.
+
+**Check yourself**
+1. Why does `myHeapSort` yield ascending order, not descending? 2. What would `std::make_heap(v.begin(), v.end(), std::greater<int>())` plus the same loop (with `greater<int>()` in `pop_heap` too) produce?
+
+<details><summary>Answer</summary>
+
+1. The default comparator `<` builds a max-heap, and `pop_heap` puts the max at the end, so the vector fills from the right with the largest values. 2. A min-heap; each `pop_heap` then moves the **smallest** remaining element to the end, so the vector ends **descending**.
+</details>
+
+---
+
+<!-- /HOLD -->
 
 ## 6. Introsort (slides "Introsort", textbook 7.7 intro and Exercise 7.27)
 

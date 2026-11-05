@@ -612,7 +612,13 @@ Pick the heap when k << u. All hash costs are averages (worst case O(n^2) for th
 | size-k max-heap while scanning (6B) | **O(n log k)** | O(k) | works on a stream; HW6 "k-th largest in a stream" |
 | quickselect | **O(n) average**, O(n^2) worst | O(1) | median of three helps; use for the median |
 
-> *A worked HW6 answer goes here. It is added to the public version after HW6 is due (Nov 10).*
+<!-- HOLD hw6 -->
+HW6 Q3 analyzed: class with `priority_queue<int, vector<int>, greater<int>>` of size k. Constructor: push the n numbers,
+O(n log k) (or `make_heap` on k then process the rest). `add(v)`: push O(log k), pop O(log k) if size > k, `top` O(1) -> **O(log k)** per call.
+HW6 Q4 (improvement, working on the underlying vector): build the initial heap of k elements with buildHeap, O(k), instead of k pushes; then for each new v,
+if v <= top do nothing (O(1)); otherwise **replace the root** with v and `percolateDown` once instead of push + pop: still O(log k) per call, but one pass, not two.
+
+<!-- /HOLD -->
 
 ### Design 7 - Sliding-window maximum (window w, n items)
 

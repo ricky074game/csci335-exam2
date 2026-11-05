@@ -3,6 +3,89 @@
   "title": "Insertion/Merge Sort, Lower Bounds, Linear-Time and External Sorting",
   "questions": [
     {
+      "id": "sortbasics-001",
+      "type": "trace",
+      "difficulty": 1,
+      "source": "hw7",
+      "tags": [
+        "insertion-sort",
+        "textbook-7.1",
+        "inversions",
+        "stability"
+      ],
+      "points": 6,
+      "prompt": "**(Textbook 7.1, HW7 Part A)** Sort the sequence `3, 1, 4, 1, 5, 9, 2, 6, 5` using insertion sort (the textbook routine: pass p = 1 .. N-1 slides `a[p]` left past every larger element).\n\na. Show the array after each pass and how many positions the element moved in that pass.\nb. How many inversions does the input have, and how does that relate to the total number of positions moved?\nc. Do the two 1s (and the two 5s) stay in their original relative order? Why?",
+      "answer": "**a.** After pass p the first p+1 entries are in sorted order.\n\n```\ninsertion pass p=1: 1 moves left 1 place(s) to index 0\n    [1 3 4 1 5 9 2 6 5]\ninsertion pass p=2: 4 moves left 0 place(s) to index 2\n    [1 3 4 1 5 9 2 6 5]\ninsertion pass p=3: 1 moves left 2 place(s) to index 1\n    [1 1 3 4 5 9 2 6 5]\ninsertion pass p=4: 5 moves left 0 place(s) to index 4\n    [1 1 3 4 5 9 2 6 5]\ninsertion pass p=5: 9 moves left 0 place(s) to index 5\n    [1 1 3 4 5 9 2 6 5]\ninsertion pass p=6: 2 moves left 4 place(s) to index 2\n    [1 1 2 3 4 5 9 6 5]\ninsertion pass p=7: 6 moves left 1 place(s) to index 6\n    [1 1 2 3 4 5 6 9 5]\ninsertion pass p=8: 5 moves left 2 place(s) to index 6\n    [1 1 2 3 4 5 5 6 9]\n\nfinal: 1,1,2,3,4,5,5,6,9   10 inversions\n```\n\nPositions moved per pass (p = 1..8): 1, 0, 2, 0, 0, 4, 1, 2.\n\n**b.** The input has **10 inversions** (listed by `sort inversions`: (3,1), (3,1), (3,2), (4,1), (4,2), (5,2), (9,2), (9,6), (9,5), (6,5)). The total positions moved is 1+0+2+0+0+4+1+2 = **10 = the number of inversions**: moving an element one place left past a larger neighbour is exactly one adjacent swap, and each such swap removes exactly one inversion (Textbook 7.3). So insertion sort runs in O(N + I).\n\n**c.** Yes - insertion sort is **stable**. The inner loop test is the *strict* `tmp < a[j-1]`, so `tmp` stops as soon as it meets an element that is equal to it and therefore never jumps over an equal element. (First 1 stays before second 1; first 5 before second 5.)",
+      "rubric": [
+        "shows the array after every pass (8 passes) with the correct values",
+        "gives positions moved 1,0,2,0,0,4,1,2",
+        "counts 10 inversions",
+        "links total moves = inversions (each adjacent swap removes one inversion)",
+        "states insertion sort is stable and explains it via the strict < in the inner loop"
+      ]
+    },
+    {
+      "id": "sortbasics-002",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "hw7",
+      "tags": [
+        "insertion-sort",
+        "textbook-7.2",
+        "best-case"
+      ],
+      "points": 4,
+      "prompt": "**(Textbook 7.2, HW7 Part A)** What is the running time of insertion sort if all N elements are equal? Justify with the code, and compare with presorted input.\n\n```cpp\nfor( int p = 1; p < a.size( ); ++p )\n{\n    Comparable tmp = std::move( a[ p ] );\n    int j;\n    for( j = p; j > 0 && tmp < a[ j - 1 ]; --j )\n        a[ j ] = std::move( a[ j - 1 ] );\n    a[ j ] = std::move( tmp );\n}\n```",
+      "answer": "**Theta(N)**, i.e. O(N).\n\nThe outer loop runs N-1 times. For equal elements the test `tmp < a[j-1]` is **false** immediately (the comparison is strict), so the inner loop body never executes: each pass costs one comparison plus constant work. Total = (N-1) comparisons and 0 element moves = O(N).\n\nThis is the same as presorted input (best case, Textbook 7.2.3): zero inversions (equal elements are not inversions, because an inversion needs a[i] > a[j]), and insertion sort is O(N + I) with I = 0.\n\n(Contrast: strictly reverse-ordered input has I = N(N-1)/2 inversions and costs Theta(N^2).)",
+      "rubric": [
+        "gives O(N) / linear time",
+        "explains the inner loop test is false at once because the comparison is strict, so the inner loop never runs",
+        "counts N-1 passes with constant work each",
+        "relates to inversions: equal elements form no inversion, I = 0, running time O(N + I)"
+      ]
+    },
+    {
+      "id": "sortbasics-003",
+      "type": "trace",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "mergesort",
+        "textbook-7.15",
+        "merge-order"
+      ],
+      "points": 8,
+      "prompt": "**(Textbook 7.15, HW7 Part A)** Sort `3, 1, 4, 1, 5, 9, 2, 6` using the textbook mergesort (Fig 7.11: `center = (left + right) / 2`, sort `a[left..center]`, sort `a[center+1..right]`, then merge). Show the result of **every merge, in the order the merges happen**, together with the index range merged.",
+      "answer": "The recursion goes all the way down the left half before touching the right half, so the merges happen in this order:\n\n```\nmerge [3] + [1] -> [1, 3]  (indices 0..1)\n    [1 3] 4 1 5 9 2 6\nmerge [4] + [1] -> [1, 4]  (indices 2..3)\n    1 3 [1 4] 5 9 2 6\nmerge [1, 3] + [1, 4] -> [1, 1, 3, 4]  (indices 0..3)\n    [1 1 3 4] 5 9 2 6\nmerge [5] + [9] -> [5, 9]  (indices 4..5)\n    1 1 3 4 [5 9] 2 6\nmerge [2] + [6] -> [2, 6]  (indices 6..7)\n    1 1 3 4 5 9 [2 6]\nmerge [5, 9] + [2, 6] -> [2, 5, 6, 9]  (indices 4..7)\n    1 1 3 4 [2 5 6 9]\nmerge [1, 1, 3, 4] + [2, 5, 6, 9] -> [1, 1, 2, 3, 4, 5, 6, 9]  (indices 0..7)\n    [1 1 2 3 4 5 6 9]\n\nfinal: 1,1,2,3,4,5,6,9\n```\n\nSeven merges in total (N - 1 = 7 merges for N = 8): four of size 1+1, two of size 2+2, one of size 4+4. Merging `[1,3]` with `[1,4]`: on a tie the `<=` in the merge takes the element from the **left** run first, which is what keeps mergesort stable.",
+      "rubric": [
+        "merges happen in recursive (depth-first, left half first) order",
+        "first four merges are the pairs (3,1) (4,1) then (5,9) (2,6) interleaved correctly with the size-2 merge [1,3]+[1,4]",
+        "shows [1,3]+[1,4] -> [1,1,3,4] and [5,9]+[2,6] -> [2,5,6,9]",
+        "final merge gives 1,1,2,3,4,5,6,9",
+        "indicates N-1 = 7 merges / index ranges"
+      ]
+    },
+    {
+      "id": "sortbasics-004",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "mergesort",
+        "textbook-7.17",
+        "recurrence"
+      ],
+      "points": 8,
+      "prompt": "**(Textbook 7.17, HW7 Part A)** Determine the running time of mergesort for (a) sorted input, (b) reverse-ordered input, (c) random input. Justify using the recurrence and the cost of `merge`. Does the number of *comparisons* depend on the input?",
+      "answer": "**All three are Theta(N log N)** (worst = best = average).\n\nJustification: mergesort's recursion never looks at the data. It always splits into two halves, so T(N) = 2T(N/2) + (cost of merge), T(1) = 1. `merge` always copies all N elements (to the temp array and back), so its cost is Theta(N) whatever the order, giving T(N) = 2T(N/2) + Theta(N) = Theta(N log N) (telescoping, Textbook 7.6.1).\n\nWhat *does* depend on the input is only the number of **comparisons** inside each merge (still between about N/2 and N - 1 per merge, so a constant factor):\n\n* sorted input: every element of the left run is smaller than every element of the right run, so the left run is used up first - a merge of two runs of length m uses only m comparisons. Total about (N/2) log N comparisons. For N = 16 the code does 32 comparisons.\n* reverse input: all of the right run goes first, then the left run is copied - also m comparisons per merge, about (N/2) log N (N = 16: 32).\n* random input: the runs interleave, about N - 1 per merge, about N log N - 1.25N comparisons overall.\n(The worst case for comparisons is N log N - N + 1.)\n\nSo it is Theta(N log N) in all three cases; only the constant in the comparison count differs. Compare insertion sort (Theta(N), Theta(N^2), Theta(N^2)) and quicksort with a bad pivot.",
+      "rubric": [
+        "states Theta(N log N) for all three inputs",
+        "uses T(N) = 2T(N/2) + cN (recursion independent of data, merge always Theta(N) because of copying)",
+        "solves/cites the telescoping solution N log N + N",
+        "notes only the comparison count (constant factor) differs between sorted/reverse/random"
+      ]
+    },
+    {
       "id": "sortbasics-005",
       "type": "trace",
       "difficulty": 1,

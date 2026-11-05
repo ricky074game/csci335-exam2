@@ -217,6 +217,80 @@
       ]
     },
     {
+      "id": "coding-010",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "hw6",
+      "tags": [
+        "priority_queue",
+        "min-heap",
+        "kth-largest",
+        "stream",
+        "hw6",
+        "greater"
+      ],
+      "points": 10,
+      "prompt": "**Kth Largest Element in a Stream (HW6 Part 3).** Design a class `KthLargest`:\n- `KthLargest(int k, vector<int>& nums)` initializes the object with the integer `k` and the initial stream `nums`;\n- `int add(int val)` appends `val` to the stream and returns the element that is the **kth largest** in the stream so far (kth largest in *sorted* order, so duplicates count separately). Assume the stream always has at least `k` elements when `add` is called.\n\nHints from the HW: declare the heap and `k` as data members; `priority_queue` is a **max-heap** by default, and a min-heap is declared as `priority_queue<int, vector<int>, greater<int> > myMinHeap;`.\n\n```cpp\nclass KthLargest {\n    // write code here\npublic:\n    KthLargest(int k, vector<int>& nums) {\n        // write code here\n    }\n    int add(int val) {\n        // write code here\n    }\n};\n```\n\nGive the complexity of the constructor (n = `nums.size()`) and of `add`, justifying each operation, and explain why the heap stores only k elements and why it is a *min*-heap.",
+      "answer": "```cpp\nclass KthLargest {\n    priority_queue<int, vector<int>, greater<int>> minHeap;   // holds the k largest values seen; top() is the kth largest\n    int k;\npublic:\n    KthLargest(int k, vector<int>& nums) : k(k) {\n        for (int x : nums) add(x);\n    }\n    int add(int val) {\n        if ((int)minHeap.size() < k)\n            minHeap.push(val);\n        else if (val > minHeap.top()) {              // val beats the current kth largest\n            minHeap.pop();\n            minHeap.push(val);\n        }\n        return minHeap.top();\n    }\n};\n```\n\n**Why a min-heap of size k.** We only ever need the k largest values seen so far. If we keep exactly those k in a **min**-heap, the root `top()` is the smallest of the k largest, i.e. the **kth largest** overall, available in O(1). A new value `val` can matter only if it is larger than the current root (otherwise it is not among the k largest, and discarding it cannot change the kth largest). If it is larger, the old root is no longer among the k largest, so we `pop()` it and `push(val)`. A max-heap would put the *largest* on top, which is the wrong end to evict and to report.\n\n**Complexity.** The heap never has more than k elements.\n- `push`: O(log k) (percolate up in a heap of at most k elements); `pop`: O(log k) (deleteMin: percolate down); `top`, `size`, comparison: O(1).\n- **`add`: O(log k) worst case** (constant number of operations of cost <= O(log k)).\n- **Constructor: O(n log k)** - it calls `add` once per initial element (n x O(log k)). Space: **O(k)**.\n\n(Details: `pop()` returns `void`, so read `top()` *before* popping if you need the value. `top()` on an empty heap is undefined, which is why the problem guarantees at least k elements.)",
+      "rubric": [
+        "Heap and k are data members; heap is a MIN-heap declared with priority_queue<int, vector<int>, greater<int>>",
+        "Keeps only the k largest values: pushes while size < k, otherwise replaces the root only when val > top()",
+        "add() returns top() (kth largest)",
+        "Constructor feeds every element of nums through the same logic",
+        "add is O(log k): push/pop on a heap of size <= k, top O(1); constructor O(n log k); space O(k)",
+        "Explains why min-heap and why only k elements are stored"
+      ]
+    },
+    {
+      "id": "coding-011",
+      "type": "coding",
+      "difficulty": 3,
+      "source": "hw6",
+      "tags": [
+        "priority_queue",
+        "make_heap",
+        "push_heap",
+        "nth_element",
+        "kth-largest",
+        "hw6",
+        "underlying-vector"
+      ],
+      "points": 10,
+      "prompt": "**HW6 Part 4.** The `KthLargest` solution built on `std::priority_queue` pushes and pops through the adaptor's interface. How could you make it more efficient if you manipulated the underlying vector directly (using the heap algorithms of `<algorithm>`, or your own percolation) instead of the `priority_queue` methods? Write the improved class and state what exactly improved, asymptotically and in constant factors.\n\n```cpp\nclass KthLargest {\n    vector<int> heap;   // you manage this vector as a 0-indexed min-heap\n    int k;\n    // write code here\npublic:\n    KthLargest(int k, vector<int>& nums);\n    int add(int val);\n};\n```",
+      "answer": "Two improvements: (1) *build* the initial heap in O(n) instead of n pushes; (2) when a large value replaces the root, do **one** percolate-down instead of a `pop()` followed by a `push()`.\n\n```cpp\nclass KthLargest {\n    vector<int> heap;                                // 0-indexed MIN-heap of the k largest values; heap[0] = kth largest\n    int k;\n    void percolateDown(int hole) {                   // textbook-style: move the hole down instead of swapping\n        int n = (int)heap.size();\n        int tmp = heap[hole];\n        int child;\n        for (; 2 * hole + 1 < n; hole = child) {\n            child = 2 * hole + 1;\n            if (child + 1 < n && heap[child + 1] < heap[child])\n                ++child;                             // pick the smaller child\n            if (heap[child] < tmp) heap[hole] = heap[child];\n            else break;\n        }\n        heap[hole] = tmp;\n    }\npublic:\n    KthLargest(int k, vector<int>& nums) : k(k) {\n        vector<int> v(nums);\n        if ((int)v.size() > k)                       // quickselect: the k largest end up in v[0..k-1], O(n) average\n            nth_element(v.begin(), v.begin() + k, v.end(), greater<int>());\n        heap.assign(v.begin(), v.begin() + min((int)v.size(), k));\n        make_heap(heap.begin(), heap.end(), greater<int>());   // buildHeap: O(k)\n    }\n    int add(int val) {\n        if ((int)heap.size() < k) {\n            heap.push_back(val);\n            push_heap(heap.begin(), heap.end(), greater<int>());\n        } else if (val > heap[0]) {\n            heap[0] = val;                           // replace the root directly ...\n            percolateDown(0);                        // ... and fix with ONE percolate-down (no pop + push)\n        }\n        return heap[0];\n    }\n};\n```\n\n**What changed.**\n1. **Constructor O(n) average instead of O(n log k).** `nth_element(..., greater<int>())` (quickselect) moves the k largest values to the front in O(n) average; `make_heap` then builds the k-element heap in O(k) (the buildHeap bound: the sum of heights is O(k), not k log k). The version with the adaptor does n calls to `add`, each O(log k). (If the initial `nums` has <= k elements we just `make_heap` them in O(n).)\n2. **`add` with a replacement: one percolate-down instead of pop + push.** With `priority_queue`, replacing the root costs `pop()` (percolate the last element down) *and* `push()` (percolate the new element up): two O(log k) operations plus the `top()` check. Overwriting `heap[0]` and percolating down once is a single O(log k) walk (<= log2 k levels, 2 comparisons per level, and the textbook \"hole\" trick uses one assignment per level instead of a swap). Asymptotically `add` is still **O(log k)**; the saving is a smaller constant, plus no extra push when the value is rejected.\n3. Direct access `heap[0]` is the kth largest (same as `top()`; no change in cost).\n\nNote the standard-library limitations behind the question: `priority_queue` hides its container (the protected member `c`), offers only push/pop/top, and has no \"replace top\" / `decreaseKey`; with `<algorithm>` you could emulate replace-top by `pop_heap` + overwrite `back()` + `push_heap`, but that is the same two-pass cost, which is why the answer percolates by hand.",
+      "rubric": [
+        "Keeps the heap in a plain vector as a min-heap (uses greater<int> consistently in make_heap/push_heap, or hand-written percolation)",
+        "Builds the initial heap with make_heap (O(n) / O(k)) or nth_element + make_heap rather than n pushes",
+        "Replaces the root and percolates down once (instead of pop then push) when val > heap[0]",
+        "Correct handling while the heap has fewer than k elements (push_back + push_heap)",
+        "States constructor improves from O(n log k) to O(n) average; add stays O(log k) but with fewer operations/constant factor",
+        "Honest about which improvements are asymptotic and which are constant-factor"
+      ]
+    },
+    {
+      "id": "coding-012",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "make_heap",
+        "pop_heap",
+        "heapsort",
+        "hw7",
+        "algorithm"
+      ],
+      "points": 8,
+      "prompt": "**HW7 Part C.** Write `myHeapSort` using the C++ library functions `std::make_heap` and `std::pop_heap` (from `<algorithm>`). It sorts the vector in **ascending** order. Do not use `sort`, `sort_heap` or any other container.\n\n```cpp\n// Takes a reference to a (typically unsorted) vector and sorts that vector using heapsort.\nvoid myHeapSort(std::vector<int>& nums) {\n    // write code here\n}\n```\n\nGive the complexity (time and extra space) and justify each library call. Is the sort stable?",
+      "answer": "```cpp\nvoid myHeapSort(std::vector<int>& nums) {\n    std::make_heap(nums.begin(), nums.end());                         // O(n): nums becomes a max-heap\n    for (auto last = nums.end(); last != nums.begin(); --last)\n        std::pop_heap(nums.begin(), last);                            // O(log n): max goes to last-1, heap shrinks by one\n}\n```\n\n**How it works.** `make_heap(first, last)` rearranges the range into a **max**-heap (default `operator<`): the largest element is at `nums[0]`. `pop_heap(first, last)` swaps the root with the last element of `[first, last)` and then restores the heap property on `[first, last - 1)`; so after the call the maximum sits at position `last - 1`, outside the shrunken heap, in its final place. Calling `pop_heap` with `last` going from `end()` down to `begin() + 1` therefore places the largest, second largest, ... elements from the back: the vector ends up ascending. This is exactly the textbook heapsort (build a max-heap, then repeat deleteMax into the freed slot), done in place.\n\n**Complexity.**\n- `make_heap`: **O(n)** (buildHeap; cplusplus.com: up to linear in 3n comparisons).\n- Each `pop_heap` on a range of size s: O(log s) <= O(log n); it is called n times: **O(n log n)**. (The last iteration, `last == begin() + 1`, calls `pop_heap` on a 1-element range, which does nothing; you may stop the loop one step earlier.)\n- Total O(n) + O(n log n) = **O(n log n)** worst, average and best case. Extra space **O(1)**: everything happens inside `nums`. Not stable (a swap of the root with the last element moves equal keys past each other).\n\nEquivalent library shortcut: `make_heap(...); sort_heap(...);` (`sort_heap` does the same repeated `pop_heap` internally, O(n log n)); the HW asks for the explicit loop.\n\n```cpp\nvoid myHeapSort2(std::vector<int>& nums) {\n    std::make_heap(nums.begin(), nums.end());   // O(n)\n    std::sort_heap(nums.begin(), nums.end());   // repeated pop_heap internally: O(n log n)\n}\n```",
+      "rubric": [
+        "Calls make_heap(nums.begin(), nums.end()) first (max-heap with default comparator)",
+        "Loops calling pop_heap on a shrinking range [begin, last), last decreasing from end()",
+        "No extra array used: in-place; result is ascending",
+        "Time O(n) for make_heap + n x O(log n) for pop_heap = O(n log n); each call justified",
+        "Space O(1) and states it is not stable"
+      ]
+    },
+    {
       "id": "coding-013",
       "type": "coding",
       "difficulty": 1,

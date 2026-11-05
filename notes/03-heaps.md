@@ -243,7 +243,67 @@ final heap (from index 1): 3,5,4,9,6,7
 
 ## 4. deleteMin and percolate down (6.3.3, Fig 6.9-6.12) - and the HW6 Q2 step format
 
-> *A worked HW6 answer goes here. It is added to the public version after HW6 is due (Nov 10).*
+<!-- HOLD hw6 -->
+**Worked example first: HW6 Question 2.** Delete the 3 at the root of the min-heap `3, 6, 5, 7, 12, 9, 13, 11, 8` (indices 1-9). **Show the array after each step, index 0 holds
+the value being moved.** The engine's output is exactly the format to hand in:
+
+```
+$ python tools/study.py heap delete 3,6,5,7,12,9,13,11,8 --count 1
+min-heap deleteMin x1 (removed [3])
+
+  [0]=8 | _ 6 5 7 12 9 13 11                     # deleteMin: remove 3 from the root (hole at 1); last element 8 goes to index 0; size 8
+  [0]=8 | 5 6 _ 7 12 9 13 11                     # smaller child 5 (index 3) beats 8 -> slide it up to index 1; hole moves to 3
+  [0]=8 | 5 6 _ 7 12 9 13 11                     # best child 9 (index 6) does not beat 8 -> stop
+  [0]=- | 5 6 8 7 12 9 13 11                     # place 8 in index 3
+
+final heap (from index 1): 5,6,8,7,12,9,13,11
+```
+
+
+Walk-through (initial array: `[0]=- | 3 6 5 7 12 9 13 11 8`, size 9):
+
+1. **Remove the minimum 3 at the root; the heap shrinks to 8 elements, so the last element (8, index 9) must be placed somewhere.** Put **8 in index 0**; the root is a hole: `[0]=8 | _ 6 5 7 12 9 13 11` (index 9 is gone).
+2. **Percolate down.** The hole is at index 1; children are index 2 (6) and index 3 (5). Smaller child = 5 (index 3). 5 < 8, so slide 5 **up** into the hole; the hole moves to index 3.
+3. Hole at index 3; its children are index 6 (9) and index 7 (13). Smaller child = 9. 9 < 8 is false: **stop**.
+4. Put 8 into the hole (index 3), clear index 0: `5 6 8 7 12 9 13 11`.
+
+Final heap: `5, 6, 8, 7, 12, 9, 13, 11`.
+
+**A longer example (Fig 6.9-6.11):** delete 13 from the 11-element heap of Figure 6.9 (the last element is 31). The element 31 percolates almost all the way to the bottom,
+which is typical (it came from the bottom, so it belongs near the bottom).
+
+```
+$ python tools/study.py heap delete 13,14,16,19,21,19,68,65,26,32,31 --count 1
+min-heap deleteMin x1 (removed [13])
+
+  [0]=31 | _ 14 16 19 21 19 68 65 26 32          # deleteMin: remove 13 from the root (hole at 1); last element 31 goes to index 0; size 10
+  [0]=31 | 14 _ 16 19 21 19 68 65 26 32          # smaller child 14 (index 2) beats 31 -> slide it up to index 1; hole moves to 2
+  [0]=31 | 14 19 16 _ 21 19 68 65 26 32          # smaller child 19 (index 4) beats 31 -> slide it up to index 2; hole moves to 4
+  [0]=31 | 14 19 16 26 21 19 68 65 _ 32          # smaller child 26 (index 9) beats 31 -> slide it up to index 4; hole moves to 9
+  [0]=- | 14 19 16 26 21 19 68 65 31 32          # place 31 in index 9
+
+final heap (from index 1): 14,19,16,26,21,19,68,65,31,32
+```
+
+
+**The one-child trap.** When the heap size is even, the last internal node has only a left child. Delete from a 15-element heap (size becomes 14): the hole reaches index 7, whose only
+child is index 14 = `currentSize`. The code must not read `array[15]`:
+
+```
+$ python tools/study.py heap delete 1,3,2,6,7,5,4,15,14,12,9,10,11,13,8 --count 1
+min-heap deleteMin x1 (removed [1])
+
+  [0]=8 | _ 3 2 6 7 5 4 15 14 12 9 10 11 13      # deleteMin: remove 1 from the root (hole at 1); last element 8 goes to index 0; size 14
+  [0]=8 | 2 3 _ 6 7 5 4 15 14 12 9 10 11 13      # smaller child 2 (index 3) beats 8 -> slide it up to index 1; hole moves to 3
+  [0]=8 | 2 3 4 6 7 5 _ 15 14 12 9 10 11 13      # smaller child 4 (index 7) beats 8 -> slide it up to index 3; hole moves to 7
+  [0]=8 | 2 3 4 6 7 5 _ 15 14 12 9 10 11 13      # best child 13 (index 14) does not beat 8 -> stop
+  [0]=- | 2 3 4 6 7 5 8 15 14 12 9 10 11 13      # place 8 in index 7
+
+final heap (from index 1): 2,3,4,6,7,5,8,15,14,12,9,10,11,13
+```
+
+
+<!-- /HOLD -->
 
 ### The code (Fig 6.12), line by line
 
@@ -737,7 +797,198 @@ final heap (from index 1): 12,10,8,7,9,5,1,6,3
 
 ---
 
-> *A worked HW6 answer goes here. It is added to the public version after HW6 is due (Nov 10).*
+<!-- HOLD hw6 -->
+## 12. HW6 worked answers
+
+**6.1** Can insert and findMin both be O(1)? See section 1: yes with an unsorted list plus a min variable (deleteMin then costs O(N)).
+
+**6.2a** Insert 10, 12, 1, 14, 6, 5, 8, 15, 3, 9, 7, 4, 11, 13, 2 one at a time into an empty min-heap:
+
+```
+$ python tools/study.py heap insert "" 10,12,1,14,6,5,8,15,3,9,7,4,11,13,2
+min-heap insert 10,12,1,14,6,5,8,15,3,9,7,4,11,13,2
+
+  [0]=10 | _                                     # insert 10: hole created at index 1; 10 stored in index 0
+  [0]=- | 10                                     # place 10 in index 1 (hole is the root)
+  [0]=12 | 10 _                                  # insert 12: hole created at index 2; 12 stored in index 0
+  [0]=- | 10 12                                  # place 12 in index 2 (parent 10 is not larger)
+  [0]=1 | 10 12 _                                # insert 1: hole created at index 3; 1 stored in index 0
+  [0]=1 | _ 12 10                                # 1 < parent 10 (index 1) -> slide 10 down to index 3; hole moves to 1
+  [0]=- | 1 12 10                                # place 1 in index 1 (hole is the root)
+  [0]=14 | 1 12 10 _                             # insert 14: hole created at index 4; 14 stored in index 0
+  [0]=- | 1 12 10 14                             # place 14 in index 4 (parent 12 is not larger)
+  [0]=6 | 1 12 10 14 _                           # insert 6: hole created at index 5; 6 stored in index 0
+  [0]=6 | 1 _ 10 14 12                           # 6 < parent 12 (index 2) -> slide 12 down to index 5; hole moves to 2
+  [0]=- | 1 6 10 14 12                           # place 6 in index 2 (parent 1 is not larger)
+  [0]=5 | 1 6 10 14 12 _                         # insert 5: hole created at index 6; 5 stored in index 0
+  [0]=5 | 1 6 _ 14 12 10                         # 5 < parent 10 (index 3) -> slide 10 down to index 6; hole moves to 3
+  [0]=- | 1 6 5 14 12 10                         # place 5 in index 3 (parent 1 is not larger)
+  [0]=8 | 1 6 5 14 12 10 _                       # insert 8: hole created at index 7; 8 stored in index 0
+  [0]=- | 1 6 5 14 12 10 8                       # place 8 in index 7 (parent 5 is not larger)
+  [0]=15 | 1 6 5 14 12 10 8 _                    # insert 15: hole created at index 8; 15 stored in index 0
+  [0]=- | 1 6 5 14 12 10 8 15                    # place 15 in index 8 (parent 14 is not larger)
+  [0]=3 | 1 6 5 14 12 10 8 15 _                  # insert 3: hole created at index 9; 3 stored in index 0
+  [0]=3 | 1 6 5 _ 12 10 8 15 14                  # 3 < parent 14 (index 4) -> slide 14 down to index 9; hole moves to 4
+  [0]=3 | 1 _ 5 6 12 10 8 15 14                  # 3 < parent 6 (index 2) -> slide 6 down to index 4; hole moves to 2
+  [0]=- | 1 3 5 6 12 10 8 15 14                  # place 3 in index 2 (parent 1 is not larger)
+  [0]=9 | 1 3 5 6 12 10 8 15 14 _                # insert 9: hole created at index 10; 9 stored in index 0
+  [0]=9 | 1 3 5 6 _ 10 8 15 14 12                # 9 < parent 12 (index 5) -> slide 12 down to index 10; hole moves to 5
+  [0]=- | 1 3 5 6 9 10 8 15 14 12                # place 9 in index 5 (parent 3 is not larger)
+  [0]=7 | 1 3 5 6 9 10 8 15 14 12 _              # insert 7: hole created at index 11; 7 stored in index 0
+  [0]=7 | 1 3 5 6 _ 10 8 15 14 12 9              # 7 < parent 9 (index 5) -> slide 9 down to index 11; hole moves to 5
+  [0]=- | 1 3 5 6 7 10 8 15 14 12 9              # place 7 in index 5 (parent 3 is not larger)
+  [0]=4 | 1 3 5 6 7 10 8 15 14 12 9 _            # insert 4: hole created at index 12; 4 stored in index 0
+  [0]=4 | 1 3 5 6 7 _ 8 15 14 12 9 10            # 4 < parent 10 (index 6) -> slide 10 down to index 12; hole moves to 6
+  [0]=4 | 1 3 _ 6 7 5 8 15 14 12 9 10            # 4 < parent 5 (index 3) -> slide 5 down to index 6; hole moves to 3
+  [0]=- | 1 3 4 6 7 5 8 15 14 12 9 10            # place 4 in index 3 (parent 1 is not larger)
+  [0]=11 | 1 3 4 6 7 5 8 15 14 12 9 10 _         # insert 11: hole created at index 13; 11 stored in index 0
+  [0]=- | 1 3 4 6 7 5 8 15 14 12 9 10 11         # place 11 in index 13 (parent 5 is not larger)
+  [0]=13 | 1 3 4 6 7 5 8 15 14 12 9 10 11 _      # insert 13: hole created at index 14; 13 stored in index 0
+  [0]=- | 1 3 4 6 7 5 8 15 14 12 9 10 11 13      # place 13 in index 14 (parent 8 is not larger)
+  [0]=2 | 1 3 4 6 7 5 8 15 14 12 9 10 11 13 _    # insert 2: hole created at index 15; 2 stored in index 0
+  [0]=2 | 1 3 4 6 7 5 _ 15 14 12 9 10 11 13 8    # 2 < parent 8 (index 7) -> slide 8 down to index 15; hole moves to 7
+  [0]=2 | 1 3 _ 6 7 5 4 15 14 12 9 10 11 13 8    # 2 < parent 4 (index 3) -> slide 4 down to index 7; hole moves to 3
+  [0]=- | 1 3 2 6 7 5 4 15 14 12 9 10 11 13 8    # place 2 in index 3 (parent 1 is not larger)
+
+final heap (from index 1): 1,3,2,6,7,5,4,15,14,12,9,10,11,13,8
+```
+
+
+**6.2b** buildHeap on the same input:
+
+```
+$ python tools/study.py heap build 10,12,1,14,6,5,8,15,3,9,7,4,11,13,2
+buildHeap (min-heap)
+
+  [0]=- | 10 12 1 14 6 5 8 15 3 9 7 4 11 13 2    # start (size 15); percolateDown from i = 7 down to 1
+  [0]=- | 10 12 1 14 6 5 2 15 3 9 7 4 11 13 8    # after percolateDown(7) (value 8)
+  [0]=- | 10 12 1 14 6 4 2 15 3 9 7 5 11 13 8    # after percolateDown(6) (value 5)
+  [0]=- | 10 12 1 14 6 4 2 15 3 9 7 5 11 13 8    # after percolateDown(5) (value 6)
+  [0]=- | 10 12 1 3 6 4 2 15 14 9 7 5 11 13 8    # after percolateDown(4) (value 14)
+  [0]=- | 10 12 1 3 6 4 2 15 14 9 7 5 11 13 8    # after percolateDown(3) (value 1)
+  [0]=- | 10 3 1 12 6 4 2 15 14 9 7 5 11 13 8    # after percolateDown(2) (value 12)
+  [0]=- | 1 3 2 12 6 4 8 15 14 9 7 5 11 13 10    # after percolateDown(1) (value 10)
+
+final heap (from index 1): 1,3,2,12,6,4,8,15,14,9,7,5,11,13,10
+```
+
+
+**6.3** Three deleteMins on "the heap of the previous exercise" (it does not say which; the two heaps differ, so state which one you use):
+
+```
+$ python tools/study.py heap delete 1,3,2,6,7,5,4,15,14,12,9,10,11,13,8 --count 3
+min-heap deleteMin x3 (removed [1, 2, 3])
+
+  [0]=8 | _ 3 2 6 7 5 4 15 14 12 9 10 11 13      # deleteMin: remove 1 from the root (hole at 1); last element 8 goes to index 0; size 14
+  [0]=8 | 2 3 _ 6 7 5 4 15 14 12 9 10 11 13      # smaller child 2 (index 3) beats 8 -> slide it up to index 1; hole moves to 3
+  [0]=8 | 2 3 4 6 7 5 _ 15 14 12 9 10 11 13      # smaller child 4 (index 7) beats 8 -> slide it up to index 3; hole moves to 7
+  [0]=8 | 2 3 4 6 7 5 _ 15 14 12 9 10 11 13      # best child 13 (index 14) does not beat 8 -> stop
+  [0]=- | 2 3 4 6 7 5 8 15 14 12 9 10 11 13      # place 8 in index 7
+  [0]=13 | _ 3 4 6 7 5 8 15 14 12 9 10 11        # deleteMin: remove 2 from the root (hole at 1); last element 13 goes to index 0; size 13
+  [0]=13 | 3 _ 4 6 7 5 8 15 14 12 9 10 11        # smaller child 3 (index 2) beats 13 -> slide it up to index 1; hole moves to 2
+  [0]=13 | 3 6 4 _ 7 5 8 15 14 12 9 10 11        # smaller child 6 (index 4) beats 13 -> slide it up to index 2; hole moves to 4
+  [0]=13 | 3 6 4 _ 7 5 8 15 14 12 9 10 11        # best child 14 (index 9) does not beat 13 -> stop
+  [0]=- | 3 6 4 13 7 5 8 15 14 12 9 10 11        # place 13 in index 4
+  [0]=11 | _ 6 4 13 7 5 8 15 14 12 9 10          # deleteMin: remove 3 from the root (hole at 1); last element 11 goes to index 0; size 12
+  [0]=11 | 4 6 _ 13 7 5 8 15 14 12 9 10          # smaller child 4 (index 3) beats 11 -> slide it up to index 1; hole moves to 3
+  [0]=11 | 4 6 5 13 7 _ 8 15 14 12 9 10          # smaller child 5 (index 6) beats 11 -> slide it up to index 3; hole moves to 6
+  [0]=11 | 4 6 5 13 7 10 8 15 14 12 9 _          # smaller child 10 (index 12) beats 11 -> slide it up to index 6; hole moves to 12
+  [0]=- | 4 6 5 13 7 10 8 15 14 12 9 11          # place 11 in index 12
+
+final heap (from index 1): 4,6,5,13,7,10,8,15,14,12,9,11
+```
+
+
+and on the buildHeap result of 6.2b:
+
+```
+$ python tools/study.py heap delete 1,3,2,12,6,4,8,15,14,9,7,5,11,13,10 --count 3
+min-heap deleteMin x3 (removed [1, 2, 3])
+
+  [0]=10 | _ 3 2 12 6 4 8 15 14 9 7 5 11 13      # deleteMin: remove 1 from the root (hole at 1); last element 10 goes to index 0; size 14
+  [0]=10 | 2 3 _ 12 6 4 8 15 14 9 7 5 11 13      # smaller child 2 (index 3) beats 10 -> slide it up to index 1; hole moves to 3
+  [0]=10 | 2 3 4 12 6 _ 8 15 14 9 7 5 11 13      # smaller child 4 (index 6) beats 10 -> slide it up to index 3; hole moves to 6
+  [0]=10 | 2 3 4 12 6 5 8 15 14 9 7 _ 11 13      # smaller child 5 (index 12) beats 10 -> slide it up to index 6; hole moves to 12
+  [0]=- | 2 3 4 12 6 5 8 15 14 9 7 10 11 13      # place 10 in index 12
+  [0]=13 | _ 3 4 12 6 5 8 15 14 9 7 10 11        # deleteMin: remove 2 from the root (hole at 1); last element 13 goes to index 0; size 13
+  [0]=13 | 3 _ 4 12 6 5 8 15 14 9 7 10 11        # smaller child 3 (index 2) beats 13 -> slide it up to index 1; hole moves to 2
+  [0]=13 | 3 6 4 12 _ 5 8 15 14 9 7 10 11        # smaller child 6 (index 5) beats 13 -> slide it up to index 2; hole moves to 5
+  [0]=13 | 3 6 4 12 7 5 8 15 14 9 _ 10 11        # smaller child 7 (index 11) beats 13 -> slide it up to index 5; hole moves to 11
+  [0]=- | 3 6 4 12 7 5 8 15 14 9 13 10 11        # place 13 in index 11
+  [0]=11 | _ 6 4 12 7 5 8 15 14 9 13 10          # deleteMin: remove 3 from the root (hole at 1); last element 11 goes to index 0; size 12
+  [0]=11 | 4 6 _ 12 7 5 8 15 14 9 13 10          # smaller child 4 (index 3) beats 11 -> slide it up to index 1; hole moves to 3
+  [0]=11 | 4 6 5 12 7 _ 8 15 14 9 13 10          # smaller child 5 (index 6) beats 11 -> slide it up to index 3; hole moves to 6
+  [0]=11 | 4 6 5 12 7 10 8 15 14 9 13 _          # smaller child 10 (index 12) beats 11 -> slide it up to index 6; hole moves to 12
+  [0]=- | 4 6 5 12 7 10 8 15 14 9 13 11          # place 11 in index 12
+
+final heap (from index 1): 4,6,5,12,7,10,8,15,14,9,13,11
+```
+
+
+**6.4** The array for a **non-complete** tree must reach the highest index used; a node at depth d has an index up to 2^(d+1) - 1. A complete tree of N nodes has deepest depth floor(log N) and needs N cells.
+(a) Two extra levels: deepest depth floor(log N) + 2, so the array needs up to 2^(floor(log N)+3) - 1 < **8N** cells.
+(b) Deepest node at depth 2 log N: up to 2^(2 log N + 1) = **2N^2** cells. (c) Depth 4.1 log N: 2^(4.1 log N + 1) = **2 N^4.1** cells.
+(d) Worst case: a chain (every node has one child) with depth N-1: **2^N - 1** cells (exponential).
+
+**6.5** The book's Fig 6.8 *already* puts a copy of the item in position 0 (that is the version in section 3). The version without the copy needs an explicit `hole > 1` test:
+
+```cpp
+void insert( const Comparable & x )
+{
+    if( currentSize == array.size( ) - 1 )
+        array.resize( array.size( ) * 2 );
+    int hole = ++currentSize;
+    for( ; hole > 1 && x < array[ hole / 2 ]; hole /= 2 )   // explicit root test replaces the sentinel
+        array[ hole ] = array[ hole / 2 ];
+    array[ hole ] = x;
+}
+```
+
+**6.6** Figure 6.13 (a very large complete binary tree): count the levels: 1 + 2 + 4 + 8 + 16 + 32 + 64 = 127 nodes in the full levels (depths 0-6) plus 98 nodes in the last level
+(depth 7, filled left to right) = **225 nodes**. (I counted the drawn circles in the book's figure: levels 1, 2, 4, 8, 16, 32, 64, 98.)
+
+**6.7a** Prove buildHeap uses at most 2N - 2 comparisons. One loop iteration of `percolateDown` makes **2 comparisons** and moves the hole down one level, so `percolateDown(i)` makes **at most 2 height(i)** comparisons.
+Total <= 2 x H, H = sum of heights of all nodes. **Lemma: H(N) = N - b(N) <= N - 1.** Proof: remove all the leaves of the complete tree; the remaining nodes (exactly the floor(N/2) internal nodes) form a complete tree
+and **every internal node's height drops by exactly 1**, while the leaves contributed 0. So H(N) = H(floor(N/2)) + floor(N/2), i.e. H(N) = floor(N/2) + floor(N/4) + floor(N/8) + ... (this is the slides' N/2 + N/4 + ... series) which is **< N**. (Induction
+gives N - b(N): if N = 2m then b(N) = b(m); if N = 2m+1 then b(N) = b(m)+1, and both agree with 2m - b(m).) Hence comparisons <= 2(N - 1) = **2N - 2**. For the 15-element tree (N = 15, b = 4): H = 11, at most 22 comparisons.
+
+**6.8** (a) The maximum is at a leaf: if the maximum were at an internal node it would have a child >= it by heap order; that child also holds a maximum; repeat down the tree until a leaf.
+(b) Exactly ceil(N/2) leaves ("N/2"): node i has a child iff 2i <= N, so the internal nodes are 1..floor(N/2), leaving N - floor(N/2) = ceil(N/2) leaves.
+(c) Every leaf must be examined: if some leaf were skipped, replacing its key by a value larger than everything else still gives a valid heap (a leaf only needs to be >= its parent), so you cannot rule out that the skipped leaf is the max. So you need Omega(N), not "O(1) because the root is smallest".
+
+**6.10a** Print all nodes < X in O(K) (K = number printed). Preorder traversal that **does not enter a subtree whose root is >= X** (everything below it is >= it, hence >= X):
+
+```cpp
+void printLessThan( int i, const Comparable & x ) const   // call with i = 1
+{
+    if( i > currentSize || !( array[ i ] < x ) )          // empty or >= x: prune the whole subtree
+        return;
+    std::cout << array[ i ] << ' ';
+    printLessThan( 2 * i, x );
+    printLessThan( 2 * i + 1, x );
+}
+```
+
+Every call either prints a node (K of them) or returns immediately; the immediate returns are children of printed nodes (<= 2K) or the root: **at most 2K + 1 calls, O(K)**.
+**6.10b** Yes: it works on any heap-ordered tree (leftist, skew, and each tree of a binomial queue; for a binomial queue add O(log N) to look at all the roots).
+**6.10c** Find an arbitrary X using about 3N/4 comparisons. Only about N/4 nodes have height 1 (parents of leaves), N/2 are leaves, N/4 have height >= 2.
+Algorithm: (1) for each node p of height 1, compare X with p. If X < p: stop looking below p (its leaf children are >= p > X) - cost 1. If X = p: found. If X > p: compare X with p's leaf children - cost at most 3 per height-1 node, **at most 3 x N/4 comparisons** in total.
+(2) Every ancestor of a height-1 node p with p < X is <= p < X, so it cannot equal X: skip it without comparing. (3) The remaining high nodes (all of whose height-1 descendants satisfied X < p) are compared directly with X: each such node sits above height-1 nodes that cost only 1 instead of 3, which pays for it.
+So the total is about 3N/4 in the worst case, versus N for a plain scan.
+
+**6.18 (min-max heap)** (a) The minimum is the root; the maximum is the larger of the root's two children (depth-1 nodes are on a max level), or the root if N = 1: O(1).
+(b) insert: add the new key x at the next leaf position; compare with its parent q. If x is on a **min** level and x > q (q is on a max level), swap them and then percolate x up along the **max** levels (compare with the grandparent, swap while x > grandparent); otherwise percolate up along the **min** levels (swap with the grandparent while x < grandparent). A node on a max level is handled symmetrically. O(log N).
+(c) deleteMin: take the root out and move the last element x to the root; **trickle down**: let m = the smallest among the children and grandchildren. If m is a grandchild and m < x: swap x and m; if x is now larger than its new parent (a max-level node), swap them too; repeat from m's position. If m is a child and m < x: swap and stop. Otherwise stop. deleteMax is symmetric, starting from the larger child of the root. O(log N) (two levels per step).
+(d) Yes, linear time: run the same trickle-down from i = N/2 down to 1 (using the min or max version according to the level of i); each costs O(height(i)), and the sum of heights is O(N) (Theorem 6.1).
+
+**HW6 Q2** is the deleteMin trace in section 4.
+
+**HW6 Q3/Q4** (LeetCode "Kth Largest Element in a Stream": the class stores `k` and a min-heap of the k largest values seen; `add(val)` returns the k-th largest). Q3 with `priority_queue<int, vector<int>, greater<int>>`: `add` pushes `val`, pops if size > k: two O(log k) operations every time.
+**Q4: more efficient by manipulating the vector directly:** (1) build the initial heap with `make_heap` on the vector (O(n)) instead of n pushes (O(n log k)); (2) in `add`, when the heap is full and `val <= heap.front()` do **nothing** (O(1)); (3) otherwise overwrite the root (`heap[0] = val`) and percolate **down** once (about log k steps, half the work of pop + push; `std::pop_heap` + `back() = val` + `push_heap` is the library way and costs two log k steps). With `priority_queue` you cannot replace the top in place; the vector lets you do one percolateDown instead of a deleteMin + insert.
+
+---
+
+<!-- /HOLD -->
 
 ## 13. What the exam asks (and how to answer)
 

@@ -95,8 +95,5 @@ progress/progress.json   your progress (created on first use; synced through YOU
 material/                the professor's files, imported by /setup (not in this repo)
 ```
 
-Questions and worked answers for homework that isn't due yet (HW6: Nov 10, HW7: Nov 17) are added here after the
-due date. Pull again then (`git pull upstream main` if you made your own repo with `/setup`).
-
 The course files and the textbook are not included in this repo for copyright reasons. Everyone imports their own.
 This is an unofficial study aid and is not affiliated with Hunter College or the professor.

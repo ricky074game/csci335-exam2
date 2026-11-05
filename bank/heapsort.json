@@ -3,6 +3,28 @@
   "title": "Heapsort and Introsort (Ch 7.5, Sorting slides)",
   "questions": [
     {
+      "id": "heapsort-001",
+      "type": "trace",
+      "difficulty": 3,
+      "source": "hw7",
+      "tags": [
+        "heapsort",
+        "trace",
+        "hw7",
+        "7.11"
+      ],
+      "points": 12,
+      "prompt": "(Textbook 7.11, HW7) Show how heapsort processes the input 142, 543, 123, 65, 453, 879, 572, 434, 111, 242, 811, 102. Use the textbook's heapsort (Fig 7.10: 0-indexed **max**-heap in the array being sorted). Give the array after buildHeap and after each deleteMax step, and mark the sorted part.",
+      "answer": "n = 12. buildHeap: `percDown(a, i, 12)` for i = n/2 - 1 = 5 down to 0. Then for j = 11 down to 1: swap `a[0]` with `a[j]` (the maximum goes to its final cell) and `percDown(a, 0, j)` (heap = `a[0..j-1]`).\n\n```\n142 543 123 65 453 879 572 434 111 242 811 102 # start (n = 12); buildHeap: percDown from i = 5 down to 0 (MAX-heap, 0-indexed)\n142 543 123 65 453 879 572 434 111 242 811 102 # buildHeap: after percDown(a, 5, 12) (value 879)\n142 543 123 65 811 879 572 434 111 242 453 102 # buildHeap: after percDown(a, 4, 12) (value 453)\n142 543 123 434 811 879 572 65 111 242 453 102 # buildHeap: after percDown(a, 3, 12) (value 65)\n142 543 879 434 811 123 572 65 111 242 453 102 # buildHeap: after percDown(a, 2, 12) (value 123)\n142 811 879 434 543 123 572 65 111 242 453 102 # buildHeap: after percDown(a, 1, 12) (value 543)\n879 811 572 434 543 123 142 65 111 242 453 102 # buildHeap: after percDown(a, 0, 12) (value 142)\n879 811 572 434 543 123 142 65 111 242 453 102 # == heap built ==\n811 543 572 434 453 123 142 65 111 242 102 879 # deleteMax 879: swap a[0] with a[11], then percDown(a, 0, 11) -> heap = a[0..10], sorted = a[11..11]\n572 543 142 434 453 123 102 65 111 242 811 879 # deleteMax 811: swap a[0] with a[10], then percDown(a, 0, 10) -> heap = a[0..9], sorted = a[10..11]\n543 453 142 434 242 123 102 65 111 572 811 879 # deleteMax 572: swap a[0] with a[9], then percDown(a, 0, 9) -> heap = a[0..8], sorted = a[9..11]\n453 434 142 111 242 123 102 65 543 572 811 879 # deleteMax 543: swap a[0] with a[8], then percDown(a, 0, 8) -> heap = a[0..7], sorted = a[8..11]\n434 242 142 111 65 123 102 453 543 572 811 879 # deleteMax 453: swap a[0] with a[7], then percDown(a, 0, 7) -> heap = a[0..6], sorted = a[7..11]\n242 111 142 102 65 123 434 453 543 572 811 879 # deleteMax 434: swap a[0] with a[6], then percDown(a, 0, 6) -> heap = a[0..5], sorted = a[6..11]\n142 111 123 102 65 242 434 453 543 572 811 879 # deleteMax 242: swap a[0] with a[5], then percDown(a, 0, 5) -> heap = a[0..4], sorted = a[5..11]\n123 111 65 102 142 242 434 453 543 572 811 879 # deleteMax 142: swap a[0] with a[4], then percDown(a, 0, 4) -> heap = a[0..3], sorted = a[4..11]\n111 102 65 123 142 242 434 453 543 572 811 879 # deleteMax 123: swap a[0] with a[3], then percDown(a, 0, 3) -> heap = a[0..2], sorted = a[3..11]\n102 65 111 123 142 242 434 453 543 572 811 879 # deleteMax 111: swap a[0] with a[2], then percDown(a, 0, 2) -> heap = a[0..1], sorted = a[2..11]\n65 102 111 123 142 242 434 453 543 572 811 879 # deleteMax 102: swap a[0] with a[1], then percDown(a, 0, 1) -> heap = a[0..0], sorted = a[1..11]\n```\n\n**Sorted output:** `65,102,111,123,142,242,434,453,543,572,811,879`. The array after buildHeap is the max-heap `879 811 572 434 543 123 142 65 111 242 453 102`.",
+      "rubric": [
+        "Uses a max-heap in the same array, 0-indexed, children 2i+1 and 2i+2",
+        "buildHeap runs percDown from i = 5 down to 0 and yields the correct max-heap",
+        "Each deleteMax swaps a[0] with a[j] and percolates down in the heap of size j (the sorted tail is untouched)",
+        "Intermediate arrays are correct (at least the first 5 deleteMaxes)",
+        "Final sorted array is 65,102,111,123,142,242,434,453,543,572,811,879"
+      ]
+    },
+    {
       "id": "heapsort-002",
       "type": "trace",
       "difficulty": 2,
@@ -80,6 +102,27 @@
         "Moves the larger child up and stops correctly",
         "After the first step: 10 8 6 3 | 12 15 21",
         "After the second step: 8 3 6 | 10 12 15 21"
+      ]
+    },
+    {
+      "id": "heapsort-006",
+      "type": "analysis",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "heapsort",
+        "presorted",
+        "hw7",
+        "7.12"
+      ],
+      "points": 6,
+      "prompt": "(Textbook 7.12, HW7) What is the running time of heapsort for **presorted** input (already sorted in increasing order)? What about input sorted in decreasing order? Explain, and compare with insertion sort.",
+      "answer": "**Theta(N log N) in both cases** (O(N log N) as for any input). The running time of heapsort does not depend on the order of the input: buildHeap is O(N) for every input, and the second phase does N - 1 deleteMaxes, each a swap plus a `percDown` of O(log N). In the second phase, the element swapped into the root is the old last element of the heap, i.e. a small one, and it sinks almost to the bottom each time regardless of how the input was ordered, so the phase costs Theta(N log N) (the book: heapsort uses at least N log N - O(N) comparisons on some inputs and 2N log N - O(N) at most).\n- Increasing input: buildHeap must do real work (about 2N comparisons: every internal node sinks).\n- Decreasing input: the array is already a max-heap, so buildHeap moves nothing, but it still takes O(N) comparisons to find that out, and the deleteMax phase is unchanged. Example, input 6 5 4 3 2 1:\n\n```\n6 5 4 3 2 1                # start (n = 6); buildHeap: percDown from i = 2 down to 0 (MAX-heap, 0-indexed)\n6 5 4 3 2 1                # buildHeap: after percDown(a, 2, 6) (value 4)\n6 5 4 3 2 1                # buildHeap: after percDown(a, 1, 6) (value 5)\n6 5 4 3 2 1                # buildHeap: after percDown(a, 0, 6) (value 6)\n6 5 4 3 2 1                # == heap built ==\n5 3 4 1 2 6                # deleteMax 6: swap a[0] with a[5], then percDown(a, 0, 5) -> heap = a[0..4], sorted = a[5..5]\n4 3 2 1 5 6                # deleteMax 5: swap a[0] with a[4], then percDown(a, 0, 4) -> heap = a[0..3], sorted = a[4..5]\n3 1 2 4 5 6                # deleteMax 4: swap a[0] with a[3], then percDown(a, 0, 3) -> heap = a[0..2], sorted = a[3..5]\n2 1 3 4 5 6                # deleteMax 3: swap a[0] with a[2], then percDown(a, 0, 2) -> heap = a[0..1], sorted = a[2..5]\n1 2 3 4 5 6                # deleteMax 2: swap a[0] with a[1], then percDown(a, 0, 1) -> heap = a[0..0], sorted = a[1..5]\n```\n\nUnlike **insertion sort** (O(N) on presorted input, O(N^2) on reversed input), heapsort has **no fast best case**: it is not adaptive. (Special case, only if the question allows equal keys: if all keys are equal, every `percDown` stops immediately and heapsort takes O(N).)",
+      "rubric": [
+        "Answers Theta(N log N) (O(N log N)) for sorted input, and the same for reversed",
+        "buildHeap O(N) + (N-1) x O(log N) for the deleteMaxes: the order of the input does not change the bound",
+        "Explains the swapped-in element sinks to the bottom each time (so the deleteMax phase is not cheaper)",
+        "Contrasts with insertion sort: heapsort is not adaptive"
       ]
     },
     {
@@ -162,6 +205,49 @@
         "Ch 6: children 2i, 2i+1 (14, 15), parent i/2 = 7, last internal node 10, buildHeap 10 down to 1",
         "Both last internal nodes have a single child (n even)",
         "Max-heap for heapsort vs min-heap for Ch 6; reason for 0-indexed in-place layout"
+      ]
+    },
+    {
+      "id": "heapsort-011",
+      "type": "coding",
+      "difficulty": 2,
+      "source": "hw7",
+      "tags": [
+        "heapsort",
+        "make_heap",
+        "pop_heap",
+        "STL",
+        "hw7",
+        "C"
+      ],
+      "points": 8,
+      "prompt": "(HW7 part C) Write `myHeapSort` using the C++ library functions `std::make_heap` and `std::pop_heap`. It takes a reference to a (typically unsorted) vector and sorts that vector (ascending) using heapsort.\n\n```cpp\n// Takes a reference to a (typically unsorted) vector and sorts that vector using heapsort.\nvoid myHeapSort( std::vector<int> & nums )\n{\n    // write code here\n}\n```",
+      "answer": "`std::make_heap(first, last)` builds a **max**-heap (comparator `<`) in O(n); `std::pop_heap(first, last)` swaps the root (the maximum) with `*(last - 1)` and re-heapifies `[first, last - 1)` in O(log n). So pop the maximum into the last cell, shrink the range, repeat:\n\n```cpp\n#include <vector>\n#include <algorithm>\n\nvoid myHeapSort( std::vector<int> & nums )\n{\n    std::make_heap( nums.begin( ), nums.end( ) );                  // buildHeap: O(n)\n    for( auto last = nums.end( ); last - nums.begin( ) > 1; --last )\n        std::pop_heap( nums.begin( ), last );                      // deleteMax: max goes to last-1; O(log n)\n}\n```\nAfter the k-th `pop_heap` the k largest elements are in their final cells at the end, in ascending order; the loop stops when one element is left (it must be the smallest). (`std::sort_heap(nums.begin(), nums.end())` after `make_heap` is the same loop.)\nTime **O(n log n)** (make_heap O(n) + n - 1 pop_heaps of O(log n)); extra space **O(1)**.",
+      "rubric": [
+        "Calls make_heap on the whole range (max-heap)",
+        "Calls pop_heap repeatedly on a shrinking range [begin, last) with last decreasing",
+        "Terminates correctly (last - begin > 1) and sorts ascending",
+        "Header includes <algorithm> and <vector>; states the O(n log n) cost"
+      ]
+    },
+    {
+      "id": "heapsort-012",
+      "type": "analysis",
+      "difficulty": 1,
+      "source": "hw7",
+      "tags": [
+        "heapsort",
+        "STL",
+        "complexity"
+      ],
+      "points": 6,
+      "prompt": "Analyze the running time and extra space of `myHeapSort` (make_heap followed by a loop of pop_heap calls on a vector of n ints). Cite the cost of each library call and say why you cannot claim O(n).",
+      "answer": "`std::make_heap` on n elements is buildHeap: **O(n)** (sum of node heights; at most about 3n comparisons). The loop runs n - 1 times; each `std::pop_heap` swaps the root with the last element of the current range (O(1)) and percolates it down a heap of at most n elements: **O(log n)**. Loop total: (n - 1) x O(log n) = O(n log n). Steps add: O(n) + O(n log n) = **O(n log n)** (and Theta(n log n) because each pop_heap really does sink the swapped-in element).\nWe cannot claim O(n): only the make_heap part is linear; popping the largest of a heap requires O(log n) work and there are n pops (also, comparison sorting needs Omega(n log n)).\nExtra space **O(1)**: both functions work in place on the vector (a few temporaries). Not stable.",
+      "rubric": [
+        "make_heap is O(n) (buildHeap)",
+        "pop_heap is O(log n) and executed n - 1 times: O(n log n)",
+        "Adds the two steps; total O(n log n)",
+        "O(1) extra space; why not O(n) (n log n lower bound / log n per pop)"
       ]
     },
     {
